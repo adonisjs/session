@@ -20,6 +20,7 @@ const path = require('path')
  * @constructor
  */
 class File {
+  /* istanbul ignore next */
   /**
    * Namespaces to inject
    *
@@ -36,6 +37,17 @@ class File {
     this._location = path.isAbsolute(sessionLocation) ? sessionLocation : Helpers.tmpPath(sessionLocation)
   }
 
+  /**
+   * Returns path to the session file
+   *
+   * @method _getFilePath
+   *
+   * @param  {String}     sessionId
+   *
+   * @return {String}
+   *
+   * @private
+   */
   _getFilePath (sessionId) {
     return path.join(this._location, `${sessionId}.sess`)
   }
@@ -52,9 +64,9 @@ class File {
    */
   async read (sessionId) {
     try {
-      const data = await fs.readFile(this._getFilePath(sessionId), 'utf-8')
-      return data || ''
+      return await fs.readFile(this._getFilePath(sessionId), 'utf-8')
     } catch (error) {
+      /* istanbul ignore next */
       if (error.code !== 'ENOENT') {
         throw error
       }

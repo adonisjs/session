@@ -79,6 +79,34 @@ test.group('Session', () => {
     const { headers } = await supertest(server).get('/').expect(200)
     assert.deepEqual(helpers.getValueObject(headers['set-cookie'][1]), { username: { d: 'virk', t: 'String' } })
   })
+
+  test('touch session when store is not dirty', async (assert) => {
+    const existingTouch = Cookie.prototype.touch
+    let calledTouch = false
+
+    Cookie.prototype.touch = function () {
+      calledTouch = true
+    }
+
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+      .instantiate()
+      .then(() => {
+        return session.commit()
+      })
+      .then(() => {
+        res.end()
+      })
+    })
+
+    await supertest(server).get('/').expect(200)
+    assert.isTrue(calledTouch)
+    Cookie.prototype.touch = existingTouch
+  })
 })
 
 test.group('Session Store', () => {

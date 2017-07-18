@@ -55,4 +55,18 @@ test.group('Driver - File', (group) => {
     const { atime: freshATime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
     assert.isBelow(time, new Date(freshATime).getTime())
   }).timeout(0)
+
+  test('use custom file location', async (assert) => {
+    const config = new Config()
+    config.set('session.file.location', 'foo')
+    const fileDriver = new FileDriver(config, new Helpers(path.join(__dirname)))
+    assert.equal(fileDriver._location, path.join(__dirname, 'tmp/foo'))
+  })
+
+  test('do not make file path when it\'s absolute', async (assert) => {
+    const config = new Config()
+    config.set('session.file.location', path.join(__dirname, 'tmp/foo'))
+    const fileDriver = new FileDriver(config, new Helpers(path.join(__dirname)))
+    assert.equal(fileDriver._location, path.join(__dirname, 'tmp/foo'))
+  })
 })

@@ -19,6 +19,7 @@ const ms = require('ms')
  * @constructor
  */
 class Redis {
+  /* istanbul ignore next */
   /**
    * Namespaces to inject
    *

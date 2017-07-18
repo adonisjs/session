@@ -18,6 +18,7 @@ const util = require('../../../lib/util')
  * @constructor
  */
 class Cookie {
+  /* istanbul ignore next */
   /**
    * Namespaces to inject
    *
