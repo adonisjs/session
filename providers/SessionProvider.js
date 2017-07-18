@@ -23,9 +23,7 @@ class SessionProvider extends ServiceProvider {
    * @private
    */
   _registerManager () {
-    this.app.manager('Adonis/Src/Session', (app) => {
-      return require('../src/Session/Manager')
-    })
+    this.app.manager('Adonis/Src/Session', require('../src/Session/Manager'))
   }
 
   /**
@@ -71,7 +69,7 @@ class SessionProvider extends ServiceProvider {
   register () {
     this._registerManager()
     this._registerProvider()
-    this._registerManager()
+    this._registerMiddleware()
   }
 }
 

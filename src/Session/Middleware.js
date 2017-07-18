@@ -9,7 +9,8 @@
  * file that was distributed with this source code.
 */
 
-const Session = require('./Session')
+const Session = require('./index')
+const debug = require('debug')('adonis:session')
 
 /**
  * Session middleware to be used on each request
@@ -41,7 +42,10 @@ class SessionMiddleware {
    * @return {void}
    */
   async handle (ctx, next) {
-    const driverInstance = this.SessionManager.makeDriverInstance(this.Config.get('session.driver', 'cookie'))
+    const driver = this.Config.get('session.driver', 'cookie')
+    debug('using %s session driver', driver)
+
+    const driverInstance = this.SessionManager.makeDriverInstance(driver)
     driverInstance.setRequest(ctx.request, ctx.response)
 
     ctx.session = new Session(ctx.request, ctx.response, driverInstance, this.Config)
@@ -50,7 +54,7 @@ class SessionMiddleware {
      * Initiate the store by reading values from the
      * driver.
      */
-    await ctx.session.initiate()
+    await ctx.session.instantiate()
 
     /**
      * Move the chain
@@ -64,4 +68,4 @@ class SessionMiddleware {
   }
 }
 
-module.export = SessionMiddleware
+module.exports = SessionMiddleware

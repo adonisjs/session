@@ -12,6 +12,7 @@
 const uuid = require('uuid')
 const Store = require('./Store')
 const util = require('../../lib/util')
+const debug = require('debug')('adonis:session')
 
 /**
  * The session class attach to HTTP context with initialized
@@ -48,6 +49,7 @@ class Session {
   _getSessionId () {
     const existingSessionId = this._request.cookie(this._key)
     if (existingSessionId) {
+      debug('existing session found for user')
       this._isNewSessionId = false
       return existingSessionId
     }
@@ -69,6 +71,7 @@ class Session {
   _touchSessionId (sessionId) {
     this._sessionId = sessionId
     this._response.cookie(this._key, sessionId, this._options)
+    debug('touching session to remain active')
   }
 
   /**
@@ -85,6 +88,7 @@ class Session {
   async _getValues () {
     const sessionId = this._getSessionId()
     this._touchSessionId(sessionId)
+    debug('using session id as %s', sessionId)
 
     if (this._isNewSessionId) {
       return new Store()
@@ -115,8 +119,10 @@ class Session {
    */
   async commit () {
     if (this._store.isDirty) {
+      debug('saving updates to session driver')
       await this._driverInstance.write(this._sessionId, JSON.stringify(this._store.toJSON()))
     } else {
+      debug('touching session driver to keep values fresh')
       await this._driverInstance.touch(this._sessionId, JSON.stringify(this._store.toJSON()))
     }
   }
