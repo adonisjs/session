@@ -84,11 +84,12 @@ class Cookie {
    *
    * @method touch
    *
+   * @param  {String} sessionId
    * @param  {Object} values
    *
    * @return {void}
    */
-  touch (values) {
+  touch (sessionId, values) {
     /**
      * If cookie is supposed to be closed on browser close,
      * then there is no need to touch it.

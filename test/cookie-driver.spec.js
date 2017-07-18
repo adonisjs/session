@@ -76,7 +76,7 @@ test.group('Drivers - Cookie', () => {
     const server = http.createServer((req, res) => {
       const cookie = new Cookie(new Config())
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
-      cookie.touch('22')
+      cookie.touch(1, '22')
       res.end()
     })
 

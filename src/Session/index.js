@@ -114,7 +114,11 @@ class Session {
    * @return {void}
    */
   async commit () {
-    await this._driverInstance.write(this._sessionId, JSON.stringify(this._store.toJSON()))
+    if (this._store.isDirty) {
+      await this._driverInstance.touch(this._sessionId, JSON.stringify(this._store.toJSON()))
+    } else {
+      await this._driverInstance.write(this._sessionId, JSON.stringify(this._store.toJSON()))
+    }
   }
 
   /* istanbul ignore next */
