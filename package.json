@@ -45,9 +45,6 @@
     "type-of-is": "^3.5.1",
     "uuid": "^3.1.0"
   },
-  "bin": {
-    "session": "index.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adonisjs/adonis-session.git"
