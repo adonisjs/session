@@ -67,6 +67,7 @@ class Store {
     this._initiate()
     this._values = {}
     this._initiate(values)
+    this.isDirty = false
   }
 
   /**
@@ -141,6 +142,7 @@ class Store {
    * @return {void}
    */
   put (key, value) {
+    this.isDirty = true
     return _.set(this._values, key, value)
   }
 
@@ -204,6 +206,7 @@ class Store {
    * @return {void}
    */
   forget (key) {
+    this.isDirty = true
     _.unset(this._values, key)
   }
 
@@ -244,6 +247,7 @@ class Store {
    * @return {void}
    */
   clear () {
+    this.isDirty = true
     this._values = {}
   }
 

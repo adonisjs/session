@@ -279,4 +279,41 @@ test.group('Session Store', () => {
     store.clear()
     assert.deepEqual(store._values, {})
   })
+
+  test('set store as dirty when added new value', (assert) => {
+    const store = new Store()
+    assert.isFalse(store.isDirty)
+    store.put('username', 'virk')
+    assert.isTrue(store.isDirty)
+  })
+
+  test('do not set as dirty when getting value', (assert) => {
+    const store = new Store()
+    assert.isFalse(store.isDirty)
+    store.get('username')
+    assert.isFalse(store.isDirty)
+  })
+
+  test('set dirty when pulled value', (assert) => {
+    const store = new Store(JSON.stringify({ username: { d: 'virk', t: 'String' } }))
+    assert.isFalse(store.isDirty)
+    assert.equal(store.pull('username'), 'virk')
+    assert.isTrue(store.isDirty)
+    assert.deepEqual(store._values, {})
+  })
+
+  test('initiate store with empty string', (assert) => {
+    const store = new Store('')
+    assert.deepEqual(store._values, {})
+  })
+
+  test('initiate store with null', (assert) => {
+    const store = new Store(null)
+    assert.deepEqual(store._values, {})
+  })
+
+  test('initiate store with undefined', (assert) => {
+    const store = new Store(undefined)
+    assert.deepEqual(store._values, {})
+  })
 })
