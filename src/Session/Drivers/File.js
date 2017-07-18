@@ -100,9 +100,9 @@ class File {
    *
    * @return {void}
    */
-  async touch (sessionId) {
-    const time = new Date()
-    await fs.utimes(this._getFilePath(sessionId), time, time)
+  touch (sessionId) {
+    const time = Math.floor(Date.now() / 1000)
+    return fs.utimes(this._getFilePath(sessionId), time, time)
   }
 }
 

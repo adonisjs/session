@@ -44,16 +44,16 @@ test.group('Driver - File', (group) => {
     const fileDriver = new FileDriver(new Config(), new Helpers(path.join(__dirname)))
     await fileDriver.write(1, JSON.stringify({ name: { d: 'virk', t: 'String' } }))
 
-    await helpers.sleep(2000)
-    const { atime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
     const time = new Date().getTime()
-    assert.isAbove((time), new Date(atime).getTime())
+    await helpers.sleep(2000)
+    const { mtime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
+    assert.isAbove((time), new Date(mtime).getTime())
 
     await fileDriver.touch(1)
 
     await helpers.sleep(2000)
-    const { atime: freshATime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
-    assert.isBelow(time, new Date(freshATime).getTime())
+    const { mtime: freshMTime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
+    assert.isBelow(time, new Date(freshMTime).getTime())
   }).timeout(0)
 
   test('use custom file location', async (assert) => {
