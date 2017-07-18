@@ -19,6 +19,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@adonisjs/fold": "^4.0.0",
     "@adonisjs/sink": "^1.0.9",
     "cz-conventional-changelog": "^2.0.0",
     "japa": "^1.0.3",
