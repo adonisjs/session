@@ -15,7 +15,7 @@ const http = require('http')
 const supertest = require('supertest')
 const helpers = require('./helpers')
 
-const { Cookie } = require('../src/Session/Drivers')
+const { cookie: Cookie } = require('../src/Session/Drivers')
 
 test.group('Drivers - Cookie', () => {
   test('set default options when config is missing', (assert) => {
@@ -49,7 +49,7 @@ test.group('Drivers - Cookie', () => {
     const server = http.createServer((req, res) => {
       const cookie = new Cookie(new Config())
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
-      cookie.write({ username: 'virk', age: 22 })
+      cookie.write(1, { username: 'virk', age: 22 })
       res.end()
     })
 

@@ -25,5 +25,11 @@ module.exports = {
   getValueObject (cookie) {
     const value = cookie.replace('adonis-session-values=', '').split(';')[0]
     return JSON.parse(querystring.unescape(value).replace('j:', ''))
+  },
+
+  sleep (time) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, time)
+    })
   }
 }

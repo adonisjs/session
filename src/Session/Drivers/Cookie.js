@@ -10,32 +10,31 @@
 */
 const util = require('../../../lib/util')
 
+/**
+ * Cookie driver to save session values to the
+ * cookie.
+ *
+ * @class Cookie
+ * @constructor
+ */
 class Cookie {
+  /**
+   * Namespaces to inject
+   *
+   * @attribute inject
+   *
+   * @return {Array}
+   */
+  static get inject () {
+    return ['Adonis/Src/Config']
+  }
+
   constructor (Config) {
     const { options, key } = util.getCookieOption(Config, 'values')
-
     this._request = null
     this._response = null
     this._options = options
     this._key = key
-  }
-
-  /**
-   * A driver indicates whether it has stale values or not. Stale
-   * values are created when values are not stored next to a
-   * given session id and upon changing the session id, old
-   * values must be treated stale.
-   *
-   * Ofcourse cookie driver can store session values next to a given
-   * unique id but that will increase the cookie size and it is not
-   * a right thing to do.
-   *
-   * @attribute hasStaleValues
-   *
-   * @return {Boolean}
-   */
-  get hasStaleValues () {
-    return true
   }
 
   /**

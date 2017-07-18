@@ -10,5 +10,6 @@
 */
 
 module.exports = {
-  Cookie: require('./Cookie')
+  cookie: require('./Cookie'),
+  redis: require('./Redis')
 }

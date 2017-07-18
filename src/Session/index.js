@@ -9,19 +9,28 @@
  * file that was distributed with this source code.
 */
 
-const util = require('../../lib/util')
-const Store = require('./Store')
 const uuid = require('uuid')
+const Store = require('./Store')
+const util = require('../../lib/util')
 
+/**
+ * The session class attach to HTTP context with initialized
+ * driver instance.
+ *
+ * @class Session
+ * @constructor
+ */
 class Session {
   constructor (request, response, driverInstance, Config) {
     const { options, key } = util.getCookieOption(Config)
     this._request = request
     this._response = response
     this._driverInstance = driverInstance
+
     this._isNewSessionId = true
     this._options = options
     this._key = key
+
     this._store = null
     this._sessionId = null
   }
@@ -59,7 +68,7 @@ class Session {
    */
   _touchSessionId (sessionId) {
     this._sessionId = sessionId
-    this._response.cookie(this._key, sessionId)
+    this._response.cookie(this._key, sessionId, this._options)
   }
 
   /**
@@ -105,9 +114,10 @@ class Session {
    * @return {void}
    */
   async commit () {
-    await this._driverInstance.write(this._sessionId, this._store.toJSON())
+    await this._driverInstance.write(this._sessionId, JSON.stringify(this._store.toJSON()))
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.put')
    */
@@ -115,6 +125,7 @@ class Session {
     return this._store.put(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.get')
    */
@@ -122,6 +133,7 @@ class Session {
     return this._store.get(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.all')
    */
@@ -129,6 +141,7 @@ class Session {
     return this._store.all(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.forget')
    */
@@ -136,6 +149,7 @@ class Session {
     return this._store.forget(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.pull')
    */
@@ -143,6 +157,7 @@ class Session {
     return this._store.pull(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.increment')
    */
@@ -150,6 +165,7 @@ class Session {
     return this._store.increment(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.decrement')
    */
@@ -157,6 +173,7 @@ class Session {
     return this._store.decrement(...args)
   }
 
+  /* istanbul ignore next */
   /**
    * @inheritDoc('Store.clear')
    */

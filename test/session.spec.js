@@ -17,7 +17,7 @@ const helpers = require('./helpers')
 
 const Session = require('../src/Session')
 const Store = require('../src/Session/Store')
-const { Cookie } = require('../src/Session/Drivers')
+const { cookie: Cookie } = require('../src/Session/Drivers')
 
 test.group('Session', () => {
   test('create session id', async (assert) => {
@@ -55,7 +55,29 @@ test.group('Session', () => {
 
     const { headers } = await supertest(server).get('/').set('Cookie', ['adonis-session=20']).expect(200)
     assert.property(headers, 'set-cookie')
-    assert.equal(headers['set-cookie'][0], 'adonis-session=20')
+    assert.equal(headers['set-cookie'][0].split(';')[0], 'adonis-session=20')
+  })
+
+  test('commit store changes with driver', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+      .instantiate()
+      .then(() => {
+        session.put('age', 20)
+        session.put('username', 'virk')
+        return session.commit()
+      })
+      .then(() => {
+        res.end()
+      })
+    })
+
+    const { headers } = await supertest(server).get('/').expect(200)
+    assert.deepEqual(helpers.getValueObject(headers['set-cookie'][1]), { username: { d: 'virk', t: 'String' } })
   })
 })
 
@@ -63,6 +85,11 @@ test.group('Session Store', () => {
   test('initiate empty store', (assert) => {
     const store = new Store()
     assert.deepEqual(store._values, {})
+  })
+
+  test('throw exception when wrong values are passed to store', (assert) => {
+    const store = () => new Store('hello')
+    assert.throw(store, 'Cannot initiate session store since unable to parse')
   })
 
   test('initiate store with values', (assert) => {
@@ -90,6 +117,42 @@ test.group('Session Store', () => {
     const store = new Store()
     const date = new Date()
     assert.deepEqual(store._guardValue(date), { d: date.toString(), t: 'Date' })
+  })
+
+  test('guard array', (assert) => {
+    const store = new Store()
+    assert.deepEqual(store._guardValue([1, 2]), { d: JSON.stringify([1, 2]), t: 'Array' })
+  })
+
+  test('unguard object', (assert) => {
+    const store = new Store()
+    const value = JSON.stringify({ username: 'virk' })
+    assert.deepEqual(store._unGuardValue({ d: value, t: 'Object' }), { username: 'virk' })
+  })
+
+  test('unguard array', (assert) => {
+    const store = new Store()
+    const value = JSON.stringify([1, 2])
+    assert.deepEqual(store._unGuardValue({ d: value, t: 'Array' }), [1, 2])
+  })
+
+  test('unguard boolean', (assert) => {
+    const store = new Store()
+    const value = String(true)
+    assert.deepEqual(store._unGuardValue({ d: value, t: 'Boolean' }), true)
+  })
+
+  test('unguard date', (assert) => {
+    const store = new Store()
+    const date = new Date()
+    const value = String(date)
+    assert.deepEqual(store._unGuardValue({ d: value, t: 'Date' }).toString(), date.toString())
+  })
+
+  test('throw exception when unguard wrong formatted value', (assert) => {
+    const store = new Store()
+    const fn = () => store._unGuardValue(2)
+    assert.throw(fn, 'Cannot unguard unrecognized pair type')
   })
 
   test('throw error when trying to guard function', (assert) => {
