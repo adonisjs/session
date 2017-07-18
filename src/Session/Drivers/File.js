@@ -101,7 +101,7 @@ class File {
    * @return {void}
    */
   async touch (sessionId) {
-    const time = Date.now() / 1000
+    const time = new Date()
     await fs.utimes(this._getFilePath(sessionId), time, time)
   }
 }
