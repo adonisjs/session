@@ -1,9 +1,10 @@
 {
   "name": "@adonisjs/session",
   "version": "1.0.0",
-  "description": "",
+  "description": "This repo is the official session provider for Adonisjs apps. It supports multiple drivers to store session data.",
   "main": "index.js",
   "directories": {
+    "lib": "lib",
     "test": "test"
   },
   "scripts": {
@@ -16,7 +17,7 @@
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "keywords": [],
-  "author": "",
+  "author": "virk",
   "license": "MIT",
   "devDependencies": {
     "@adonisjs/fold": "^4.0.0",
@@ -43,5 +44,16 @@
     "ms": "^2.0.0",
     "type-of-is": "^3.5.1",
     "uuid": "^3.1.0"
-  }
+  },
+  "bin": {
+    "session": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/adonis-session.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/adonis-session/issues"
+  },
+  "homepage": "https://github.com/adonisjs/adonis-session#readme"
 }
