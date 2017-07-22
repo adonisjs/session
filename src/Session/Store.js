@@ -265,7 +265,7 @@ class Store {
        * Do not store null, undefined, empty arrays or empty
        * objects to the store
        */
-      if (!_.size(value)) {
+      if (!value || (_.isObject(value) && !_.size(value))) {
         return result
       }
 

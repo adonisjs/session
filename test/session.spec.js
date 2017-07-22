@@ -67,7 +67,6 @@ test.group('Session', () => {
       session
       .instantiate()
       .then(() => {
-        session.put('age', 20)
         session.put('username', 'virk')
         return session.commit()
       })
