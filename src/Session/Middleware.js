@@ -46,7 +46,10 @@ class SessionMiddleware {
     debug('using %s session driver', driver)
 
     const driverInstance = this.SessionManager.makeDriverInstance(driver)
-    driverInstance.setRequest(ctx.request, ctx.response)
+
+    if (typeof (driverInstance.setRequest) === 'function') {
+      driverInstance.setRequest(ctx.request, ctx.response)
+    }
 
     ctx.session = new Session(ctx.request, ctx.response, driverInstance, this.Config)
 

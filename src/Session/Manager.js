@@ -9,8 +9,9 @@
  * file that was distributed with this source code.
 */
 
-const drivers = require('./Drivers')
 const { ioc } = require('@adonisjs/fold')
+const drivers = require('./Drivers')
+const CE = require('../Exceptions')
 
 /**
  * Session manager class is used by ioc container
@@ -54,7 +55,7 @@ class SessionManager {
   makeDriverInstance (name) {
     const driver = drivers[name] || this._drivers[name]
     if (!driver) {
-      throw new Error(`${name} is not valid session driver`)
+      throw CE.InvalidArgumentException.invalidSessionDriver(name)
     }
     return ioc.make(driver)
   }
