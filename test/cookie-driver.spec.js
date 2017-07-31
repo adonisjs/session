@@ -85,18 +85,4 @@ test.group('Drivers - Cookie', () => {
     const sessionValue = helpers.getValueObject(headers['set-cookie'][0])
     assert.equal(sessionValue, '22')
   })
-
-  test('do not touch when expires is not set', async (assert) => {
-    const server = http.createServer((req, res) => {
-      const config = new Config()
-      config.set('session.clearWithBrowser', true)
-      const cookie = new Cookie(config)
-      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
-      cookie.touch('22')
-      res.end()
-    })
-
-    const { headers } = await supertest(server).get('/').expect(200)
-    assert.notProperty(headers, 'set-cookie')
-  })
 })

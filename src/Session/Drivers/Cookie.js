@@ -91,13 +91,7 @@ class Cookie {
    * @return {void}
    */
   touch (sessionId, values) {
-    /**
-     * If cookie is supposed to be closed on browser close,
-     * then there is no need to touch it.
-     */
-    if (this._options.expires || this._options.maxAge) {
-      this._response.cookie(this._key, values, this._options)
-    }
+    this.write(sessionId, values)
   }
 }
 
