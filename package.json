@@ -20,6 +20,7 @@
   "author": "virk",
   "license": "MIT",
   "devDependencies": {
+    "@adonisjs/ace": "^4.0.3",
     "@adonisjs/fold": "^4.0.0",
     "@adonisjs/sink": "^1.0.9",
     "coveralls": "^2.13.1",
@@ -36,6 +37,9 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "nyc": {
+    "exclude": ["bin"]
   },
   "dependencies": {
     "debug": "^2.6.8",
