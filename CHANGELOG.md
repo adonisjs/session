@@ -1,3 +1,18 @@
+<a name="1.0.6"></a>
+## [1.0.6](https://github.com/adonisjs/adonis-session/compare/v1.0.5...v1.0.6) (2017-08-01)
+
+
+### Features
+
+* **instructions:** add instructions file for ace ([959d3ce](https://github.com/adonisjs/adonis-session/commit/959d3ce))
+
+
+### Reverts
+
+* **command:** remove config:session command ([3387118](https://github.com/adonisjs/adonis-session/commit/3387118))
+
+
+
 <a name="1.0.5"></a>
 ## [1.0.5](https://github.com/adonisjs/adonis-session/compare/v1.0.4...v1.0.5) (2017-07-31)
 
