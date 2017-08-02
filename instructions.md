@@ -32,3 +32,14 @@ Route.get('/', async ({ session }) => {
 ## Config
 
 You can find the configuration inside `config/session.js` file. Feel free to tweak it as per your needs.
+
+## Environment Variables
+
+The config file `config/session.js` reference an environment variable called `SESSION_DRIVER` defined in `.env` file. 
+
+Make sure to set the value for production and development both.
+
+```
+SESSION_DRIVER=cookie
+```
+

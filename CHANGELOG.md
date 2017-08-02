@@ -1,3 +1,13 @@
+<a name="1.0.7"></a>
+## [1.0.7](https://github.com/adonisjs/adonis-session/compare/v1.0.6...v1.0.7) (2017-08-02)
+
+
+### Features
+
+* **exceptions:** use generic-exceptions package ([6504434](https://github.com/adonisjs/adonis-session/commit/6504434))
+
+
+
 <a name="1.0.6"></a>
 ## [1.0.6](https://github.com/adonisjs/adonis-session/compare/v1.0.5...v1.0.6) (2017-08-01)
 

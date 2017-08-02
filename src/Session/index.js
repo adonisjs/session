@@ -10,16 +10,18 @@
 */
 
 const uuid = require('uuid')
+const debug = require('debug')('adonis:session')
 const Store = require('./Store')
 const util = require('../../lib/util')
-const debug = require('debug')('adonis:session')
 
 /**
- * The session class attach to HTTP context with initialized
- * driver instance.
+ * An instance of this class is generated automatically for
+ * each request for the active driver and attached to
+ * @ref('HttpContext')
  *
  * @class Session
  * @constructor
+ * @group Http
  */
 class Session {
   constructor (request, response, driverInstance, Config) {
@@ -95,6 +97,7 @@ class Session {
     }
 
     const sessionValue = await this._driverInstance.read(sessionId)
+    debug('fetch driver session value as %j', sessionValue)
     return new Store(sessionValue)
   }
 

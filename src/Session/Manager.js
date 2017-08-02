@@ -10,18 +10,20 @@
 */
 
 const { ioc } = require('@adonisjs/fold')
+const GE = require('@adonisjs/generic-exceptions')
 const drivers = require('./Drivers')
-const CE = require('../Exceptions')
 
 /**
- * Session manager class is used by ioc container
- * to allow adding new drivers.
- *
- * @class SessionManager
- * @constructor
+ * The session manager class is exposed as IoC container
+ * binding, which can be used to add new driver and
+ * get an instance of a given driver.
  *
  * @namespace Adonis/Src/Session
+ * @manager Adonis/Src/Session
  * @singleton
+ * @group Http
+ *
+ * @class SessionManager
  */
 class SessionManager {
   constructor () {
@@ -55,7 +57,9 @@ class SessionManager {
   makeDriverInstance (name) {
     const driver = drivers[name] || this._drivers[name]
     if (!driver) {
-      throw CE.InvalidArgumentException.invalidSessionDriver(name)
+      throw GE
+        .InvalidArgumentException
+        .invoke(`${name} is not a valid session provider`, 500, 'E_INVALID_SESSION_DRIVER')
     }
     return ioc.make(driver)
   }
