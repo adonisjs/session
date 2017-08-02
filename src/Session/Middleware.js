@@ -13,14 +13,14 @@ const Session = require('./index')
 const debug = require('debug')('adonis:session')
 
 /**
- * Session middleware to be used on each request
- * to enable sessions.
- *
- * This class will instance will be accessed via
+ * Session middleware is used to attach session to the
  * HTTP context.
  *
+ * Also this class auto commits the session changes
+ * when response is made
+ *
  * @namespace Adonis/Middleware/Session
- * @uses (['Adonis/Src/Config'])
+ * @group Http
  *
  * @class SessionMiddleware
  * @constructor

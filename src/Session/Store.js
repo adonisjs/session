@@ -62,6 +62,15 @@ const toOriginalType = {
   }
 }
 
+/**
+ * The session store class is used to create a
+ * temporary in-memory store of session values.
+ * The final set of values are stored with the
+ * session driver.
+ *
+ * @class Store
+ * @group Http
+ */
 class Store {
   constructor (values = null) {
     this._initiate()
@@ -78,6 +87,8 @@ class Store {
    * @param  {String}  values
    *
    * @return {void}
+   *
+   * @private
    */
   _initiate (values) {
     if (values) {
@@ -140,6 +151,14 @@ class Store {
    * @param  {Mixed} value
    *
    * @return {void}
+   *
+   * @example
+   * ```js
+   * Store.put('name', 'virk')
+   *
+   * // saving object
+   * Store.put('user', { username: 'virk', age: 27 })
+   * ```
    */
   put (key, value) {
     this.isDirty = true
@@ -155,6 +174,14 @@ class Store {
    * @param  {Mixed} [defaultValue]
    *
    * @return {Mixed}
+   *
+   * @example
+   * ```js
+   * Store.get('username')
+   *
+   * // with default value
+   * Store.get('username', 'virk')
+   * ```
    */
   get (key, defaultValue = null) {
     return _.get(this._values, key, defaultValue)
@@ -169,6 +196,13 @@ class Store {
    * @param  {Number}  [steps = 1]
    *
    * @return {void}
+   *
+   * @throws {Error} If the value are you incrementing is not a number
+   *
+   * @example
+   * ```js
+   * Store.increment('age')
+   * ```
    */
   increment (key, steps = 1) {
     const value = this.get(key)
@@ -187,6 +221,13 @@ class Store {
    * @param  {Number}  [steps = 1]
    *
    * @return {void}
+   *
+   * @throws {Error} If the value are you decrementing is not a number
+   *
+   * @example
+   * ```js
+   * Store.decrement('age')
+   * ```
    */
   decrement (key, steps = 1) {
     const value = this.get(key)
@@ -204,6 +245,12 @@ class Store {
    * @param  {String} key
    *
    * @return {void}
+   *
+   * @example
+   * ```js
+   * Store.forget('username')
+   * Store.get('username') // null
+   * ```
    */
   forget (key) {
     this.isDirty = true
@@ -231,6 +278,12 @@ class Store {
    * @param  {Mixed} [defaultValue]
    *
    * @return {Mixed}
+   *
+   * @example
+   * ```js
+   * const username = Store.pull('username')
+   * Store.get('username') // null
+   * ```
    */
   pull (key, defaultValue) {
     return ((value) => {

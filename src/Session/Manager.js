@@ -14,14 +14,16 @@ const GE = require('@adonisjs/generic-exceptions')
 const drivers = require('./Drivers')
 
 /**
- * Session manager class is used by ioc container
- * to allow adding new drivers.
- *
- * @class SessionManager
- * @constructor
+ * The session manager class is exposed as IoC container
+ * binding, which can be used to add new driver and
+ * get an instance of a given driver.
  *
  * @namespace Adonis/Src/Session
+ * @manager Adonis/Src/Session
  * @singleton
+ * @group Http
+ *
+ * @class SessionManager
  */
 class SessionManager {
   constructor () {
