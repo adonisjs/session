@@ -60,6 +60,16 @@ class SessionMiddleware {
     await ctx.session.instantiate()
 
     /**
+     * Sharing flash messages with the view when view
+     * exists in the session and there is share
+     * method on it too.
+     */
+    const flashMessages = ctx.session.pull('__flash__', {})
+    if (ctx.view && typeof (ctx.view.share) === 'function') {
+      ctx.view.share({ flashMessages })
+    }
+
+    /**
      * Move the chain
      */
     await next()

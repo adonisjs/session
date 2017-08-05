@@ -1,3 +1,15 @@
+<a name="1.0.8"></a>
+## [1.0.8](https://github.com/adonisjs/adonis-session/compare/v1.0.7...v1.0.8) (2017-08-05)
+
+
+### Features
+
+* **session:** add flash messages related view globals ([4347a1f](https://github.com/adonisjs/adonis-session/commit/4347a1f))
+* **session:** add memory driver ([e90b1a7](https://github.com/adonisjs/adonis-session/commit/e90b1a7))
+* **session:** add support for flash messages ([f0a536e](https://github.com/adonisjs/adonis-session/commit/f0a536e))
+
+
+
 <a name="1.0.7"></a>
 ## [1.0.7](https://github.com/adonisjs/adonis-session/compare/v1.0.6...v1.0.7) (2017-08-02)
 
