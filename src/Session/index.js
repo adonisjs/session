@@ -9,8 +9,10 @@
  * file that was distributed with this source code.
 */
 
+const _ = require('lodash')
 const uuid = require('uuid')
 const debug = require('debug')('adonis:session')
+const GE = require('@adonisjs/generic-exceptions')
 const Store = require('./Store')
 const util = require('../../lib/util')
 
@@ -192,6 +194,83 @@ class Session {
    */
   clear () {
     this._store.clear()
+  }
+
+  /* istanbul ignore next */
+  /**
+   * Flash entire request object to the session
+   *
+   * @method flashAll
+   *
+   * @chainable
+   */
+  flashAll () {
+    return this.flash(this._request.all())
+  }
+
+  /* istanbul ignore next */
+  /**
+   * Flash only selected fields from request data to
+   * the session
+   *
+   * @method flashOnly
+   *
+   * @param  {...Spread} fields
+   *
+   * @chainable
+   */
+  flashOnly (...fields) {
+    return this.flash(this._request.only(...fields))
+  }
+
+  /* istanbul ignore next */
+  /**
+   * Flash request data to the session except
+   * certain fields
+   *
+   * @method flashExcept
+   *
+   * @param  {...Spread} fields
+   *
+   * @chainable
+   */
+  flashExcept (...fields) {
+    return this.flash(this._request.except(...fields))
+  }
+
+  /**
+   * Flash errors to the session
+   *
+   * @method withErrors
+   *
+   * @param  {Object}   errors
+   *
+   * @chainable
+   */
+  withErrors (errors) {
+    return this.flash({ errors })
+  }
+
+  /**
+   * Flash data to the session
+   *
+   * @method flash
+   *
+   * @param  {Object} data
+   *
+   * @chainable
+   */
+  flash (data) {
+    if (!_.isPlainObject(data)) {
+      throw GE.InvalidArgumentException.invalidParameter('Flash data should be an object', data)
+    }
+    const flashMessage = this.get('__flash__', null)
+    if (!flashMessage) {
+      this.put('__flash__', data)
+    } else {
+      _.merge(flashMessage, data)
+    }
+    return this
   }
 }
 
