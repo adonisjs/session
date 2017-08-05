@@ -66,7 +66,7 @@ class SessionMiddleware {
      */
     const flashMessages = ctx.session.pull('__flash__', {})
     if (ctx.view && typeof (ctx.view.share) === 'function') {
-      ctx.view.share({ flash: flashMessages })
+      ctx.view.share({ flashMessages })
     }
 
     /**

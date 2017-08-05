@@ -212,7 +212,7 @@ test.group('Middleware', (group) => {
     const { body } = await supertest(server).get('/').set('set-cookie', '[adonis-session=20]').redirects(1).expect(200)
     assert.deepEqual(body, {})
     assert.deepEqual(view.locals, {
-      flash: { username: 'virk' }
+      flashMessages: { username: 'virk' }
     })
   })
 })

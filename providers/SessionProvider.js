@@ -71,6 +71,12 @@ class SessionProvider extends ServiceProvider {
     this._registerProvider()
     this._registerMiddleware()
   }
+
+  boot () {
+    try {
+      require('../src/Session/FlashGlobals')(this.app.use('Adonis/Src/View'))
+    } catch (error) {}
+  }
 }
 
 module.exports = SessionProvider

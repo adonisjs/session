@@ -16,6 +16,7 @@ const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 
 const Session = require('../src/Session')
+const FlashGlobals = require('../src/Session/FlashGlobals')
 const { cookie: Cookie } = require('../src/Session/Drivers')
 
 test.group('Flash Messages', () => {
@@ -128,5 +129,98 @@ test.group('Flash Messages', () => {
 
     const { text } = await supertest(server).get('/').expect(500)
     assert.equal(text, 'E_INVALID_PARAMETER: Flash data should be an object instead received string')
+  })
+})
+
+test.group('Flash View Globals', () => {
+  test('return flash message from view globals', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk' },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.equal(View.$globals.old('username'), 'virk')
+  })
+
+  test('return error messages from flash messages', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk', errors: [{ message: 'Some error message' }] },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.deepEqual(View.$globals.errors(), [{ message: 'Some error message' }])
+  })
+
+  test('return error message for a specific field', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk', errors: [{ message: 'Some error message', field: 'username' }] },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.equal(View.$globals.getErrorFor('username'), 'Some error message')
+  })
+
+  test('return true when has errors', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk', errors: [{ message: 'Some error message', field: 'username' }] },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.isTrue(View.$globals.hasErrors())
+  })
+
+  test('return false when no errors', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk', errors: [] },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.isFalse(View.$globals.hasErrors())
+  })
+
+  test('return error from a plain object', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk', errors: { username: 'username is required' } },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.equal(View.$globals.getErrorFor('username'), 'username is required')
+  })
+
+  test('return error from a plain object', (assert) => {
+    const View = {
+      flashMessages: { username: 'virk', errors: { username: 'username is required' } },
+      $globals: {},
+      global: function (name, callback) {
+        this.$globals[name] = callback.bind(this)
+      }
+    }
+
+    FlashGlobals(View)
+    assert.equal(View.$globals.getErrorFor('username'), 'username is required')
   })
 })
