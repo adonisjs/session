@@ -12,5 +12,6 @@
 module.exports = {
   cookie: require('./Cookie'),
   redis: require('./Redis'),
-  file: require('./File')
+  file: require('./File'),
+  memory: require('./Memory')
 }
