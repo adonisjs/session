@@ -13,19 +13,19 @@ const _ = require('lodash')
 
 module.exports = function (View) {
   View.global('old', function (key, defaultValue) {
-    return _.get(this.flashMessages, key, defaultValue)
+    return _.get(this.resolve('flashMessages'), key, defaultValue)
   })
 
   View.global('errors', function () {
-    return this.$globals.old('errors')
+    return this.resolve('old')('errors')
   })
 
   View.global('hasErrors', function (key) {
-    return !!_.size(this.$globals.errors())
+    return !!_.size(this.resolve('errors')())
   })
 
   View.global('getErrorFor', function (key) {
-    const errors = this.$globals.errors()
+    const errors = this.resolve('errors')()
 
     /**
      * If errors is an object and not an array
@@ -44,6 +44,6 @@ module.exports = function (View) {
   })
 
   View.global('hasErrorFor', function (key) {
-    return !!this.$globals.error(key)
+    return !!this.resolve('getErrorFor')(key)
   })
 }
