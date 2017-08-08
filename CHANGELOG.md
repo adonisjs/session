@@ -1,3 +1,13 @@
+<a name="1.0.9"></a>
+## [1.0.9](https://github.com/adonisjs/adonis-session/compare/v1.0.8...v1.0.9) (2017-08-08)
+
+
+### Bug Fixes
+
+* **globals:** flash view globals use resolve method ([abc0fdf](https://github.com/adonisjs/adonis-session/commit/abc0fdf))
+
+
+
 <a name="1.0.8"></a>
 ## [1.0.8](https://github.com/adonisjs/adonis-session/compare/v1.0.7...v1.0.8) (2017-08-05)
 

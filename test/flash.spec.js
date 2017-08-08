@@ -19,6 +19,25 @@ const Session = require('../src/Session')
 const FlashGlobals = require('../src/Session/FlashGlobals')
 const { cookie: Cookie } = require('../src/Session/Drivers')
 
+const View = {
+  resolve: function (key) {
+    let value = this.$data[key]
+    if (!value) {
+      value = this.$globals[key]
+      value = typeof (value) === 'function' ? value.bind(this) : value
+    }
+    return value
+  },
+  $globals: {},
+  global: function (name, callback) {
+    this.$globals[name] = callback
+  },
+  setData: function (key, values) {
+    this.$data = {}
+    this.$data[key] = values
+  }
+}
+
 test.group('Flash Messages', () => {
   test('store flash messages to the session', async (assert) => {
     const server = http.createServer((req, res) => {
@@ -132,95 +151,55 @@ test.group('Flash Messages', () => {
   })
 })
 
-test.group('Flash View Globals', () => {
-  test('return flash message from view globals', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk' },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
-
+test.group('Flash View Globals', (group) => {
+  group.before(() => {
     FlashGlobals(View)
-    assert.equal(View.$globals.old('username'), 'virk')
+  })
+
+  test('return flash message from view globals', (assert) => {
+    View.setData('flashMessages', { username: 'virk' })
+    assert.equal(View.resolve('old')('username'), 'virk')
   })
 
   test('return error messages from flash messages', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk', errors: [{ message: 'Some error message' }] },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
+    View
+      .setData('flashMessages', { username: 'virk', errors: [{ message: 'Some error message' }] })
 
-    FlashGlobals(View)
-    assert.deepEqual(View.$globals.errors(), [{ message: 'Some error message' }])
+    assert.deepEqual(View.resolve('errors')(), [{ message: 'Some error message' }])
   })
 
   test('return error message for a specific field', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk', errors: [{ message: 'Some error message', field: 'username' }] },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
+    View
+      .setData('flashMessages', { username: 'virk', errors: [{ message: 'Some error message', field: 'username' }] })
 
-    FlashGlobals(View)
-    assert.equal(View.$globals.getErrorFor('username'), 'Some error message')
+    assert.equal(View.resolve('getErrorFor')('username'), 'Some error message')
   })
 
   test('return true when has errors', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk', errors: [{ message: 'Some error message', field: 'username' }] },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
+    View
+      .setData('flashMessages', { username: 'virk', errors: [{ message: 'Some error message', field: 'username' }] })
 
-    FlashGlobals(View)
-    assert.isTrue(View.$globals.hasErrors())
+    assert.isTrue(View.resolve('hasErrors')())
   })
 
   test('return false when no errors', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk', errors: [] },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
+    View
+      .setData('flashMessages', { username: 'virk', errors: [] })
 
-    FlashGlobals(View)
-    assert.isFalse(View.$globals.hasErrors())
+    assert.isFalse(View.resolve('hasErrors')())
   })
 
   test('return error from a plain object', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk', errors: { username: 'username is required' } },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
+    View
+      .setData('flashMessages', { username: 'virk', errors: { username: 'username is required' } })
 
-    FlashGlobals(View)
-    assert.equal(View.$globals.getErrorFor('username'), 'username is required')
+    assert.equal(View.resolve('getErrorFor')('username'), 'username is required')
   })
 
   test('return error from a plain object', (assert) => {
-    const View = {
-      flashMessages: { username: 'virk', errors: { username: 'username is required' } },
-      $globals: {},
-      global: function (name, callback) {
-        this.$globals[name] = callback.bind(this)
-      }
-    }
+    View
+      .setData('flashMessages', { username: 'virk', errors: { username: 'username is required' } })
 
-    FlashGlobals(View)
-    assert.equal(View.$globals.getErrorFor('username'), 'username is required')
+    assert.equal(View.resolve('getErrorFor')('username'), 'username is required')
   })
 })
