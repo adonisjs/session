@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-const memoryStore = {}
+const memoryStore = new Map()
 
 /**
  * Memory driver to save session values inside
@@ -32,7 +32,11 @@ class Memory {
    * @return {void}
    */
   write (sessionId, values) {
-    memoryStore[sessionId] = values
+    if (!values) {
+      memoryStore.clear(sessionId)
+      return
+    }
+    memoryStore.set(sessionId, values)
   }
 
   /**
@@ -45,7 +49,7 @@ class Memory {
    * @return {String}
    */
   read (sessionId) {
-    return memoryStore[sessionId]
+    return memoryStore.get(sessionId)
   }
 
   touch () {}
