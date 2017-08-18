@@ -40,21 +40,23 @@ test.group('Driver - File', (group) => {
     assert.equal(sessValues, JSON.stringify({ name: { d: 'virk', t: 'String' } }))
   })
 
-  test('update file ttl', async (assert) => {
-    const fileDriver = new FileDriver(new Config(), new Helpers(path.join(__dirname)))
-    await fileDriver.write(1, JSON.stringify({ name: { d: 'virk', t: 'String' } }))
+  if (process.platform !== 'win32') {
+    test('update file ttl', async (assert) => {
+      const fileDriver = new FileDriver(new Config(), new Helpers(path.join(__dirname)))
+      await fileDriver.write(1, JSON.stringify({ name: { d: 'virk', t: 'String' } }))
 
-    const time = new Date().getTime()
-    await helpers.sleep(2000)
-    const { mtime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
-    assert.isAbove((time), new Date(mtime).getTime())
+      const time = new Date().getTime()
+      await helpers.sleep(2000)
+      const { mtime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
+      assert.isAbove((time), new Date(mtime).getTime())
 
-    await fileDriver.touch(1)
+      await fileDriver.touch(1)
 
-    await helpers.sleep(2000)
-    const { mtime: freshMTime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
-    assert.isBelow(time, new Date(freshMTime).getTime())
-  }).timeout(0)
+      await helpers.sleep(2000)
+      const { mtime: freshMTime } = await fs.stat(path.join(__dirname, 'tmp/sessions/1.sess'))
+      assert.isBelow(time, new Date(freshMTime).getTime())
+    }).timeout(0)
+  }
 
   test('use custom file location', async (assert) => {
     const config = new Config()
