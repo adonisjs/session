@@ -37,8 +37,22 @@ class SessionProvider extends ServiceProvider {
    * @private
    */
   _registerProvider () {
-    this.app.bind('Adonis/Src/Session', (app) => {
+    this.app.bind('Adonis/Src/Session', () => {
       return require('../src/Session/Manager')
+    })
+  }
+
+  /**
+   * Registers the session client under `Adonis/Clients/Session`
+   * namespace
+   *
+   * @method _registerClient
+   *
+   * @return {void}
+   */
+  _registerClient () {
+    this.app.bind('Adonis/Clients/Session', () => {
+      return require('../src/Session/Client')
     })
   }
 
@@ -69,6 +83,7 @@ class SessionProvider extends ServiceProvider {
   register () {
     this._registerManager()
     this._registerProvider()
+    this._registerClient()
     this._registerMiddleware()
   }
 
