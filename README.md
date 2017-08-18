@@ -16,6 +16,16 @@ This repo contains following providers.
 1. Multiple Drivers ( redis, cookie, file )
 2. Smartly detects when to write values vs when to touch values.
 
+## Setup
+
+Install the provider from npm
+
+```bash
+adonis install @adonisjs/session
+```
+
+Next, make sure to read [instructions.md](instructions.md) file.
+
 ## Node/OS Target
 
 This repo/branch is supposed to run fine on all major OS platforms and targets `Node.js >=7.0`
