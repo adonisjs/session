@@ -74,6 +74,22 @@ class SessionProvider extends ServiceProvider {
   }
 
   /**
+   * Register the vow trait to bind session client
+   * under `Adonis/Traits/Session` namespace.
+   *
+   * @method _registerVowTrait
+   *
+   * @return {void}
+   */
+  _registerVowTrait () {
+    this.app.bind('Adonis/Traits/Session', (app) => {
+      const Config = app.use('Adonis/Src/Config')
+      return ({ Request }) => require('../src/VowBindings/Request')(Request, Config)
+    })
+    this.app.alias('Adonis/Traits/Session', 'Session/Client')
+  }
+
+  /**
    * Register method called by ioc container
    *
    * @method register
@@ -85,6 +101,7 @@ class SessionProvider extends ServiceProvider {
     this._registerProvider()
     this._registerClient()
     this._registerMiddleware()
+    this._registerVowTrait()
   }
 
   boot () {

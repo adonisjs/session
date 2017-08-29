@@ -32,20 +32,9 @@ const util = require('../../lib/util')
 class SessionClient {
   constructor (Config) {
     const { key } = util.getCookieOption(Config)
-    this._sessionId = null
+    this._sessionId = uuid.v4()
     this._key = key
     this._store = new Store()
-  }
-
-  /**
-   * Instantiate the session client
-   *
-   * @method instantiate
-   *
-   * @return {void}
-   */
-  instantiate () {
-    this._sessionId = uuid.v4()
   }
 
   /* istanbul ignore next */

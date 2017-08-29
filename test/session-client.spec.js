@@ -18,18 +18,12 @@ test.group('Session client', (group) => {
   test('initiate the session client', (assert) => {
     const client = new SessionClient(new Config())
     assert.instanceOf(client, SessionClient)
-  })
-
-  test('initiate session store and session id', (assert) => {
-    const client = new SessionClient(new Config())
-    client.instantiate()
     assert.instanceOf(client._store, SessionStore)
     assert.isDefined(client._sessionId)
   })
 
   test('get array of cookie key/value pairs', (assert) => {
     const client = new SessionClient(new Config())
-    client.instantiate()
     client.put('name', 'virk')
     client.put('age', 22)
 
