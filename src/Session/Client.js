@@ -19,44 +19,33 @@
  */
 
 const uuid = require('uuid')
-const { memory: Driver } = require('./Drivers')
-const { memoryStore } = Driver
-const util = require('../../lib/util')
 const Store = require('./Store')
+const util = require('../../lib/util')
 
+/**
+ * Session client to set sessions as
+ * cookies.
+ *
+ * @constructor
+ * @class SessionClient
+ */
 class SessionClient {
-  constructor (testRequest, Config) {
-    const { options, key } = util.getCookieOption(Config)
-    this._options = options
+  constructor (Config) {
+    const { key } = util.getCookieOption(Config)
+    this._sessionId = null
     this._key = key
-    this._driverInstance = new Driver()
-    this._testRequest = testRequest
-    this._sessionId = uuid.v4()
-    this._store = null
+    this._store = new Store()
   }
 
   /**
-   * Loads the data from the memory driver
+   * Instantiate the session client
    *
    * @method instantiate
    *
    * @return {void}
    */
   instantiate () {
-    this._store = new Store(this._driverInstance.read(this._sessionId))
-  }
-
-  /**
-   * Writes the session id as the request cookie and
-   * values to the store
-   *
-   * @method commit
-   *
-   * @return {void}
-   */
-  commit () {
-    this._testRequest.setCookie(this._key, this._sessionId)
-    this._driverInstance.write(this._sessionId, JSON.stringify(this._store.toJSON()))
+    this._sessionId = uuid.v4()
   }
 
   /* istanbul ignore next */
@@ -121,7 +110,27 @@ class SessionClient {
    */
   clear () {
     this._store.clear()
-    memoryStore.clear()
+  }
+
+  /**
+   * Returns an object with keys and values
+   * to be set as cookies
+   *
+   * @method toJSON
+   *
+   * @return {Array}
+   */
+  toJSON () {
+    return [
+      {
+        key: this._key,
+        value: this._sessionId
+      },
+      {
+        key: `${this._key}-values`,
+        value: JSON.stringify(this._store.toJSON())
+      }
+    ]
   }
 }
 
