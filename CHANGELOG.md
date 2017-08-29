@@ -1,3 +1,14 @@
+<a name="1.0.11"></a>
+## [1.0.11](https://github.com/adonisjs/adonis-session/compare/v1.0.10...v1.0.11) (2017-08-29)
+
+
+### Features
+
+* **client:** add session client ([85378d2](https://github.com/adonisjs/adonis-session/commit/85378d2))
+* **trait:** add session client trait for vow ([54b6516](https://github.com/adonisjs/adonis-session/commit/54b6516))
+
+
+
 <a name="1.0.10"></a>
 ## [1.0.10](https://github.com/adonisjs/adonis-session/compare/v1.0.9...v1.0.10) (2017-08-18)
 

@@ -34,7 +34,7 @@ module.exports = function (Request, Config) {
    * is executed
    */
   Request.before((requestInstance) => {
-    this._session.toJSON().forEach((item) => {
+    requestInstance._session.toJSON().forEach((item) => {
       requestInstance.cookie(item.key, item.value)
     })
   })
