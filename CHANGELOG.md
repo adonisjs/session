@@ -1,3 +1,14 @@
+<a name="1.0.12"></a>
+## [1.0.12](https://github.com/adonisjs/adonis-session/compare/v1.0.11...v1.0.12) (2017-08-30)
+
+
+### Features
+
+* **vow:** add response bindings for session ([e447408](https://github.com/adonisjs/adonis-session/commit/e447408))
+* **vow-bindings:** hook session response in vow suite ([d2a4374](https://github.com/adonisjs/adonis-session/commit/d2a4374))
+
+
+
 <a name="1.0.11"></a>
 ## [1.0.11](https://github.com/adonisjs/adonis-session/compare/v1.0.10...v1.0.11) (2017-08-29)
 
