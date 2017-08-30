@@ -28,6 +28,7 @@
     "ioredis": "^3.1.2",
     "japa": "^1.0.3",
     "japa-cli": "^1.0.1",
+    "macroable": "^1.0.0",
     "node-cookie": "^2.0.1",
     "nyc": "^11.1.0",
     "standard": "^10.0.2",

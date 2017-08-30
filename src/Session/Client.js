@@ -30,11 +30,14 @@ const util = require('../../lib/util')
  * @class SessionClient
  */
 class SessionClient {
-  constructor (Config) {
+  constructor (Config, cookies) {
+    cookies = cookies || {}
     const { key } = util.getCookieOption(Config)
+    const sessionValues = cookies[`${key}-values`] || null
+
     this._sessionId = uuid.v4()
     this._key = key
-    this._store = new Store()
+    this._store = sessionValues ? new Store(sessionValues) : new Store()
   }
 
   /* istanbul ignore next */

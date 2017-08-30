@@ -65,6 +65,15 @@ class SessionMiddleware {
      * method on it too.
      */
     const flashMessages = ctx.session.pull('__flash__', {})
+
+    /**
+     * Add flash message to a key inside session when in
+     * testing mode. This makes assertions easy.
+     */
+    if (process.env.NODE_ENV === 'testing') {
+      ctx.session.put('__flash__old', flashMessages)
+    }
+
     if (ctx.view && typeof (ctx.view.share) === 'function') {
       ctx.view.share({ flashMessages })
     }
