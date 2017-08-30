@@ -29,6 +29,7 @@ module.exports = function (Request, Config) {
     return this
   })
 
+  /* istanbul ignore next */
   /**
    * Adding session as cookie before request
    * is executed

@@ -25,47 +25,41 @@ function getResponse () {
   return Response
 }
 
-class Request {
-  constructor () {
-    this._getters = []
-    this._macros = []
-    this._hooks = []
+function getRequest () {
+  class Request extends Macroable {
+    static before (fn) {
+      this._hooks.push({ fn })
+    }
   }
 
-  getter (key, value, singleton) {
-    this._getters.push({ key, value, singleton })
-  }
+  Request._macros = {}
+  Request._getters = {}
+  Request._hooks = []
 
-  macro (key, value) {
-    this._macros.push({ key, value })
-  }
-
-  before (fn) {
-    this._hooks.push({ fn })
-  }
+  return Request
 }
 
 test.group('Vow request', () => {
   test('add session getter to the request', (assert) => {
+    const Request = getRequest()
+    VowRequest(Request, new Config())
     const req = new Request()
-    VowRequest(req, new Config())
-    assert.lengthOf(req._getters, 1)
-    assert.equal(req._getters[0].key, '_session')
-    assert.instanceOf(req._getters[0].value(), SessionClient)
+    assert.instanceOf(req._session, SessionClient)
   })
 
   test('add macro to the request', (assert) => {
+    const Request = getRequest()
+    VowRequest(Request, new Config())
     const req = new Request()
-    VowRequest(req, new Config())
-    assert.lengthOf(req._macros, 1)
-    assert.equal(req._macros[0].key, 'session')
+    req.session('username', 'virk')
+    assert.equal(req._session.get('username'), 'virk')
   })
 
   test('add before hook', (assert) => {
-    const req = new Request()
-    VowRequest(req, new Config())
-    assert.lengthOf(req._hooks, 1)
-    assert.isFunction(req._hooks[0].fn)
+    const Request = getRequest()
+    VowRequest(Request, new Config())
+    assert.lengthOf(Request._hooks, 1)
+    assert.isFunction(Request._hooks[0].fn)
   })
 })
 
@@ -171,6 +165,21 @@ test.group('Vow response', () => {
     } catch ({ message }) {
       assert.equal(message, 'There are no errors for the age field: expected false to be true')
     }
+  })
+
+  test('assert session error not exists', (assert) => {
+    assert.plan(1)
+
+    const Response = getResponse()
+    VowResponse(Response, new Config())
+    const res = new Response()
+    res.cookies = {
+      'adonis-session-values': JSON.stringify({
+        __flash__old: { d: JSON.stringify({ errors: { username: 'foo' } }), t: 'Object' }
+      })
+    }
+    res._assert = assert
+    res.session.assertErrorNotExists('age')
   })
 
   test('work fine when hasError assertion passes', (assert) => {
