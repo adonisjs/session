@@ -84,7 +84,10 @@ class SessionProvider extends ServiceProvider {
   _registerVowTrait () {
     this.app.bind('Adonis/Traits/Session', (app) => {
       const Config = app.use('Adonis/Src/Config')
-      return ({ Request }) => require('../src/VowBindings/Request')(Request, Config)
+      return ({ Request, Response }) => {
+        require('../src/VowBindings/Request')(Request, Config)
+        require('../src/VowBindings/Response')(Response, Config)
+      }
     })
     this.app.alias('Adonis/Traits/Session', 'Session/Client')
   }
