@@ -43,3 +43,11 @@ Make sure to set the value for production and development both.
 SESSION_DRIVER=cookie
 ```
 
+
+## Testing
+
+When writing tests, make sure to use the `sessions` trait for setting and getting session values.
+
+```js
+trait('Session/Client')
+```
