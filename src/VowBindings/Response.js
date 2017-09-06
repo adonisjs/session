@@ -79,6 +79,15 @@ class ResponseSession {
     return this.old('errors')
   }
 
+  /**
+   * Returns error for a given key
+   *
+   * @method getErrorFor
+   *
+   * @param  {String}    key
+   *
+   * @return {String|Null}
+   */
   getErrorFor (key) {
     const errors = this.errors()
 
@@ -94,7 +103,7 @@ class ResponseSession {
      * Otherwise look inside array assuming validation
      * error structure
      */
-    const errorMessage = _.find(errors, (error) => error.field === key)
+    const errorMessage = _.find(errors, (error) => error.field === key || error.fieldName === key)
     return errorMessage ? errorMessage.message : null
   }
 

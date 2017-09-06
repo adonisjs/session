@@ -39,7 +39,7 @@ module.exports = function (View) {
      * Otherwise look inside array assuming validation
      * error structure
      */
-    const errorMessage = _.find(errors, (error) => error.field === key)
+    const errorMessage = _.find(errors, (error) => error.field === key || error.fieldName === key)
     return errorMessage ? errorMessage.message : null
   })
 
