@@ -21,7 +21,7 @@ test.group('Drivers - Cookie', () => {
   test('set default options when config is missing', (assert) => {
     const cookie = new Cookie(new Config())
     assert.isTrue(cookie._options.httpOnly)
-    assert.isTrue(cookie._options.sameSite)
+    assert.isFalse(cookie._options.sameSite)
     assert.isAbove(Date.parse(cookie._options.expires) - Date.now(), 1000 * 60 * 90)
   })
 
@@ -30,7 +30,7 @@ test.group('Drivers - Cookie', () => {
     config.set('session.age', '20 mins')
     const cookie = new Cookie(config)
     assert.isTrue(cookie._options.httpOnly)
-    assert.isTrue(cookie._options.sameSite)
+    assert.isFalse(cookie._options.sameSite)
     assert.isAbove(Date.parse(cookie._options.expires) - Date.now(), 1000 * 60 * 19)
     assert.isBelow(Date.parse(cookie._options.expires) - Date.now(), 1000 * 60 * 60)
   })
@@ -40,7 +40,7 @@ test.group('Drivers - Cookie', () => {
     config.set('session.age', 1000 * 60 * 20)
     const cookie = new Cookie(config)
     assert.isTrue(cookie._options.httpOnly)
-    assert.isTrue(cookie._options.sameSite)
+    assert.isFalse(cookie._options.sameSite)
     assert.isAbove(Date.parse(cookie._options.expires) - Date.now(), 1000 * 60 * 19)
     assert.isBelow(Date.parse(cookie._options.expires) - Date.now(), 1000 * 60 * 60)
   })

@@ -1,3 +1,13 @@
+<a name="1.0.13"></a>
+## [1.0.13](https://github.com/adonisjs/adonis-session/compare/v1.0.12...v1.0.13) (2017-09-06)
+
+
+### Bug Fixes
+
+* **config:** set sameSite to false ([44dfeb2](https://github.com/adonisjs/adonis-session/commit/44dfeb2))
+
+
+
 <a name="1.0.12"></a>
 ## [1.0.12](https://github.com/adonisjs/adonis-session/compare/v1.0.11...v1.0.12) (2017-08-30)
 
