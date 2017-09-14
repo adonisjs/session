@@ -79,6 +79,15 @@ class ResponseSession {
     return this.old('errors')
   }
 
+  /**
+   * Returns error for a given key
+   *
+   * @method getErrorFor
+   *
+   * @param  {String}    key
+   *
+   * @return {String|Null}
+   */
   getErrorFor (key) {
     const errors = this.errors()
 
@@ -94,7 +103,7 @@ class ResponseSession {
      * Otherwise look inside array assuming validation
      * error structure
      */
-    const errorMessage = _.find(errors, (error) => error.field === key)
+    const errorMessage = _.find(errors, (error) => error.field === key || error.fieldName === key)
     return errorMessage ? errorMessage.message : null
   }
 
@@ -120,10 +129,11 @@ class ResponseSession {
    * @param  {String}       key
    * @param  {String}       message
    *
-   * @return {void}
+   * @chainable
    */
   assertError (key, message) {
     this._assert.deepEqual(this.getErrorFor(key), message)
+    return this
   }
 
   /**
@@ -133,10 +143,11 @@ class ResponseSession {
    *
    * @param  {String}          key
    *
-   * @return {void}
+   * @chainable
    */
   assertErrorExists (key) {
     this._assert.isTrue(this.hasErrorFor(key), `There are no errors for the ${key} field`)
+    return this
   }
 
     /**
@@ -146,10 +157,11 @@ class ResponseSession {
    *
    * @param  {String}          key
    *
-   * @return {void}
+   * @chainable
    */
   assertErrorNotExists (key) {
     this._assert.isFalse(this.hasErrorFor(key), `There is an error for the ${key} field`)
+    return this
   }
 
   /**
@@ -160,10 +172,11 @@ class ResponseSession {
    * @param  {String}    key
    * @param  {Mixed}    value
    *
-   * @return {void}
+   * @chainable
    */
   assertValue (key, value) {
     this._assert.deepEqual(this.get(key), value)
+    return this
   }
 
   /**
@@ -175,10 +188,11 @@ class ResponseSession {
    * @param  {String}  key
    * @param  {Mixed}  value
    *
-   * @return {void}
+   * @chainable
    */
   assertOld (key, value) {
     this._assert.deepEqual(this.old(key), value)
+    return this
   }
 
   /**
@@ -189,10 +203,11 @@ class ResponseSession {
    *
    * @param  {String}        key
    *
-   * @return {void}
+   * @chainable
    */
   assertOldExists (key) {
     this._assert.isTrue(!!this.old(key))
+    return this
   }
 }
 
