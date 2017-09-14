@@ -129,10 +129,11 @@ class ResponseSession {
    * @param  {String}       key
    * @param  {String}       message
    *
-   * @return {void}
+   * @chainable
    */
   assertError (key, message) {
     this._assert.deepEqual(this.getErrorFor(key), message)
+    return this
   }
 
   /**
@@ -142,10 +143,11 @@ class ResponseSession {
    *
    * @param  {String}          key
    *
-   * @return {void}
+   * @chainable
    */
   assertErrorExists (key) {
     this._assert.isTrue(this.hasErrorFor(key), `There are no errors for the ${key} field`)
+    return this
   }
 
     /**
@@ -155,10 +157,11 @@ class ResponseSession {
    *
    * @param  {String}          key
    *
-   * @return {void}
+   * @chainable
    */
   assertErrorNotExists (key) {
     this._assert.isFalse(this.hasErrorFor(key), `There is an error for the ${key} field`)
+    return this
   }
 
   /**
@@ -169,10 +172,11 @@ class ResponseSession {
    * @param  {String}    key
    * @param  {Mixed}    value
    *
-   * @return {void}
+   * @chainable
    */
   assertValue (key, value) {
     this._assert.deepEqual(this.get(key), value)
+    return this
   }
 
   /**
@@ -184,10 +188,11 @@ class ResponseSession {
    * @param  {String}  key
    * @param  {Mixed}  value
    *
-   * @return {void}
+   * @chainable
    */
   assertOld (key, value) {
     this._assert.deepEqual(this.old(key), value)
+    return this
   }
 
   /**
@@ -198,10 +203,11 @@ class ResponseSession {
    *
    * @param  {String}        key
    *
-   * @return {void}
+   * @chainable
    */
   assertOldExists (key) {
     this._assert.isTrue(!!this.old(key))
+    return this
   }
 }
 
