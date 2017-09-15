@@ -84,9 +84,13 @@ class SessionMiddleware {
     await next()
 
     /**
-     * Commit changes back to the driver.
+     * Commit changes back to the driver, only when in implicit
+     * mode. Otherwise the end user will have to save them
+     * manually.
      */
-    await ctx.session.commit()
+    if (ctx.response.implicitEnd) {
+      await ctx.session.commit()
+    }
   }
 }
 

@@ -1,3 +1,13 @@
+<a name="1.0.15"></a>
+## [1.0.15](https://github.com/adonisjs/adonis-session/compare/v1.0.14...v1.0.15) (2017-09-15)
+
+
+### Bug Fixes
+
+* **middleware:** commit session only in implicit mode ([f8d813e](https://github.com/adonisjs/adonis-session/commit/f8d813e))
+
+
+
 <a name="1.0.14"></a>
 ## [1.0.14](https://github.com/adonisjs/adonis-session/compare/v1.0.13...v1.0.14) (2017-09-14)
 
