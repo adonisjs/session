@@ -16,6 +16,10 @@ module.exports = function (View) {
     return _.get(this.resolve('flashMessages'), key, defaultValue)
   })
 
+  View.global('flashMessage', function (key, defaultValue) {
+    return this.resolve('old')(key, defaultValue)
+  })
+
   View.global('errors', function () {
     return this.resolve('old')('errors')
   })

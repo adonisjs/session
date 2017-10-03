@@ -1,3 +1,13 @@
+<a name="1.0.16"></a>
+## [1.0.16](https://github.com/adonisjs/adonis-session/compare/v1.0.15...v1.0.16) (2017-10-03)
+
+
+### Features
+
+* **view:globals:** add alias for old as `flashMessage` ([efdba9a](https://github.com/adonisjs/adonis-session/commit/efdba9a))
+
+
+
 <a name="1.0.15"></a>
 ## [1.0.15](https://github.com/adonisjs/adonis-session/compare/v1.0.14...v1.0.15) (2017-09-15)
 
