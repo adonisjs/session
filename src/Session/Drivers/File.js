@@ -100,11 +100,13 @@ class File {
    *
    * @return {void}
    */
-  async touch (sessionId) {
+  async touch (sessionId, values) {
     const time = Math.floor(Date.now() / 1000)
     const exists = await fs.exists(this._getFilePath(sessionId))
     if (exists) {
-      return fs.utimes(this._getFilePath(sessionId), time, time)
+      await fs.utimes(this._getFilePath(sessionId), time, time)
+    } else {
+      await this.write(sessionId, values)
     }
   }
 }

@@ -1,3 +1,8 @@
+<a name="1.0.17"></a>
+## [1.0.17](https://github.com/adonisjs/adonis-session/compare/v1.0.16...v1.0.17) (2017-10-29)
+
+
+
 <a name="1.0.16"></a>
 ## [1.0.16](https://github.com/adonisjs/adonis-session/compare/v1.0.15...v1.0.16) (2017-10-03)
 
