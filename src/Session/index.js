@@ -79,6 +79,26 @@ class Session {
   }
 
   /**
+   * Throws an exception when session store is
+   * not initiated
+   *
+   * @method _ensureInitiated
+   *
+   * @return {void}
+   *
+   * @private
+   *
+   * @throws {Exception} If session store has not be initiated
+   */
+  _ensureInitiated () {
+    if (!this._store) {
+      throw GE
+        .RuntimeException
+        .invoke('Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware.')
+    }
+  }
+
+  /**
    * Returns an instance of store with existing values
    * for a given session or empty store if session
    * is newly created
@@ -137,6 +157,7 @@ class Session {
    * @inheritDoc('Store.put')
    */
   put (...args) {
+    this._ensureInitiated()
     return this._store.put(...args)
   }
 
@@ -145,6 +166,7 @@ class Session {
    * @inheritDoc('Store.get')
    */
   get (...args) {
+    this._ensureInitiated()
     return this._store.get(...args)
   }
 
@@ -153,6 +175,7 @@ class Session {
    * @inheritDoc('Store.all')
    */
   all (...args) {
+    this._ensureInitiated()
     return this._store.all(...args)
   }
 
@@ -161,6 +184,7 @@ class Session {
    * @inheritDoc('Store.forget')
    */
   forget (...args) {
+    this._ensureInitiated()
     return this._store.forget(...args)
   }
 
@@ -169,6 +193,7 @@ class Session {
    * @inheritDoc('Store.pull')
    */
   pull (...args) {
+    this._ensureInitiated()
     return this._store.pull(...args)
   }
 
@@ -177,6 +202,7 @@ class Session {
    * @inheritDoc('Store.increment')
    */
   increment (...args) {
+    this._ensureInitiated()
     return this._store.increment(...args)
   }
 
@@ -185,6 +211,7 @@ class Session {
    * @inheritDoc('Store.decrement')
    */
   decrement (...args) {
+    this._ensureInitiated()
     return this._store.decrement(...args)
   }
 
@@ -193,6 +220,7 @@ class Session {
    * @inheritDoc('Store.clear')
    */
   clear () {
+    this._ensureInitiated()
     this._store.clear()
   }
 
@@ -265,6 +293,7 @@ class Session {
       throw GE.InvalidArgumentException.invalidParameter('Flash data should be an object', data)
     }
     const flashMessage = this.get('__flash__', null)
+
     if (!flashMessage) {
       this.put('__flash__', data)
     } else {
