@@ -126,7 +126,7 @@ class SessionProvider extends ServiceProvider {
      * for fetching or setting data.
      */
     HttpContext.getter('session', function () {
-      return require('../Src/Session/getRequestInstance')(this.request, this.response, Config, SessionManager)
+      return require('../src/Session/getRequestInstance')(this.request, this.response, Config, SessionManager)
     }, true)
 
     /**
