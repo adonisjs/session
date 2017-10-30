@@ -1,3 +1,13 @@
+<a name="1.0.18"></a>
+## [1.0.18](https://github.com/adonisjs/adonis-session/compare/v1.0.17...v1.0.18) (2017-10-30)
+
+
+### Bug Fixes
+
+* **session:** initiate session before hand using context.getter ([3e82994](https://github.com/adonisjs/adonis-session/commit/3e82994))
+
+
+
 <a name="1.0.17"></a>
 ## [1.0.17](https://github.com/adonisjs/adonis-session/compare/v1.0.16...v1.0.17) (2017-10-29)
 

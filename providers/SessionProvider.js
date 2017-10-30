@@ -107,7 +107,31 @@ class SessionProvider extends ServiceProvider {
     this._registerVowTrait()
   }
 
+  /**
+   * Boot the provider
+   *
+   * @method boot
+   *
+   * @return {void}
+   */
   boot () {
+    const HttpContext = this.app.use('Adonis/Src/HttpContext')
+    const Config = this.app.use('Adonis/Src/Config')
+    const SessionManager = this.app.use('Adonis/Src/Session')
+
+    /**
+     * Adding getter to the HTTP context. Please note the session
+     * store is not initialized yet and middleware must be
+     * executed before the session store can be used
+     * for fetching or setting data.
+     */
+    HttpContext.getter('session', function () {
+      return require('../Src/Session/getRequestInstance')(this.request, this.response, Config, SessionManager)
+    }, true)
+
+    /**
+     * Adding flash globals to the view layer, only when it is in use
+     */
     try {
       require('../src/Session/FlashGlobals')(this.app.use('Adonis/Src/View'))
     } catch (error) {}

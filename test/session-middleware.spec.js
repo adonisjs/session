@@ -15,10 +15,10 @@ const { ioc } = require('@adonisjs/fold')
 const supertest = require('supertest')
 const { Config } = require('@adonisjs/sink')
 
-const Session = require('../src/Session')
 const SessionManager = require('../src/Session/Manager')
 const Middleware = require('../src/Session/Middleware')
-const { redis: Redis } = require('../src/Session/Drivers')
+const getRequestInstance = require('../src/Session/getRequestInstance')
+
 let sessionValues = ''
 
 test.group('Middleware', (group) => {
@@ -41,74 +41,6 @@ test.group('Middleware', (group) => {
     })
   })
 
-  test('attach session instance on the http context', async (assert) => {
-    const server = http.createServer((req, res) => {
-      const request = {
-        cookie: () => {}
-      }
-
-      const response = {
-        cookie: () => {}
-      }
-
-      const context = { request, response }
-      const middleware = new Middleware(ioc.use('Adonis/Src/Config'), SessionManager)
-      middleware
-        .handle(context, async function () {
-          return true
-        })
-        .then(() => {
-          assert.isDefined(context.session)
-          assert.instanceOf(context.session, Session)
-          res.end()
-        }).catch(({ message }) => {
-          console.log(message)
-          res.writeHead(500)
-          res.write(message)
-          res.end()
-        })
-    })
-
-    await supertest(server).get('/').expect(200)
-  })
-
-  test('do not call setRequest when driver has not implemented the method', async (assert) => {
-    ioc.singleton('Adonis/Src/Config', () => {
-      const config = new Config()
-      config.set('session.driver', 'redis')
-      return config
-    })
-
-    const server = http.createServer((req, res) => {
-      const request = {
-        cookie: () => {}
-      }
-
-      const response = {
-        cookie: () => {}
-      }
-
-      const context = { request, response }
-      const middleware = new Middleware(ioc.use('Adonis/Src/Config'), SessionManager)
-      middleware
-        .handle(context, async function () {
-          return true
-        })
-        .then(() => {
-          assert.isDefined(context.session)
-          assert.instanceOf(context.session._driverInstance, Redis)
-          res.end()
-        }).catch(({ message }) => {
-          console.log(message)
-          res.writeHead(500)
-          res.write(message)
-          res.end()
-        })
-    })
-
-    await supertest(server).get('/').expect(200)
-  })
-
   test('pull flash messages on each request', async (assert) => {
     ioc.singleton('Adonis/Src/Config', () => {
       const config = new Config()
@@ -125,8 +57,10 @@ test.group('Middleware', (group) => {
         cookie: () => {}
       }
 
-      const context = { request, response }
-      const middleware = new Middleware(ioc.use('Adonis/Src/Config'), SessionManager)
+      const session = getRequestInstance(request, response, new Config(), SessionManager)
+      const context = { request, response, session }
+      const middleware = new Middleware()
+
       middleware
         .handle(context, async function () {
           return true
@@ -178,8 +112,10 @@ test.group('Middleware', (group) => {
         cookie: () => {}
       }
 
-      const context = { request, response, view }
-      const middleware = new Middleware(ioc.use('Adonis/Src/Config'), SessionManager)
+      const session = getRequestInstance(request, response, ioc.use('Adonis/Src/Config'), SessionManager)
+      const context = { request, response, view, session }
+      const middleware = new Middleware()
+
       middleware
         .handle(context, async function () {
           return true

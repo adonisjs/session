@@ -106,6 +106,25 @@ test.group('Session', () => {
     assert.isTrue(calledTouch)
     Cookie.prototype.touch = existingTouch
   })
+
+  test('throw exception when store is not initiated', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+
+      try {
+        session.put('username', 'virk')
+      } catch (error) {
+        res.writeHead(500)
+        res.end(error.message)
+      }
+    })
+
+    const { text } = await supertest(server).get('/').expect(500)
+    assert.equal(text, 'E_RUNTIME_ERROR: Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware.')
+  })
 })
 
 test.group('Session Store', () => {
