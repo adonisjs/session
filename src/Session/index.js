@@ -41,6 +41,18 @@ class Session {
   }
 
   /**
+   * A boolean flag telling whether store has been
+   * initiated or not
+   *
+   * @attribute initiated
+   *
+   * @return {Boolean}
+   */
+  get initiated () {
+    return !!this._store
+  }
+
+  /**
    * Returns a unique session id for the given
    * session.
    *
@@ -91,7 +103,7 @@ class Session {
    * @throws {Exception} If session store has not be initiated
    */
   _ensureInitiated () {
-    if (!this._store) {
+    if (!this.initiated) {
       throw GE
         .RuntimeException
         .invoke('Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware.')
