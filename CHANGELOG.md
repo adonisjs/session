@@ -1,3 +1,13 @@
+<a name="1.0.19"></a>
+## [1.0.19](https://github.com/adonisjs/adonis-session/compare/v1.0.18...v1.0.19) (2017-10-31)
+
+
+### Bug Fixes
+
+* **case:** lowercase src folder ([948274c](https://github.com/adonisjs/adonis-session/commit/948274c))
+
+
+
 <a name="1.0.18"></a>
 ## [1.0.18](https://github.com/adonisjs/adonis-session/compare/v1.0.17...v1.0.18) (2017-10-30)
 
