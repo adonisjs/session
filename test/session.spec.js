@@ -12,6 +12,7 @@
 const test = require('japa')
 const http = require('http')
 const supertest = require('supertest')
+const ObjectId = require('objectid')
 const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 
@@ -170,6 +171,13 @@ test.group('Session Store', () => {
     assert.deepEqual(store._guardValue([1, 2]), { d: JSON.stringify([1, 2]), t: 'Array' })
   })
 
+  test('guard objectId', (assert) => {
+    const store = new Store()
+    const id = '507f191e810c19729de860ea'
+    const objId = ObjectId(id)
+    assert.deepEqual(store._guardValue(objId), { d: id, t: 'ObjectID' })
+  })
+
   test('unguard object', (assert) => {
     const store = new Store()
     const value = JSON.stringify({ username: 'virk' })
@@ -193,6 +201,12 @@ test.group('Session Store', () => {
     const date = new Date()
     const value = String(date)
     assert.deepEqual(store._unGuardValue({ d: value, t: 'Date' }).toString(), date.toString())
+  })
+
+  test('unguard objectId', (assert) => {
+    const store = new Store()
+    const id = '507f191e810c19729de860ea'
+    assert.deepEqual(store._unGuardValue({ d: id, t: 'ObjectID' }), id)
   })
 
   test('throw exception when unguard wrong formatted value', (assert) => {

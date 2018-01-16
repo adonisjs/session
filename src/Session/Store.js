@@ -30,6 +30,9 @@ const toString = {
   },
   'String' (value) {
     return value
+  },
+  'ObjectID' (value) {
+    return String(value)
   }
 }
 
@@ -58,6 +61,9 @@ const toOriginalType = {
     return new Date(value)
   },
   'String' (value) {
+    return value
+  },
+  'ObjectID' (value) {
     return value
   }
 }
