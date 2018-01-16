@@ -206,7 +206,10 @@ test.group('Session Store', () => {
   test('unguard objectId', (assert) => {
     const store = new Store()
     const id = '507f191e810c19729de860ea'
-    assert.deepEqual(store._unGuardValue({ d: id, t: 'ObjectID' }), id)
+    const unguarded = store._unGuardValue({ d: id, t: 'ObjectID' })
+
+    assert.equal(ObjectId.isValid(unguarded), true)
+    assert.equal(ObjectId.equals(unguarded, new ObjectId(id)), true)
   })
 
   test('throw exception when unguard wrong formatted value', (assert) => {
