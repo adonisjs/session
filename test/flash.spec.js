@@ -147,7 +147,7 @@ test.group('Flash Messages', () => {
     })
 
     const { text } = await supertest(server).get('/').expect(500)
-    assert.equal(text, 'E_INVALID_PARAMETER: Flash data should be an object instead received string')
+    assert.match(text, /E_INVALID_PARAMETER: Flash data should be an object instead received string/)
   })
 })
 
