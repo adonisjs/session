@@ -123,7 +123,7 @@ test.group('Session', () => {
     })
 
     const { text } = await supertest(server).get('/').expect(500)
-    assert.equal(text, 'E_RUNTIME_ERROR: Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware.')
+    assert.match(text, /E_RUNTIME_ERROR: Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware./)
   })
 })
 
