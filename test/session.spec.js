@@ -27,11 +27,11 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        assert.isTrue(session._isNewSessionId)
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          assert.isTrue(session._isNewSessionId)
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -46,11 +46,11 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        assert.isFalse(session._isNewSessionId)
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          assert.isFalse(session._isNewSessionId)
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').set('Cookie', ['adonis-session=20']).expect(200)
@@ -65,14 +65,14 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        session.put('username', 'virk')
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          session.put('username', 'virk')
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -93,13 +93,13 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     await supertest(server).get('/').expect(200)
@@ -124,6 +124,69 @@ test.group('Session', () => {
 
     const { text } = await supertest(server).get('/').expect(500)
     assert.match(text, /E_RUNTIME_ERROR: Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware./)
+  })
+
+  test('initiate session in freezed state', async (assert) => {
+    assert.plan(1)
+
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          assert.isTrue(session.freezed)
+          res.end()
+        }).catch(() => {
+          res.writeHead(500)
+          res.end()
+        })
+    })
+
+    await supertest(server).get('/').expect(200)
+  })
+
+  test('do not set session id when initiated store in frozen state', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          res.end()
+        }).catch(() => {
+          res.writeHead(500)
+          res.end()
+        })
+    })
+
+    const { headers } = await supertest(server).get('/').expect(200)
+    assert.notProperty(headers, 'set-cookie')
+  })
+
+  test('throw exception when trying to modify freezed session', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          session.put('username', 'virk')
+        }).catch(({ message }) => {
+          res.writeHead(500)
+          res.end(message)
+        })
+    })
+
+    const { headers, text } = await supertest(server).get('/').expect(500)
+    assert.notProperty(headers, 'set-cookie')
+    assert.match(text, /E_RUNTIME_ERROR: Session store is freezed and you cannot write values to session/)
   })
 })
 
@@ -361,5 +424,24 @@ test.group('Session Store', () => {
   test('initiate store with undefined', (assert) => {
     const store = new Store(undefined)
     assert.deepEqual(store._values, {})
+  })
+
+  test('calling forget on non-existing value, should not make the store dirty', (assert) => {
+    const store = new Store()
+    store.forget('username')
+    assert.isFalse(store.isDirty)
+  })
+
+  test('calling forget on existing value, should make the store dirty', (assert) => {
+    const store = new Store(JSON.stringify({ username: { d: 'virk', t: 'String' } }))
+    store.forget('username')
+    assert.isTrue(store.isDirty)
+    assert.deepEqual(store._values, {})
+  })
+
+  test('calling put for same value in the store should not make it dirty', (assert) => {
+    const store = new Store(JSON.stringify({ username: { d: 'virk', t: 'String' } }))
+    store.put('username', 'virk')
+    assert.isFalse(store.isDirty)
   })
 })
