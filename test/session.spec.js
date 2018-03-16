@@ -425,4 +425,23 @@ test.group('Session Store', () => {
     const store = new Store(undefined)
     assert.deepEqual(store._values, {})
   })
+
+  test('calling forget on non-existing value, should not make the store dirty', (assert) => {
+    const store = new Store()
+    store.forget('username')
+    assert.isFalse(store.isDirty)
+  })
+
+  test('calling forget on existing value, should make the store dirty', (assert) => {
+    const store = new Store(JSON.stringify({ username: { d: 'virk', t: 'String' } }))
+    store.forget('username')
+    assert.isTrue(store.isDirty)
+    assert.deepEqual(store._values, {})
+  })
+
+  test('calling put for same value in the store should not make it dirty', (assert) => {
+    const store = new Store(JSON.stringify({ username: { d: 'virk', t: 'String' } }))
+    store.put('username', 'virk')
+    assert.isFalse(store.isDirty)
+  })
 })
