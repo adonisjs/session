@@ -125,6 +125,69 @@ test.group('Session', () => {
     const { text } = await supertest(server).get('/').expect(500)
     assert.match(text, /E_RUNTIME_ERROR: Session store is not initiated yet. Make sure that you have included the session middleware inside the list of global middleware./)
   })
+
+  test('initiate session in freezed state', async (assert) => {
+    assert.plan(1)
+
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          assert.isTrue(session.freezed)
+          res.end()
+        }).catch(() => {
+          res.writeHead(500)
+          res.end()
+        })
+    })
+
+    await supertest(server).get('/').expect(200)
+  })
+
+  test('do not set session id when initiated store in frozen state', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          res.end()
+        }).catch(() => {
+          res.writeHead(500)
+          res.end()
+        })
+    })
+
+    const { headers } = await supertest(server).get('/').expect(200)
+    assert.notProperty(headers, 'set-cookie')
+  })
+
+  test('throw exception when trying to modify freezed session', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          session.put('username', 'virk')
+        }).catch(({ message }) => {
+          res.writeHead(500)
+          res.end(message)
+        })
+    })
+
+    const { headers, text } = await supertest(server).get('/').expect(500)
+    assert.notProperty(headers, 'set-cookie')
+    assert.match(text, /E_RUNTIME_ERROR: Session store is freezed and you cannot write values to session/)
+  })
 })
 
 test.group('Session Store', () => {

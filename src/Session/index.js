@@ -38,6 +38,7 @@ class Session {
 
     this._store = null
     this._sessionId = null
+    this.freezed = false
   }
 
   /**
@@ -111,6 +112,25 @@ class Session {
   }
 
   /**
+   * Throws exception when session is freezed for modifications
+   *
+   * @method _ensureNotFreezed
+   *
+   * @return {void}
+   *
+   * @private
+   *
+   * @throws {Exception} If session is freezed
+   */
+  _ensureNotFreezed () {
+    if (this.freezed) {
+      throw GE
+        .RuntimeException
+        .invoke('Session store is freezed and you cannot write values to session. This usually happens during the Websocket request')
+    }
+  }
+
+  /**
    * Returns an instance of store with existing values
    * for a given session or empty store if session
    * is newly created
@@ -123,8 +143,14 @@ class Session {
    */
   async _getValues () {
     const sessionId = this._getSessionId()
-    this._touchSessionId(sessionId)
     debug('using session id as %s', sessionId)
+
+    /**
+     * Only set session id on response when is not freezed
+     */
+    if (!this.freezed) {
+      this._touchSessionId(sessionId)
+    }
 
     if (this._isNewSessionId) {
       return new Store()
@@ -142,7 +168,8 @@ class Session {
    *
    * @return {void}
    */
-  async instantiate () {
+  async instantiate (freezed) {
+    this.freezed = freezed
     this._store = await this._getValues()
   }
 
@@ -170,6 +197,8 @@ class Session {
    */
   put (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.put(...args)
   }
 
@@ -179,6 +208,8 @@ class Session {
    */
   get (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.get(...args)
   }
 
@@ -188,6 +219,8 @@ class Session {
    */
   all (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.all(...args)
   }
 
@@ -197,6 +230,8 @@ class Session {
    */
   forget (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.forget(...args)
   }
 
@@ -206,6 +241,8 @@ class Session {
    */
   pull (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.pull(...args)
   }
 
@@ -215,6 +252,8 @@ class Session {
    */
   increment (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.increment(...args)
   }
 
@@ -224,6 +263,8 @@ class Session {
    */
   decrement (...args) {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     return this._store.decrement(...args)
   }
 
@@ -233,6 +274,8 @@ class Session {
    */
   clear () {
     this._ensureInitiated()
+    this._ensureNotFreezed()
+
     this._store.clear()
   }
 
@@ -245,6 +288,7 @@ class Session {
    * @chainable
    */
   flashAll () {
+    this._ensureNotFreezed()
     return this.flash(this._request.all())
   }
 
@@ -260,6 +304,7 @@ class Session {
    * @chainable
    */
   flashOnly (...fields) {
+    this._ensureNotFreezed()
     return this.flash(this._request.only(...fields))
   }
 
@@ -275,6 +320,7 @@ class Session {
    * @chainable
    */
   flashExcept (...fields) {
+    this._ensureNotFreezed()
     return this.flash(this._request.except(...fields))
   }
 
@@ -288,6 +334,7 @@ class Session {
    * @chainable
    */
   withErrors (errors) {
+    this._ensureNotFreezed()
     return this.flash({ errors })
   }
 
