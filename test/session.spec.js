@@ -27,11 +27,11 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        assert.isTrue(session._isNewSessionId)
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          assert.isTrue(session._isNewSessionId)
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -46,11 +46,11 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        assert.isFalse(session._isNewSessionId)
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          assert.isFalse(session._isNewSessionId)
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').set('Cookie', ['adonis-session=20']).expect(200)
@@ -65,14 +65,14 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        session.put('username', 'virk')
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          session.put('username', 'virk')
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -93,13 +93,13 @@ test.group('Session', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     await supertest(server).get('/').expect(200)
