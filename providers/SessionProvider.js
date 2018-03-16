@@ -136,7 +136,7 @@ class SessionProvider extends ServiceProvider {
      * for them
      */
     try {
-      const WsContext = this.app.use('Adonis/Src/WsContext')
+      const WsContext = this.app.use('Adonis/Addons/WsContext')
       WsContext.getter('session', function () {
         return require('../src/Session/getRequestInstance')(this.request, this.response, Config, SessionManager)
       }, true)
