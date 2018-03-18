@@ -188,6 +188,26 @@ test.group('Session', () => {
     assert.notProperty(headers, 'set-cookie')
     assert.match(text, /E_RUNTIME_ERROR: Session store is freezed and you cannot write values to session/)
   })
+
+  test('should be able to access values in freezed state', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate(true)
+        .then(() => {
+          res.end(session.get('username'))
+        }).catch(({ message }) => {
+          res.writeHead(500)
+          res.end(message)
+        })
+    })
+
+    const { text } = await supertest(server).get('/').expect(200)
+    assert.equal(text, '')
+  })
 })
 
 test.group('Session Store', () => {
