@@ -1,3 +1,13 @@
+<a name="1.0.22"></a>
+## [1.0.22](https://github.com/adonisjs/adonis-session/compare/v1.0.21...v1.0.22) (2018-03-18)
+
+
+### Bug Fixes
+
+* **session:** allow readonly access to store when freezed ([49282d7](https://github.com/adonisjs/adonis-session/commit/49282d7))
+
+
+
 <a name="1.0.21"></a>
 ## [1.0.21](https://github.com/adonisjs/adonis-session/compare/v1.0.20...v1.0.21) (2018-03-16)
 

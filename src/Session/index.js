@@ -208,8 +208,6 @@ class Session {
    */
   get (...args) {
     this._ensureInitiated()
-    this._ensureNotFreezed()
-
     return this._store.get(...args)
   }
 
@@ -219,8 +217,6 @@ class Session {
    */
   all (...args) {
     this._ensureInitiated()
-    this._ensureNotFreezed()
-
     return this._store.all(...args)
   }
 
