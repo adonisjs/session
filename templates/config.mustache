@@ -85,9 +85,14 @@ module.exports = {
   | Redis config
   |--------------------------------------------------------------------------
   |
-  | The configuration for the redis driver. By default we reference it from
-  | the redis file. But you are free to define an object here too.
+  | The configuration for the redis driver. 
   |
   */
-  redis: 'self::redis.default'
+  redis: {
+    host: '127.0.0.1',
+    port: 6379,
+    password: null,
+    db: 0,
+    keyPrefix: ''
+  }
 }
