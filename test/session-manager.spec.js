@@ -27,8 +27,10 @@ test.group('Session Manager', (group) => {
       return new Helpers(path.join(__dirname))
     })
 
-    ioc.singleton('Adonis/Addons/RedisFactory', () => {
-      return class RedisFactory {}
+    ioc.singleton('Adonis/Addons/Redis', () => {
+      return class Redis {
+        static namedConnection () {}
+      }
     })
   })
 

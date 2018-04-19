@@ -28,10 +28,10 @@ class Redis {
    * @return {Array}
    */
   static get inject () {
-    return ['Adonis/Src/Config', 'Adonis/Addons/RedisFactory']
+    return ['Adonis/Src/Config', 'Adonis/Addons/Redis']
   }
 
-  constructor (Config, RedisFactory) {
+  constructor (Config, Redis) {
     const config = Config.merge('session.redis', {
       port: 6379,
       host: '127.0.0.1'
@@ -47,7 +47,7 @@ class Redis {
     /**
      * Setting cluster to false for sessions
      */
-    this.redis = new RedisFactory(config, false)
+    this.redis = Redis.namedConnection('__adonis__session', config)
   }
 
   /**
@@ -95,5 +95,7 @@ class Redis {
     await this.redis.expire(sessionId, this.ttl)
   }
 }
+
+Redis.redis = null
 
 module.exports = Redis
