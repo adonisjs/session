@@ -46,14 +46,14 @@ test.group('Flash Messages', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        session.flash({ username: 'virk' })
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          session.flash({ username: 'virk' })
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -72,15 +72,15 @@ test.group('Flash Messages', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        session.flash({ username: 'virk' })
-        session.flash({ age: 22 })
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          session.flash({ username: 'virk' })
+          session.flash({ age: 22 })
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -99,14 +99,14 @@ test.group('Flash Messages', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        session.withErrors([{ field: 'username', message: 'username is required' }]).flash({ username: 'virk' })
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          session.withErrors([{ field: 'username', message: 'username is required' }]).flash({ username: 'virk' })
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
     })
 
     const { headers } = await supertest(server).get('/').expect(200)
@@ -131,23 +131,23 @@ test.group('Flash Messages', () => {
       cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
       const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
       session
-      .instantiate()
-      .then(() => {
-        session.flash('username', 'virk')
-        return session.commit()
-      })
-      .then(() => {
-        res.end()
-      })
-      .catch(({ message, status }) => {
-        res.writeHead(status || 500)
-        res.write(message)
-        res.end()
-      })
+        .instantiate()
+        .then(() => {
+          session.flash('username', 'virk')
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
+        .catch(({ message, status }) => {
+          res.writeHead(status || 500)
+          res.write(message)
+          res.end()
+        })
     })
 
     const { text } = await supertest(server).get('/').expect(500)
-    assert.equal(text, 'E_INVALID_PARAMETER: Flash data should be an object instead received string')
+    assert.match(text, /E_INVALID_PARAMETER: Flash data should be an object instead received string/)
   })
 })
 

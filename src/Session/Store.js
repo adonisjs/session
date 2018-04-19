@@ -168,7 +168,7 @@ class Store {
    * ```
    */
   put (key, value) {
-    this.isDirty = true
+    this.isDirty = this.get(key) !== value
     return _.set(this._values, key, value)
   }
 
@@ -260,6 +260,10 @@ class Store {
    * ```
    */
   forget (key) {
+    if (!_.has(this._values, key)) {
+      return
+    }
+
     this.isDirty = true
     _.unset(this._values, key)
   }

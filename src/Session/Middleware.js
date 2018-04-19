@@ -76,6 +76,22 @@ class SessionMiddleware {
       await ctx.session.commit()
     }
   }
+
+  /**
+   * Initiates the session store in ready only mode
+   *
+   * @method wsHandle
+   *
+   * @param  {Session}   options.session
+   * @param  {Function} next
+   *
+   * @return {void}
+   */
+  async wsHandle ({ session }, next) {
+    await session.instantiate(true)
+    debug('session store initiated in read only mode')
+    await next()
+  }
 }
 
 module.exports = SessionMiddleware

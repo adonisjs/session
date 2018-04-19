@@ -27,8 +27,8 @@ test.group('Middleware', (group) => {
       return new Config()
     })
 
-    ioc.singleton('Adonis/Addons/RedisFactory', () => {
-      return class RedisFactory {
+    ioc.singleton('Adonis/Addons/Redis', () => {
+      class RedisFactory {
         expire () {
         }
         setex (sessionId, ttl, values) {
@@ -38,6 +38,18 @@ test.group('Middleware', (group) => {
           return sessionValues
         }
       }
+
+      class Redis {
+        constructor () {
+          this.factory = new RedisFactory()
+        }
+
+        namedConnection () {
+          return this.factory
+        }
+      }
+
+      return new Redis()
     })
   })
 
