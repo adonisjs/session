@@ -32,6 +32,7 @@
     "nyc": "^11.7.1",
     "semver": "^5.5.0",
     "standard": "^11.0.1",
+    "objectid": "^3.2.1",
     "supertest": "^3.0.0"
   },
   "config": {

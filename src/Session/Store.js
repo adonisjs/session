@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const Type = require('type-of-is')
+const ObjectId = require('bson').ObjectId
 
 const toString = {
   'Number' (value) {
@@ -30,6 +31,9 @@ const toString = {
   },
   'String' (value) {
     return value
+  },
+  'ObjectID' (value) {
+    return String(value)
   }
 }
 
@@ -59,6 +63,9 @@ const toOriginalType = {
   },
   'String' (value) {
     return value
+  },
+  'ObjectID' (value) {
+    return new ObjectId(value)
   }
 }
 
