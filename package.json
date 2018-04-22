@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/session",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "This repo is the official session provider for Adonisjs apps. It supports multiple drivers to store session data.",
   "main": "providers/SessionProvider",
   "directories": {
@@ -32,7 +32,6 @@
     "nyc": "^11.7.1",
     "semver": "^5.5.0",
     "standard": "^11.0.1",
-    "objectid": "^3.2.1",
     "supertest": "^3.0.0"
   },
   "config": {
@@ -48,6 +47,7 @@
   },
   "dependencies": {
     "@adonisjs/generic-exceptions": "^2.0.0",
+    "bson": "^2.0.5",
     "debug": "^3.1.0",
     "fs-extra": "^5.0.0",
     "lodash": "^4.17.5",

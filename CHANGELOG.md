@@ -1,3 +1,20 @@
+<a name="1.0.25"></a>
+## [1.0.25](https://github.com/adonisjs/adonis-session/compare/v1.0.23...v1.0.25) (2018-04-22)
+
+
+### Bug Fixes
+
+* **bson:** fix where bson dependency was missing ([fd90a72](https://github.com/adonisjs/adonis-session/commit/fd90a72))
+* **config:** fix the config template ([#5](https://github.com/adonisjs/adonis-session/issues/5)) ([bebb263](https://github.com/adonisjs/adonis-session/commit/bebb263))
+* **redis-driver:** fix where a new connection was created for each request ([cc0744a](https://github.com/adonisjs/adonis-session/commit/cc0744a))
+
+
+### Features
+
+* **store:** allow objectid serialisation  ([dc08d8f](https://github.com/adonisjs/adonis-session/commit/dc08d8f))
+
+
+
 <a name="1.0.24"></a>
 ## [1.0.24](https://github.com/adonisjs/adonis-session/compare/v1.0.23...v1.0.24) (2018-04-22)
 

@@ -12,7 +12,7 @@
 const test = require('japa')
 const http = require('http')
 const supertest = require('supertest')
-const ObjectId = require('objectid')
+const ObjectId = require('bson').ObjectId
 const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 
@@ -292,7 +292,7 @@ test.group('Session Store', () => {
     const unguarded = store._unGuardValue({ d: id, t: 'ObjectID' })
 
     assert.equal(ObjectId.isValid(unguarded), true)
-    assert.equal(ObjectId.equals(unguarded, new ObjectId(id)), true)
+    assert.deepEqual(unguarded, new ObjectId(id))
   })
 
   test('throw exception when unguard wrong formatted value', (assert) => {
