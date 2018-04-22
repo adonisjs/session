@@ -12,6 +12,8 @@ const providers = [
 
 The next thing you should do is register the global middleware inside `start/kernel.js` file.
 
+**For Websocket, register the middleware inside `start/wsKernel.js` file.**
+
 ```js
 const globalMiddleware = [
   'Adonis/Middleware/Session'

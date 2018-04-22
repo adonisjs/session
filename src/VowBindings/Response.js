@@ -150,7 +150,7 @@ class ResponseSession {
     return this
   }
 
-    /**
+  /**
    * Asserts that error doesn't exists for a given key
    *
    * @method assertErrorNotExists

@@ -1,3 +1,47 @@
+<a name="1.0.24"></a>
+## [1.0.24](https://github.com/adonisjs/adonis-session/compare/v1.0.23...v1.0.24) (2018-04-22)
+
+
+### Bug Fixes
+
+* **config:** fix the config template ([#5](https://github.com/adonisjs/adonis-session/issues/5)) ([bebb263](https://github.com/adonisjs/adonis-session/commit/bebb263))
+* **redis-driver:** fix where a new connection was created for each request ([cc0744a](https://github.com/adonisjs/adonis-session/commit/cc0744a))
+
+
+
+<a name="1.0.23"></a>
+## [1.0.23](https://github.com/adonisjs/adonis-session/compare/v1.0.22...v1.0.23) (2018-03-18)
+
+
+
+<a name="1.0.22"></a>
+## [1.0.22](https://github.com/adonisjs/adonis-session/compare/v1.0.21...v1.0.22) (2018-03-18)
+
+
+### Bug Fixes
+
+* **session:** allow readonly access to store when freezed ([49282d7](https://github.com/adonisjs/adonis-session/commit/49282d7))
+
+
+
+<a name="1.0.21"></a>
+## [1.0.21](https://github.com/adonisjs/adonis-session/compare/v1.0.20...v1.0.21) (2018-03-16)
+
+
+### Bug Fixes
+
+* **providers:** use correct namespace for WsContext binding ([9fb6bc2](https://github.com/adonisjs/adonis-session/commit/9fb6bc2))
+* **store:** only make store dirty when actual values change ([ad8f29d](https://github.com/adonisjs/adonis-session/commit/ad8f29d))
+
+
+### Features
+
+* **middleware:** add wsHandle to be websocket complaint ([cbef165](https://github.com/adonisjs/adonis-session/commit/cbef165))
+* **provider:** bind session on ws context when defined ([150a05b](https://github.com/adonisjs/adonis-session/commit/150a05b))
+* **session:** add option to initiate read only session ([d8e5b3a](https://github.com/adonisjs/adonis-session/commit/d8e5b3a))
+
+
+
 <a name="1.0.20"></a>
 ## [1.0.20](https://github.com/adonisjs/adonis-session/compare/v1.0.19...v1.0.20) (2018-02-07)
 

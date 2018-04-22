@@ -130,6 +130,19 @@ class SessionProvider extends ServiceProvider {
     }, true)
 
     /**
+     * Since Websocket is optional, we need to wrap the use
+     * statement inside a try/catch and if user is using
+     * websocket connection, we will initiate sessions
+     * for them
+     */
+    try {
+      const WsContext = this.app.use('Adonis/Addons/WsContext')
+      WsContext.getter('session', function () {
+        return require('../src/Session/getRequestInstance')(this.request, this.response, Config, SessionManager)
+      }, true)
+    } catch (error) {}
+
+    /**
      * Adding flash globals to the view layer, only when it is in use
      */
     try {
