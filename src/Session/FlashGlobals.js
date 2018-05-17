@@ -12,11 +12,11 @@
 const _ = require('lodash')
 
 module.exports = function (View) {
-  View.global('old', function (key, defaultValue) {
+  View.global('old', function (key, defaultValue = '') {
     return _.get(this.resolve('flashMessages'), key, defaultValue)
   })
 
-  View.global('flashMessage', function (key, defaultValue) {
+  View.global('flashMessage', function (key, defaultValue = '') {
     return this.resolve('old')(key, defaultValue)
   })
 
