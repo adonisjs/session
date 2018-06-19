@@ -160,6 +160,14 @@ test.group('Flash View Globals', (group) => {
     View.setData('flashMessages', { username: 'virk' })
     assert.equal(View.resolve('old')('username'), 'virk')
   })
+  
+  test('return the default value in old method', (assert) => {
+    assert.equal(View.resolve('old')('not_defined' , 'not defined'), 'not defined')
+  })
+
+  test('return a blank string as the default value when no default value is set', (assert) => {
+    assert.equal(View.resolve('old')('not_defined'), '')
+  })
 
   test('return error messages from flash messages', (assert) => {
     View
