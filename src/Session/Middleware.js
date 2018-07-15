@@ -58,9 +58,17 @@ class SessionMiddleware {
       ctx.session.put('__flash__old', flashMessages)
     }
 
+    /**
+     * Sharing the flashMessages on the view
+     */
     if (ctx.view && typeof (ctx.view.share) === 'function') {
       ctx.view.share({ flashMessages })
     }
+
+    /**
+     * Sharing the flashMessages on the request
+     */
+    ctx.request.flashMessages = flashMessages
 
     /**
      * Move the chain
