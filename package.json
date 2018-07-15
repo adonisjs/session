@@ -3,6 +3,15 @@
   "version": "1.0.25",
   "description": "This repo is the official session provider for Adonisjs apps. It supports multiple drivers to store session data.",
   "main": "providers/SessionProvider",
+  "files": [
+    "lib",
+    "providers",
+    "src",
+    "templates",
+    "instructions.js",
+    "instructions.js",
+    "instructions.md"
+  ],
   "directories": {
     "lib": "lib",
     "test": "test"
