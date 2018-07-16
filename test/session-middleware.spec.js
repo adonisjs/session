@@ -163,4 +163,65 @@ test.group('Middleware', (group) => {
       flashMessages: { username: 'virk' }
     })
   })
+
+  test('set flash messages on request', async (assert) => {
+    ioc.singleton('Adonis/Src/Config', () => {
+      const config = new Config()
+      config.set('session.driver', 'redis')
+      return config
+    })
+
+    const view = {
+      share () {
+      }
+    }
+
+    const request = {
+      cookie: () => {
+        return '20'
+      }
+    }
+
+    const server = http.createServer((req, res) => {
+      const response = {
+        cookie: () => {}
+      }
+
+      const session = getRequestInstance(request, response, ioc.use('Adonis/Src/Config'), SessionManager)
+      const context = { request, response, view, session }
+      const middleware = new Middleware()
+
+      middleware
+        .handle(context, async function () {
+          return true
+        })
+        .then(() => {
+          if (req.url === '/') {
+            context.session.flash({ username: 'virk' })
+          }
+          return context.session.commit()
+        })
+        .then(() => {
+          if (req.url === '/') {
+            res.setHeader('Location', '/flash')
+            res.writeHead(301)
+            res.end()
+          } else {
+            res.writeHead(200, { 'content-type': 'application/json' })
+            res.write(JSON.stringify(context.session.get('__flash__', {})))
+            res.end()
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+          res.writeHead(500)
+          res.write(error.message)
+          res.end()
+        })
+    })
+
+    const { body } = await supertest(server).get('/').set('set-cookie', '[adonis-session=20]').redirects(1).expect(200)
+    assert.deepEqual(body, {})
+    assert.deepEqual(request.flashMessages, { username: 'virk' })
+  })
 })

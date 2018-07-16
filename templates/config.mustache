@@ -64,7 +64,8 @@ module.exports = {
   */
   cookie: {
     httpOnly: true,
-    path: '/'
+    path: '/',
+    sameSite: false
   },
 
   /*
@@ -85,7 +86,7 @@ module.exports = {
   | Redis config
   |--------------------------------------------------------------------------
   |
-  | The configuration for the redis driver. 
+  | The configuration for the redis driver.
   |
   */
   redis: {
