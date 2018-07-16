@@ -1,3 +1,13 @@
+<a name="1.0.26"></a>
+## [1.0.26](https://github.com/adonisjs/adonis-session/compare/v1.0.25...v1.0.26) (2018-07-16)
+
+
+### Features
+
+* **flash:** set flash messages on request instance ([e17c167](https://github.com/adonisjs/adonis-session/commit/e17c167)), closes [#4](https://github.com/adonisjs/adonis-session/issues/4)
+
+
+
 <a name="1.0.25"></a>
 ## [1.0.25](https://github.com/adonisjs/adonis-session/compare/v1.0.23...v1.0.25) (2018-04-22)
 
