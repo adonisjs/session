@@ -404,7 +404,7 @@ test.group('Session Store', () => {
     store.put('user.profile.name', 'virk')
     assert.deepEqual(store.toJSON(), {
       username: { d: 'virk', t: 'String' },
-      user: { d: JSON.stringify({ profile: {age: 22, name: 'virk'} }), t: 'Object' }
+      user: { d: JSON.stringify({ profile: { age: 22, name: 'virk' } }), t: 'Object' }
     })
   })
 
