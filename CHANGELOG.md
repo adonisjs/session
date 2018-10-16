@@ -1,3 +1,13 @@
+<a name="1.0.28"></a>
+## [1.0.28](https://github.com/adonisjs/adonis-session/compare/v1.0.27...v1.0.28) (2018-10-16)
+
+
+### Features
+
+* **flash:** use request.original when exists ([961501a](https://github.com/adonisjs/adonis-session/commit/961501a))
+
+
+
 <a name="1.0.27"></a>
 ## [1.0.27](https://github.com/adonisjs/adonis-session/compare/v1.0.26...v1.0.27) (2018-09-27)
 
