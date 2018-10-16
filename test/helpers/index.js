@@ -1,6 +1,7 @@
 'use strict'
 
 const nodeCookie = require('node-cookie')
+const nodeReq = require('node-req')
 const querystring = require('querystring')
 
 module.exports = {
@@ -16,6 +17,9 @@ module.exports = {
   getRequest (req) {
     return {
       request: req,
+      original () {
+        return nodeReq.get(req)
+      },
       cookie: function (key) {
         return nodeCookie.get(req, key)
       }
