@@ -257,8 +257,8 @@ test.group('Session Store', () => {
   test('guard objectId', (assert) => {
     const store = new Store()
     const id = '507f191e810c19729de860ea'
-    const objId = ObjectId(id)
-    assert.deepEqual(store._guardValue(objId), { d: id, t: 'ObjectID' })
+    const objId = new ObjectId(id)
+    assert.deepEqual(store._guardValue(objId), { d: id, t: 'ObjectId' })
   })
 
   test('unguard object', (assert) => {
