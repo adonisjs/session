@@ -162,6 +162,20 @@ class Session {
   }
 
   /**
+   * Returns the request body for flashing data inside
+   * sessions
+   *
+   * @method _requestBody
+   *
+   * @return {Object}
+   *
+   * @private
+   */
+  _requestBody () {
+    return typeof (this._request.original) === 'function' ? this._request.original() : this._request.all()
+  }
+
+  /**
    * Instantiate session object
    *
    * @method instantiate
@@ -285,7 +299,7 @@ class Session {
    */
   flashAll () {
     this._ensureNotFreezed()
-    return this.flash(this._request.all())
+    return this.flash(this._requestBody())
   }
 
   /* istanbul ignore next */
@@ -295,13 +309,13 @@ class Session {
    *
    * @method flashOnly
    *
-   * @param  {...Spread} fields
+   * @param  {Array} fields
    *
    * @chainable
    */
-  flashOnly (...fields) {
+  flashOnly (fields) {
     this._ensureNotFreezed()
-    return this.flash(this._request.only(...fields))
+    return this.flash(_.pick(this._requestBody(), fields))
   }
 
   /* istanbul ignore next */
@@ -311,13 +325,13 @@ class Session {
    *
    * @method flashExcept
    *
-   * @param  {...Spread} fields
+   * @param  {Array} fields
    *
    * @chainable
    */
-  flashExcept (...fields) {
+  flashExcept (fields) {
     this._ensureNotFreezed()
-    return this.flash(this._request.except(...fields))
+    return this.flash(_.omit(this._requestBody(), fields))
   }
 
   /**

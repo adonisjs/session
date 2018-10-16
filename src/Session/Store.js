@@ -32,7 +32,13 @@ const toString = {
   'String' (value) {
     return value
   },
+  /**
+   * To be backward compatible
+   */
   'ObjectID' (value) {
+    return String(value)
+  },
+  'ObjectId' (value) {
     return String(value)
   }
 }
@@ -64,7 +70,13 @@ const toOriginalType = {
   'String' (value) {
     return value
   },
+  /**
+   * To be backward compatible
+   */
   'ObjectID' (value) {
+    return new ObjectId(value)
+  },
+  'ObjectId' (value) {
     return new ObjectId(value)
   }
 }

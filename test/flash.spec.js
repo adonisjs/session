@@ -149,6 +149,105 @@ test.group('Flash Messages', () => {
     const { text } = await supertest(server).get('/').expect(500)
     assert.match(text, /E_INVALID_PARAMETER: Flash data should be an object instead received string/)
   })
+
+  test('flash request original data', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate()
+        .then(() => {
+          session.flashAll()
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
+        .catch(({ message, status }) => {
+          res.writeHead(status || 500)
+          res.write(message)
+          res.end()
+        })
+    })
+
+    const { headers } = await supertest(server).post('/?username=virk').expect(200)
+    assert.deepEqual(helpers.getValueObject(headers['set-cookie'][1]), {
+      __flash__: {
+        t: 'Object',
+        d: JSON.stringify({
+          username: 'virk'
+        })
+      }
+    })
+  })
+
+  test('flash request picked fields data', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate()
+        .then(() => {
+          session.flashOnly(['age'])
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
+        .catch(({ message, status }) => {
+          res.writeHead(status || 500)
+          res.write(message)
+          res.end()
+        })
+    })
+
+    const { headers } = await supertest(server).post('/?username=virk&age=22').expect(200)
+    assert.deepEqual(helpers.getValueObject(headers['set-cookie'][1]), {
+      __flash__: {
+        t: 'Object',
+        d: JSON.stringify({
+          age: '22'
+        })
+      }
+    })
+  })
+
+  test('flash request except picked fields data', async (assert) => {
+    const server = http.createServer((req, res) => {
+      const config = new Config()
+      const cookie = new Cookie(config)
+      cookie.setRequest(helpers.getRequest(req), helpers.getResponse(res))
+      const session = new Session(helpers.getRequest(req), helpers.getResponse(res), cookie, config)
+      session
+        .instantiate()
+        .then(() => {
+          session.flashExcept(['age'])
+          return session.commit()
+        })
+        .then(() => {
+          res.end()
+        })
+        .catch(({ message, status }) => {
+          res.writeHead(status || 500)
+          res.write(message)
+          res.end()
+        })
+    })
+
+    const { headers } = await supertest(server).post('/?username=virk&age=22').expect(200)
+    assert.deepEqual(helpers.getValueObject(headers['set-cookie'][1]), {
+      __flash__: {
+        t: 'Object',
+        d: JSON.stringify({
+          username: 'virk'
+        })
+      }
+    })
+  })
 })
 
 test.group('Flash View Globals', (group) => {
