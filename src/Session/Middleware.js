@@ -86,7 +86,7 @@ class SessionMiddleware {
   }
 
   /**
-   * Initiates the session store in ready only mode
+   * Initiates the session store in read only mode
    *
    * @method wsHandle
    *
