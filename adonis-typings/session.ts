@@ -8,9 +8,15 @@
 */
 
 declare module '@ioc:Adonis/Addons/Session' {
-  import { CookieOptions } from '@poppinss/cookie'
   import { ObjectID } from 'bson'
+  import { IocContract } from '@adonisjs/fold'
+  import { CookieOptions } from '@poppinss/cookie'
+  import { HttpContextContract } from '@poppinss/http-server'
 
+  /**
+   * Session of session config. The end user must be able to
+   * extend the interface and add their own config to it.
+   */
   export interface SessionConfigContract {
     driver: Exclude<
     keyof SessionConfigContract,
@@ -59,12 +65,28 @@ declare module '@ioc:Adonis/Addons/Session' {
     } & { [key: string]: any },
   }
 
+  /**
+   * Shape of a driver that every session driver must have
+   */
   export interface SessionDriverContract {
     read (sessionId: string): Promise<string>
     write (sessionId: string, value: string): Promise<void>
     destroy (sessionId: string): Promise<void>
   }
 
+  /**
+   * The callback to be passed to the `extend` method. It is invoked
+   * for each request (if extended driver is in use).
+   */
+  export type SessionDriverCallback = (
+    container: IocContract,
+    config: SessionConfigContract,
+    ctx: HttpContextContract,
+  ) => SessionDriverContract
+
+  /**
+   * The values allowed by the `session.put` method
+   */
   export type AllowedSessionValues = string
     | boolean
     | number
@@ -72,4 +94,37 @@ declare module '@ioc:Adonis/Addons/Session' {
     | Date
     | Array<any>
     | ObjectID
+
+  /**
+   * Shape of the actual session store
+   */
+  export interface SessionContract {
+    initiated: boolean
+    readonly: boolean
+    fresh: boolean
+    sessionId: string
+    initiate (readonly: boolean): Promise<void>
+    commit (): Promise<void>
+    regenerate (): void
+
+    /**
+     * Store API
+     */
+    put (key: string, value: AllowedSessionValues): void
+    get (key: string, defaultValue?: any): any
+    all (): any
+    forget (key: string): void
+    pull (key: string, defaultValue?: any): any
+    increment (key: string, steps?: number): any
+    decrement (key: string, steps?: number): any
+    clear (): void
+  }
+
+  /**
+   * Session manager shape
+   */
+  export interface SessionManagerContract {
+    create (ctx: HttpContextContract): SessionContract
+    extend (driver: string, callback: CallableFunction): void
+  }
 }

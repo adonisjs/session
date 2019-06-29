@@ -8,8 +8,9 @@
 */
 
 import { ObjectId } from 'bson'
-import { set, unset, get } from 'lodash'
 import * as Typeof from 'type-of-is'
+import { set, unset, get, isNil } from 'lodash'
+import { Exception } from '@poppinss/utils'
 import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
 
 /**
@@ -75,8 +76,9 @@ const toOriginalType = {
 }
 
 /**
- * Store is used to serialize and cast values from the session
- * storage.
+ * Store is used to serialize and cast values for the session storage. We
+ * offload the task of serializing values from the drivers and they always
+ * receive and return a JSON string.
  */
 export class Store {
   private _values: any = {}
@@ -104,7 +106,10 @@ export class Store {
     try {
       const parsed = JSON.parse(value)
       return Object.keys(parsed).reduce((result, key) => {
-        result[key] = this._castValue(parsed[key])
+        const castedValue = this._castValue(parsed[key])
+        if (!isNil(castedValue)) {
+          result[key] = castedValue
+        }
         return result
       }, {})
     } catch (error) {
@@ -120,7 +125,11 @@ export class Store {
   private _serializeValue (value: any): any {
     const type = Typeof.string(value)
     if (!toString[type]) {
-      throw new Error(`${type} data type cannot be saved into session`)
+      throw new Exception(
+        `${type} data type cannot be saved into session`,
+        500,
+        'E_UNALLOWED_SESSION_DATA_TYPE',
+      )
     }
 
     return {
@@ -134,7 +143,11 @@ export class Store {
    */
   private _serialize (): any {
     return Object.keys(this._values).reduce((result, key) => {
-      result[key] = this._serializeValue(this._values[key])
+      const serializedValue = this._serializeValue(this._values[key])
+
+      if (!isNil(serializedValue)) {
+        result[key] = serializedValue
+      }
       return result
     }, {})
   }
@@ -172,8 +185,8 @@ export class Store {
   /**
    * Get value for a given key
    */
-  public get (key: string) {
-    return get(this._values, key)
+  public get (key: string, defaultValue?: any) {
+    return get(this._values, key, defaultValue)
   }
 
   /**

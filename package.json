@@ -2,16 +2,31 @@
   "name": "@adonisjs/session",
   "version": "1.0.28",
   "description": "Session provider for AdonisJs",
+  "main": "build/providers/SessionProvider.js",
+  "files": [
+    "build/src",
+    "build/adonis-typings",
+    "build/providers"
+  ],
+  "typings": "./build/adonis-typings/index.d.ts",
   "dependencies": {
+    "@poppinss/dev-utils": "^1.0.0",
+    "@poppinss/utils": "^1.0.3",
     "@types/bson": "^4.0.0",
     "@types/lodash": "^4.14.135",
     "bson": "^4.0.2",
+    "fs-extra": "^8.1.0",
     "lodash": "^4.17.11",
     "ms": "^2.1.2",
     "type-of-is": "^3.5.1",
     "uuid": "^3.3.2"
   },
+  "peerDependencies": {
+    "adonisjs/core": "2.x.x"
+  },
   "devDependencies": {
+    "@adonisjs/core": "^2.0.3",
+    "@adonisjs/fold": "^6.0.3",
     "@adonisjs/mrm-preset": "^2.0.3",
     "@adonisjs/redis": "^3.0.0",
     "@poppinss/cookie": "^1.0.1",
@@ -30,7 +45,7 @@
     "ts-node": "^8.3.0",
     "tslint": "^5.18.0",
     "tslint-eslint-rules": "^5.4.0",
-    "typescript": "^3.5.2"
+    "typescript": "^3.4.5"
   },
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
@@ -65,12 +80,6 @@
       ".ts"
     ]
   },
-  "main": "build/index.js",
-  "files": [
-    "build/src",
-    "build/index.d.ts",
-    "build/index.js"
-  ],
   "husky": {
     "hooks": {
       "pre-commit": "doctoc README.md --title='## Table of contents' && git add README.md",
