@@ -187,4 +187,36 @@ test.group('Session', (group) => {
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk', age: 22 } })
     assert.isUndefined(MemoryDriver.sessions.get('1234'))
   })
+
+  test('remove session values when the store is empty', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = HttpContext.create('/', {}, req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+
+      const driver = new MemoryDriver()
+      const session = new Session(config, ctx, driver)
+      await session.initiate(false)
+
+      session.forget('user')
+      await session.commit()
+      ctx.response.send('')
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store('')
+    store.set('user.age', 22)
+    MemoryDriver.sessions.set('1234', store.toString())
+
+    const { headers } = await supertest(server)
+      .get('/')
+      .set('cookie', serialize(config.cookieName, '1234', SECRET))
+
+    const cookies = parse(headers['set-cookie'][0].split(';')[0], SECRET)
+    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+
+    assert.isUndefined(MemoryDriver.sessions.get('1234'))
+  })
 })

@@ -225,7 +225,23 @@ export class Session implements SessionContract {
       this.sessionId = uuid.v4()
     }
 
+    /**
+     * Update the cookie value
+     */
     this._ctx.response.cookie(this._config.cookieName, this.sessionId, this._config.cookie!)
+
+    const sessionValue = this._store.toString()
+
+    /**
+     * Delete the session values from the driver when it is empty. This results in
+     * saving lots of space when the sessions are not used but initialized in
+     * an application.
+     */
+    if (sessionValue === '{}') {
+      await this._driver.destroy(this.sessionId)
+      return
+    }
+
     await this._driver.write(this.sessionId, this._store.toString())
   }
 }
