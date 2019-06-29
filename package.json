@@ -10,7 +10,6 @@
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "dependencies": {
-    "@poppinss/dev-utils": "^1.0.0",
     "@poppinss/utils": "^1.0.3",
     "@types/bson": "^4.0.0",
     "@types/lodash": "^4.14.135",
@@ -28,8 +27,8 @@
     "@adonisjs/core": "^2.0.3",
     "@adonisjs/fold": "^6.0.3",
     "@adonisjs/mrm-preset": "^2.0.3",
-    "@adonisjs/redis": "^3.0.0",
     "@poppinss/cookie": "^1.0.1",
+    "@poppinss/dev-utils": "^1.0.0",
     "@poppinss/http-server": "^1.1.5",
     "@poppinss/logger": "^1.1.0",
     "@types/node": "^12.0.10",
