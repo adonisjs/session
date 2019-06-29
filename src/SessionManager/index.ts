@@ -10,6 +10,7 @@
 import { IocContract } from '@adonisjs/fold'
 import { HttpContextContract } from '@poppinss/http-server'
 import { Exception } from '@poppinss/utils'
+import * as ms from 'ms'
 
 import {
   SessionConfigContract,
@@ -32,6 +33,16 @@ export class SessionManager implements SessionManagerContract {
   private _extendedDrivers: Map<string, SessionDriverCallback> = new Map()
 
   constructor (private _container: IocContract, private _config: SessionConfigContract) {
+    /**
+     * Settings the expires value only when `clearWithBrowser` is set
+     * to false.
+     */
+    if (!this._config.clearWithBrowser) {
+      const age = typeof (this._config.age) === 'string' ? ms(this._config.age) : this._config.age
+      this._config.cookie.expires = new Date(Date.now() + age)
+    } else {
+      delete this._config.cookie.expires
+    }
   }
 
   /**

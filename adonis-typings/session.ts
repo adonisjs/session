@@ -18,13 +18,7 @@ declare module '@ioc:Adonis/Addons/Session' {
    * extend the interface and add their own config to it.
    */
   export interface SessionConfigContract {
-    driver: Exclude<
-    keyof SessionConfigContract,
-      'driver' |
-      'cookieName' |
-      'clearWithBrowser' |
-      'age'
-    >,
+    driver: string,
 
     /**
      * Cookie name.
@@ -44,7 +38,7 @@ declare module '@ioc:Adonis/Addons/Session' {
     /**
      * Config for the cookie driver
      */
-    cookie?: Partial<CookieOptions>,
+    cookie: Omit<Partial<CookieOptions>, 'maxAge'>,
 
     /**
      * Config for the file driver

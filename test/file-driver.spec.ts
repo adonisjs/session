@@ -22,6 +22,7 @@ const config: SessionConfigContract = {
   cookieName: 'adonis-session',
   clearWithBrowser: false,
   age: 3000,
+  cookie: {},
   file: {
     location: fs.basePath,
   },
