@@ -24,7 +24,7 @@
     "adonisjs/core": "2.x.x"
   },
   "devDependencies": {
-    "@adonisjs/core": "^2.0.3",
+    "@adonisjs/core": "^2.0.4",
     "@adonisjs/fold": "^6.0.3",
     "@adonisjs/mrm-preset": "^2.0.3",
     "@poppinss/cookie": "^1.0.1",
@@ -36,7 +36,7 @@
     "cz-conventional-changelog": "^2.1.0",
     "del-cli": "^2.0.0",
     "doctoc": "^1.4.0",
-    "husky": "^2.4.1",
+    "husky": "^2.7.0",
     "japa": "^2.0.10",
     "mrm": "^1.2.2",
     "pkg-ok": "^2.3.1",
@@ -44,7 +44,7 @@
     "ts-node": "^8.3.0",
     "tslint": "^5.18.0",
     "tslint-eslint-rules": "^5.4.0",
-    "typescript": "^3.4.5"
+    "typescript": "^3.5.2"
   },
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
