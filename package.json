@@ -12,7 +12,7 @@
   "dependencies": {
     "@poppinss/utils": "^1.0.3",
     "@types/bson": "^4.0.0",
-    "@types/lodash": "^4.14.135",
+    "@types/lodash": "^4.14.136",
     "bson": "^4.0.2",
     "fs-extra": "^8.1.0",
     "lodash": "^4.17.11",
