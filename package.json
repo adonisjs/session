@@ -24,7 +24,7 @@
     "adonisjs/core": "2.x.x"
   },
   "devDependencies": {
-    "@adonisjs/core": "^2.0.4",
+    "@adonisjs/core": "^2.0.5",
     "@adonisjs/fold": "^6.1.0",
     "@adonisjs/mrm-preset": "^2.0.3",
     "@poppinss/cookie": "^1.0.1",
