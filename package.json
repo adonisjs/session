@@ -12,14 +12,14 @@
   "dependencies": {
     "@poppinss/utils": "^1.0.3",
     "@types/bson": "^4.0.0",
-    "@types/lodash": "^4.14.136",
+    "@types/lodash": "^4.14.135",
     "bson": "^4.0.2",
     "fs-extra": "^8.1.0",
     "lodash": "^4.17.13",
     "ms": "^2.1.2",
     "type-of-is": "^3.5.1",
     "uuid": "^3.3.2",
-    "snyk": "^1.189.0"
+    "snyk": "^1.195.1"
   },
   "peerDependencies": {
     "adonisjs/core": "2.x.x"
