@@ -30,7 +30,7 @@
     "@adonisjs/mrm-preset": "^2.0.3",
     "@poppinss/cookie": "^1.0.1",
     "@poppinss/dev-utils": "^1.0.0",
-    "@poppinss/http-server": "^1.1.5",
+    "@poppinss/http-server": "^1.1.6",
     "@poppinss/logger": "^1.1.0",
     "@types/node": "^12.6.8",
     "commitizen": "^3.1.1",
