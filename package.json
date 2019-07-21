@@ -12,13 +12,14 @@
   "dependencies": {
     "@poppinss/utils": "^1.0.3",
     "@types/bson": "^4.0.0",
-    "@types/lodash": "^4.14.135",
+    "@types/lodash": "^4.14.136",
     "bson": "^4.0.2",
     "fs-extra": "^8.1.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.13",
     "ms": "^2.1.2",
     "type-of-is": "^3.5.1",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "snyk": "^1.189.0"
   },
   "peerDependencies": {
     "adonisjs/core": "2.x.x"
@@ -44,7 +45,7 @@
     "ts-node": "^8.3.0",
     "tslint": "^5.18.0",
     "tslint-eslint-rules": "^5.4.0",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.3"
   },
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
@@ -55,7 +56,9 @@
     "compile": "npm run lint && npm run clean && tsc",
     "build": "npm run compile",
     "lint": "tslint --project tsconfig.json",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -93,5 +96,6 @@
   "publishConfig": {
     "tag": "next",
     "access": "public"
-  }
+  },
+  "snyk": true
 }
