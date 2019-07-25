@@ -19,7 +19,7 @@
     "ms": "^2.1.2",
     "type-of-is": "^3.5.1",
     "uuid": "^3.3.2",
-    "snyk": "^1.195.1"
+    "snyk": "^1.199.2"
   },
   "peerDependencies": {
     "adonisjs/core": "2.x.x"
