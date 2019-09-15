@@ -113,6 +113,6 @@ declare module '@ioc:Adonis/Addons/Session' {
    */
   export interface SessionManagerContract {
     create (ctx: HttpContextContract): SessionContract
-    extend (driver: string, callback: CallableFunction): void
+    extend (driver: string, callback: SessionDriverCallback): void
   }
 }
