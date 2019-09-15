@@ -7,7 +7,8 @@
     "build/adonis-typings",
     "build/providers",
     "build/src",
-    "build/templates"
+    "build/templates",
+    "build/instructions.js"
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "dependencies": {
@@ -32,6 +33,7 @@
     "@adonisjs/logger": "^1.1.6",
     "@adonisjs/mrm-preset": "^2.1.0",
     "@adonisjs/redis": "^3.1.2",
+    "@adonisjs/sink": "^2.1.12",
     "@poppinss/cookie": "^1.0.2",
     "@poppinss/dev-utils": "^1.0.1",
     "@types/ms": "^0.7.31",
@@ -102,6 +104,7 @@
     "access": "public"
   },
   "adonisjs": {
+    "instructions": "./build/instructions.js",
     "templates": {
       "config": [
         "session.txt"
