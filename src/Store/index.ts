@@ -7,10 +7,12 @@
 * file that was distributed with this source code.
 */
 
+/// <reference path="../../adonis-typings/index.ts" />
+
 import { ObjectId } from 'bson'
-import * as Typeof from 'type-of-is'
-import { set, unset, get, isNil } from 'lodash'
+import Typeof from 'type-of-is'
 import { Exception } from '@poppinss/utils'
+import { set, unset, get, isNil } from 'lodash'
 import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
 
 /**

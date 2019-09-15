@@ -7,9 +7,11 @@
  * file that was distributed with this source code.
  */
 
-import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+/// <reference path="../../adonis-typings/index.ts" />
+
 import { join } from 'path'
 import { readFile, ensureFile, outputFile, remove } from 'fs-extra'
+import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
 /**
  * File driver to read/write session to filesystem

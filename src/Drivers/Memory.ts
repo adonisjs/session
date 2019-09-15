@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
+/// <reference path="../../adonis-typings/index.ts" />
+
 import { SessionDriverContract } from '@ioc:Adonis/Addons/Session'
 
 /**
- * Memory driver is meant to be used for writing tests. Also tests
- * will have to find the lifecycle in session to clear old
- * sessions.
+ * Memory driver is meant to be used for writing tests.
  */
 export class MemoryDriver implements SessionDriverContract {
   public static sessions: Map<string, string> = new Map()

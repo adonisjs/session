@@ -9,16 +9,14 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import * as test from 'japa'
-import * as supertest from 'supertest'
+import test from 'japa'
+import supertest from 'supertest'
 import { createServer } from 'http'
-import { HttpContext } from '@poppinss/http-server'
 import { serialize, parse } from '@poppinss/cookie'
-import { CookieDriver } from '../src/Drivers/Cookie'
-
 import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
-const SECRET = Math.random().toFixed(36).substring(2, 38)
+import { CookieDriver } from '../src/Drivers/Cookie'
+import { createCtx, SECRET } from '../test-helpers'
 
 const config: SessionConfigContract = {
   driver: 'cookie',
@@ -35,7 +33,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const session = new CookieDriver(config, HttpContext.create('/', {}, req, res))
+      const session = new CookieDriver(config, createCtx(req, res))
       const value = await session.read(sessionId)
       res.write(value)
       res.end()
@@ -49,7 +47,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const session = new CookieDriver(config, HttpContext.create('/', {}, req, res))
+      const session = new CookieDriver(config, createCtx(req, res))
       const value = await session.read(sessionId)
       res.write(value)
       res.end()
@@ -66,7 +64,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = HttpContext.create('/', {}, req, res)
+      const ctx = createCtx(req, res)
       ctx.request['_config'].secret = SECRET
 
       const session = new CookieDriver(config, ctx)
@@ -77,7 +75,7 @@ test.group('Cookie driver', () => {
 
     const { text } = await supertest(server)
       .get('/')
-      .set('cookie', serialize('1234', 'hello-world', SECRET))
+      .set('cookie', serialize('1234', 'hello-world', SECRET)!)
 
     assert.equal(text, 'hello-world')
   })
@@ -86,16 +84,17 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = HttpContext.create('/', {}, req, res)
+      const ctx = createCtx(req, res)
       ctx.response['_config'].secret = SECRET
 
       const session = new CookieDriver(config, ctx)
       session.write(sessionId, 'hello-world')
       ctx.response.send('')
+      ctx.response.finish()
     })
 
-    const { headers } = await supertest(server).get('/')
-    const cookies = parse(headers['set-cookie'][0].split(';')[0], SECRET)
+    const { header } = await supertest(server).get('/')
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
 
     assert.deepEqual(cookies, {
       signedCookies: { 1234: 'hello-world' },

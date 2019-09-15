@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import { IocContract } from '@adonisjs/fold'
-import { HttpContextContract } from '@poppinss/http-server'
+import ms from 'ms'
 import { Exception } from '@poppinss/utils'
-import * as ms from 'ms'
+import { IocContract } from '@adonisjs/fold'
+import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import {
   SessionConfigContract,
@@ -21,6 +21,7 @@ import {
 
 import { Session } from '../Session'
 import { CookieDriver } from '../Drivers/Cookie'
+import { FileDriver } from '../Drivers/File'
 
 /**
  * Session manager exposes the API to create session instance for a given
@@ -33,10 +34,13 @@ export class SessionManager implements SessionManagerContract {
   private _extendedDrivers: Map<string, SessionDriverCallback> = new Map()
 
   constructor (private _container: IocContract, private _config: SessionConfigContract) {
-    /**
-     * Settings the expires value only when `clearWithBrowser` is set
-     * to false.
-     */
+    this._processConfig()
+  }
+
+  /**
+   * Processes the config and decides the `expires` option for the cookie
+   */
+  private _processConfig () {
     if (!this._config.clearWithBrowser) {
       const age = typeof (this._config.age) === 'string' ? ms(this._config.age) : this._config.age
       this._config.cookie.expires = new Date(Date.now() + age)
@@ -54,11 +58,15 @@ export class SessionManager implements SessionManagerContract {
       return new CookieDriver(this._config, ctx)
     }
 
+    if (this._config.driver === 'file') {
+      return new FileDriver(this._config)
+    }
+
     /**
      * Make extended driver when it exists
      */
     if (this._extendedDrivers.has(this._config.driver)) {
-      return this._extendedDrivers.get(this._config.driver)!(this._container, this._config,ctx)
+      return this._extendedDrivers.get(this._config.driver)!(this._container, this._config, ctx)
     }
 
     throw new Exception(
@@ -72,7 +80,7 @@ export class SessionManager implements SessionManagerContract {
    * Creates a new session instance for a given HTTP request
    */
   public create (ctx: HttpContextContract) {
-    return new Session(this._config, ctx, this._createDriver(ctx))
+    return new Session(ctx, this._config, this._createDriver(ctx))
   }
 
   /**

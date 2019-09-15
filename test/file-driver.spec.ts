@@ -9,16 +9,16 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import * as test from 'japa'
+import test from 'japa'
+import { join } from 'path'
 import { Filesystem } from '@poppinss/dev-utils'
 import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
-import { join } from 'path'
 
 import { FileDriver } from '../src/Drivers/File'
 const fs = new Filesystem()
 
 const config: SessionConfigContract = {
-  driver: 'cookie',
+  driver: 'file',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
   age: 3000,
@@ -63,7 +63,7 @@ test.group('File driver', (group) => {
     await session.write(sessionId, 'hello-world')
     await session.destroy(sessionId)
 
-    const exists = await fs.fsExtra.exists(join(fs.basePath, '1234.txt'))
+    const exists = await fs.fsExtra.pathExists(join(fs.basePath, '1234.txt'))
     assert.isFalse(exists)
   })
 })

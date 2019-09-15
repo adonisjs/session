@@ -11,11 +11,10 @@ declare module '@ioc:Adonis/Addons/Session' {
   import { ObjectID } from 'bson'
   import { IocContract } from '@adonisjs/fold'
   import { CookieOptions } from '@poppinss/cookie'
-  import { HttpContextContract } from '@poppinss/http-server'
+  import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
   /**
-   * Session of session config. The end user must be able to
-   * extend the interface and add their own config to it.
+   * Shape of session config.
    */
   export interface SessionConfigContract {
     driver: string,
@@ -36,7 +35,8 @@ declare module '@ioc:Adonis/Addons/Session' {
     age: string | number,
 
     /**
-     * Config for the cookie driver
+     * Config for the cookie driver and also the session id
+     * cookie
      */
     cookie: Omit<Partial<CookieOptions>, 'maxAge'>,
 
@@ -48,15 +48,9 @@ declare module '@ioc:Adonis/Addons/Session' {
     },
 
     /**
-     * Config for the redis driver
+     * The redis connection to use from the `config/redis` file
      */
-    redis?: {
-      host: string,
-      port: number,
-      password?: string,
-      db?: string,
-      keyPrefix?: string,
-    } & { [key: string]: any },
+    redisConnection?: string,
   }
 
   /**

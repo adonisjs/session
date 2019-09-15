@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/session.ts" />
 
-import { HttpContextContract } from '@poppinss/http-server'
+import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
 /**

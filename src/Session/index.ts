@@ -9,14 +9,14 @@
 
 /// <reference path="../../adonis-typings/session.ts" />
 
-import * as uuid from 'uuid'
+import uuid from 'uuid'
 import { Exception } from '@poppinss/utils'
-import { HttpContextContract } from '@poppinss/http-server'
+import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import {
+  SessionContract,
   SessionConfigContract,
   SessionDriverContract,
-  SessionContract,
   AllowedSessionValues,
 } from '@ioc:Adonis/Addons/Session'
 
@@ -64,8 +64,8 @@ export class Session implements SessionContract {
   private _regenerate = false
 
   constructor (
-    private _config: SessionConfigContract,
     private _ctx: HttpContextContract,
+    private _config: SessionConfigContract,
     private _driver: SessionDriverContract,
   ) {}
 
@@ -88,7 +88,7 @@ export class Session implements SessionContract {
   private _ensureIsReady () {
     if (!this.initiated) {
       throw new Exception(
-        'Session store is not initiated yet. Make sure you are using session hook',
+        'Session store is not initiated yet. Make sure you are using the session hook',
         500,
         'E_RUNTIME_EXCEPTION',
       )
@@ -101,6 +101,30 @@ export class Session implements SessionContract {
         'E_RUNTIME_EXCEPTION',
       )
     }
+  }
+
+  /**
+   * Touches the session cookie
+   */
+  private _touchSessionCookie () {
+    this._ctx.response.cookie(this._config.cookieName, this.sessionId, this._config.cookie!)
+  }
+
+  /**
+   * Commits the session value to the store
+   */
+  private async _commitValuesToStore (value: string) {
+    /**
+     * Delete the session values from the driver when it is empty. This results in
+     * saving lots of space when the sessions are not used but initialized in
+     * an application.
+     */
+    if (value === '{}') {
+      await this._driver.destroy(this.sessionId)
+      return
+    }
+
+    await this._driver.write(this.sessionId, value)
   }
 
   /**
@@ -117,8 +141,16 @@ export class Session implements SessionContract {
     this.initiated = true
     this.readonly = readonly
 
-    const contents = await this._driver.read(this.sessionId)
-    this._store = new Store(contents)
+    const action = this._ctx.profiler.profile('session:initiate', { driver: this._config.driver })
+
+    try {
+      const contents = await this._driver.read(this.sessionId)
+      this._store = new Store(contents)
+      action.end()
+    } catch (error) {
+      action.end({ error })
+      throw error
+    }
   }
 
   /**
@@ -217,31 +249,26 @@ export class Session implements SessionContract {
    * Writes value to the underlying session driver.
    */
   public async commit () {
-    /**
-     * Cleanup old session and re-generate new session
-     */
-    if (this._regenerate) {
-      await this._driver.destroy(this.sessionId)
-      this.sessionId = uuid.v4()
+    const action = this._ctx.profiler.profile('session:commit', { driver: this._config.driver })
+
+    try {
+      /**
+       * Cleanup old session and re-generate new session
+       */
+      if (this._regenerate) {
+        await this._driver.destroy(this.sessionId)
+        this.sessionId = uuid.v4()
+      }
+
+      /**
+       * Update the cookie value
+       */
+      this._touchSessionCookie()
+      await this._commitValuesToStore(this._store.toString())
+      action.end()
+    } catch (error) {
+      action.end({ error })
+      throw error
     }
-
-    /**
-     * Update the cookie value
-     */
-    this._ctx.response.cookie(this._config.cookieName, this.sessionId, this._config.cookie!)
-
-    const sessionValue = this._store.toString()
-
-    /**
-     * Delete the session values from the driver when it is empty. This results in
-     * saving lots of space when the sessions are not used but initialized in
-     * an application.
-     */
-    if (sessionValue === '{}') {
-      await this._driver.destroy(this.sessionId)
-      return
-    }
-
-    await this._driver.write(this.sessionId, this._store.toString())
   }
 }

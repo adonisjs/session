@@ -1,6 +1,6 @@
 {
   "extends": "./node_modules/@adonisjs/mrm-preset/_tsconfig",
-  "compilerOptions": {
-    "types": ["@types/node", "@adonisjs/core"]
-  }
+  "files": [
+    "./node_modules/@adonisjs/http-server/build/adonis-typings/index.d.ts"
+  ]
 }

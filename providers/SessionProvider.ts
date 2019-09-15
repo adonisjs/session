@@ -29,12 +29,12 @@ export default class SessionProvider {
      * controller raises exception.
      */
     this.$container.with(['Adonis/Core/Server', 'Adonis/Addons/SessionManager'], (Server, Session) => {
-      Server.before(async (ctx) => {
+      Server.hooks.before(async (ctx) => {
         ctx.session = Session.create(ctx)
         await ctx.session.initiate(false)
       })
 
-      Server.after(async (ctx) => {
+      Server.hooks.after(async (ctx) => {
         await ctx.session.commit()
       })
     })

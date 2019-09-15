@@ -7,8 +7,9 @@
 * file that was distributed with this source code.
 */
 
-import * as test from 'japa'
+import test from 'japa'
 import { ObjectId, ObjectID } from 'bson'
+
 import { Store } from '../src/Store'
 
 test.group('Store', () => {
