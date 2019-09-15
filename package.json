@@ -45,7 +45,7 @@
     "husky": "^3.0.5",
     "japa": "^3.0.1",
     "mrm": "^1.2.2",
-    "pkg-ok": "^2.3.1",
+    "np": "^5.1.0",
     "supertest": "^4.0.2",
     "ts-node": "^8.3.0",
     "tslint": "^5.20.0",
@@ -56,12 +56,13 @@
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
     "test": "node japaFile.js",
-    "prepublishOnly": "npm run build",
     "clean": "del build",
     "compile": "npm run lint && npm run clean && tsc && copyfiles \"templates/*\" build",
     "build": "npm run compile",
     "lint": "tslint --project tsconfig.json",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "release": "np",
+    "version": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -102,10 +103,16 @@
   },
   "adonisjs": {
     "templates": {
-      "config": ["session.txt"]
+      "config": [
+        "session.txt"
+      ]
     },
     "env": {
       "SESSION_DRIVER": "cookie"
     }
+  },
+  "np": {
+    "contents": ".",
+    "anyBranch": false
   }
 }
