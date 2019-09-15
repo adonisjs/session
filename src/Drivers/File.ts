@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { join } from 'path'
+import { Exception } from '@poppinss/utils'
 import { readFile, ensureFile, outputFile, remove } from 'fs-extra'
 import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
@@ -17,7 +18,15 @@ import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons
  * File driver to read/write session to filesystem
  */
 export class FileDriver implements SessionDriverContract {
-  constructor (private _config: SessionConfigContract) {}
+  constructor (private _config: SessionConfigContract) {
+    if (!this._config.file || !this._config.file.location) {
+      throw new Exception(
+        'Missing file.location for session file driver inside config/session file',
+        500,
+        'E_INVALID_SESSION_DRIVER_CONFIG',
+      )
+    }
+  }
 
   /**
    * Returns complete path to the session file
