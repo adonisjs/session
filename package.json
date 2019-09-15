@@ -4,9 +4,10 @@
   "description": "Session provider for AdonisJs",
   "main": "build/providers/SessionProvider.js",
   "files": [
-    "build/src",
     "build/adonis-typings",
-    "build/providers"
+    "build/providers",
+    "build/src",
+    "build/templates"
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "dependencies": {
@@ -37,6 +38,7 @@
     "@types/node": "^12.7.5",
     "@types/supertest": "^2.0.8",
     "commitizen": "^4.0.3",
+    "copyfiles": "^2.1.1",
     "cz-conventional-changelog": "^3.0.2",
     "del-cli": "^3.0.0",
     "doctoc": "^1.4.0",
@@ -56,7 +58,7 @@
     "test": "node japaFile.js",
     "prepublishOnly": "npm run build",
     "clean": "del build",
-    "compile": "npm run lint && npm run clean && tsc",
+    "compile": "npm run lint && npm run clean && tsc && copyfiles \"templates/*\" build",
     "build": "npm run compile",
     "lint": "tslint --project tsconfig.json",
     "commit": "git-cz"
@@ -97,5 +99,13 @@
   "publishConfig": {
     "tag": "next",
     "access": "public"
+  },
+  "adonisjs": {
+    "templates": {
+      "config": ["session.txt"]
+    },
+    "env": {
+      "SESSION_DRIVER": "cookie"
+    }
   }
 }

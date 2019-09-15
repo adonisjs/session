@@ -1,7 +1,10 @@
 {
   "extends": "./node_modules/@adonisjs/mrm-preset/_tsconfig",
-  "files": [
-    "./node_modules/@adonisjs/http-server/build/adonis-typings/index.d.ts",
-    "./node_modules/@adonisjs/redis/build/adonis-typings/redis.d.ts"
-  ]
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "types": [
+      "@types/node",
+      "@adonisjs/core"
+    ]
+  }
 }

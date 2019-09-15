@@ -1,8 +1,15 @@
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
-import Env from '@ioc:Adonis/Core/Env'
+/**
+ * Config source: https://git.io/JeYHp
+ *
+ * Feel free to let us know via PR, if you find something broken in this config
+ * file.
+ */
 
-const config: SessionConfigContract = {
-  driver: 'cookie',
+import Env from '@ioc:Adonis/Core/Env'
+import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+
+const sessionConfig: SessionConfigContract = {
+  driver: Env.get('SESSION_DRIVER', 'cookie') as string,
 
   /*
   |--------------------------------------------------------------------------
@@ -74,13 +81,11 @@ const config: SessionConfigContract = {
   | Redis driver
   |--------------------------------------------------------------------------
   |
-  | The configuration for the redis driver.
+  | The redis connection you want session driver to use. The same connection
+  | must be defined inside `config/redis.ts` file
   |
   */
-  redis: {
-    host: Env.get('REDIS_HOST', '127.0.0.1')! as string,
-    port: Number(Env.get('REDIS_PORT', 6379)!),
-  },
+  redisConnection: 'session',
 }
 
-export default config
+export default sessionConfig
