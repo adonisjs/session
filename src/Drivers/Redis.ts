@@ -45,7 +45,7 @@ export class RedisDriver implements SessionDriverContract {
   /**
    * Write session values to a file
    */
-  public async write (sessionId: string, value: any): Promise<void> {
+  public async write (sessionId: string, value: string): Promise<void> {
     await this._redis
       .connection(this._config.redisConnection!)
       .setex(sessionId, this._ttl, value)

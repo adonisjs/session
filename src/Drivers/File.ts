@@ -48,7 +48,7 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Write session values to a file
    */
-  public async write (sessionId: string, value: any): Promise<void> {
+  public async write (sessionId: string, value: string): Promise<void> {
     await outputFile(this._getFilePath(sessionId), value)
   }
 
@@ -60,7 +60,10 @@ export class FileDriver implements SessionDriverContract {
   }
 
   /**
-   * Touch is noop in file driver
+   * Writes the value by reading it from the store
    */
-  public async touch () {}
+  public async touch (sessionId: string) {
+    const value = await this.read(sessionId)
+    await this.write(sessionId, value)
+  }
 }
