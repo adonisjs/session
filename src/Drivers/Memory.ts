@@ -37,4 +37,6 @@ export class MemoryDriver implements SessionDriverContract {
   public async destroy (sessionId: string): Promise<void> {
     MemoryDriver.sessions.delete(sessionId)
   }
+
+  public async touch () {}
 }

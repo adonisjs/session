@@ -44,4 +44,12 @@ export class CookieDriver implements SessionDriverContract {
   public async destroy (sessionId: string) {
     this._ctx.response.clearCookie(sessionId)
   }
+
+  /**
+   * Updates the cookie with existing cookie values
+   */
+  public async touch (sessionId: string) {
+    const value = await this.read(sessionId)
+    await this.write(sessionId, value)
+  }
 }

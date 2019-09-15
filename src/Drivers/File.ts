@@ -58,4 +58,9 @@ export class FileDriver implements SessionDriverContract {
   public async destroy (sessionId: string): Promise<void> {
     await remove(this._getFilePath(sessionId))
   }
+
+  /**
+   * Touch is noop in file driver
+   */
+  public async touch () {}
 }

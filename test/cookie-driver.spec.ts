@@ -101,4 +101,29 @@ test.group('Cookie driver', () => {
       plainCookies: {},
     })
   })
+
+  test('update cookie with existing value', async (assert) => {
+    const sessionId = '1234'
+
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+
+      const session = new CookieDriver(config, ctx)
+      await session.touch(sessionId)
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server)
+      .get('/')
+      .set('cookie', serialize('1234', 'hello-world', SECRET)!)
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    assert.deepEqual(cookies, {
+      signedCookies: { 1234: 'hello-world' },
+      plainCookies: {},
+    })
+  })
 })

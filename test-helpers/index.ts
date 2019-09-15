@@ -31,3 +31,7 @@ export function createCtx (req: IncomingMessage, res: ServerResponse) {
     res,
   ) as unknown as HttpContextContract
 }
+
+export function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time))
+}

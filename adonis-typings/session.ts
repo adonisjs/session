@@ -60,6 +60,7 @@ declare module '@ioc:Adonis/Addons/Session' {
     read (sessionId: string): Promise<string>
     write (sessionId: string, value: string): Promise<void>
     destroy (sessionId: string): Promise<void>
+    touch (sessionId: string): Promise<void>
   }
 
   /**

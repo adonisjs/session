@@ -57,4 +57,11 @@ export class RedisDriver implements SessionDriverContract {
   public async destroy (sessionId: string): Promise<void> {
     await this._redis.connection(this._config.redisConnection!).del(sessionId)
   }
+
+  /**
+   * Updates the value expiry
+   */
+  public async touch (sessionId: string): Promise<void> {
+    await this._redis.connection(this._config.redisConnection!).expire(sessionId, this._ttl)
+  }
 }

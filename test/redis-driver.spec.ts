@@ -15,6 +15,7 @@ import { Redis } from '@adonisjs/redis/build/src/Redis'
 import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
 import { RedisDriver } from '../src/Drivers/Redis'
+import { sleep } from '../test-helpers'
 
 const config: SessionConfigContract = {
   driver: 'redis',
@@ -89,4 +90,33 @@ test.group('Redis driver', () => {
     contents = await session.read(sessionId)
     assert.equal(contents, '')
   })
+
+  test('update session expiry', async (assert) => {
+    const sessionId = '1234'
+    const redis = new Redis(new Ioc(), {
+      connections: {
+        session: {},
+      },
+    } as any)
+
+    const session = new RedisDriver(config, redis)
+    await session.write(sessionId, 'hello-world')
+
+    await sleep(1000)
+
+    let expiry = await redis.connection('session').ttl('1234')
+    assert.isBelow(expiry, 3000)
+
+    /**
+     * Update expiry
+     */
+    await session.touch(sessionId)
+    expiry = await redis.connection('session').ttl('1234')
+    assert.equal(expiry, 3000)
+
+    const contents = await session.read(sessionId)
+    assert.equal(contents, 'hello-world')
+
+    await session.destroy('1234')
+  }).timeout(0)
 })

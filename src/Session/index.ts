@@ -128,6 +128,13 @@ export class Session implements SessionContract {
   }
 
   /**
+   * Touches the store to make sure the session doesn't expire
+   */
+  private async _touchStore () {
+    await this._driver.touch(this.sessionId)
+  }
+
+  /**
    * Initiating the session by reading it's value from the
    * driver and feeding it to a store.
    *
@@ -264,7 +271,13 @@ export class Session implements SessionContract {
        * Update the cookie value
        */
       this._touchSessionCookie()
-      await this._commitValuesToStore(this._store.toString())
+
+      if (this.initiated) {
+        await this._commitValuesToStore(this._store.toString())
+      } else {
+        await this._touchStore()
+      }
+
       action.end()
     } catch (error) {
       action.end({ error })
