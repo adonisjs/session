@@ -14,8 +14,9 @@ import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
 import { Ioc } from '@adonisjs/fold'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 import { Filesystem } from '@poppinss/dev-utils'
+import { Redis } from '@adonisjs/redis/build/src/Redis'
+import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../src/Store'
 import { SessionManager } from '../src/SessionManager'
@@ -107,5 +108,43 @@ test.group('Session Manager', (group) => {
 
     const sessionContents = await fs.get(`${sessionId}.txt`)
     assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })
+  })
+
+  test('use redis driver to persist session value', async (assert) => {
+    const ioc = new Ioc()
+
+    ioc.singleton('Adonis/Addons/Redis', () => {
+      return new Redis(ioc, {
+        connections: {
+          session: {},
+        },
+      } as any)
+    })
+
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+
+      const customConfig = Object.assign({}, config, {
+        driver: 'redis',
+        redisConnection: 'session',
+      })
+
+      const manager = new SessionManager(ioc, customConfig)
+      const session = manager.create(ctx)
+      await session.initiate(false)
+
+      session.put('user', { username: 'virk' })
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+    const sessionId = header['set-cookie'][0].split(';')[0].split('=')[1]
+
+    const sessionContents = await ioc.use('Adonis/Addons/Redis').connection('session').get(sessionId)
+    assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })
+
+    await ioc.use('Adonis/Addons/Redis').connection('session').del(sessionId)
   })
 })

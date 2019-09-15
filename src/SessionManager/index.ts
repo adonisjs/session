@@ -20,8 +20,6 @@ import {
 } from '@ioc:Adonis/Addons/Session'
 
 import { Session } from '../Session'
-import { CookieDriver } from '../Drivers/Cookie'
-import { FileDriver } from '../Drivers/File'
 
 /**
  * Session manager exposes the API to create session instance for a given
@@ -50,30 +48,59 @@ export class SessionManager implements SessionManagerContract {
   }
 
   /**
+   * Returns an instance of cookie driver
+   */
+  private _createCookieDriver (ctx: HttpContextContract) {
+    const { CookieDriver } = require('../Drivers/Cookie')
+    return new CookieDriver(this._config, ctx)
+  }
+
+  /**
+   * Returns an instance of file driver
+   */
+  private _createFileDriver () {
+    const { FileDriver } = require('../Drivers/File')
+    return new FileDriver(this._config)
+  }
+
+  /**
+   * Returns an instance of redis driver
+   */
+  private _createRedisDriver () {
+    const { RedisDriver } = require('../Drivers/Redis')
+    return new RedisDriver(this._config, this._container.use('Adonis/Addons/Redis'))
+  }
+
+  /**
+   * Creates an instance of extended driver
+   */
+  private _createExtendedDriver (ctx: HttpContextContract) {
+    if (!this._extendedDrivers.has(this._config.driver)) {
+      throw new Exception(
+        `${this._config.driver} is not a valid session driver`,
+        500,
+        'E_INVALID_SESSION_DRIVER',
+      )
+    }
+
+    return this._extendedDrivers.get(this._config.driver)!(this._container, this._config, ctx)
+  }
+
+  /**
    * Creates an instance of driver by looking at the config value `driver`.
    * An hard exception is raised in case of invalid driver name
    */
-  private _createDriver (ctx): SessionDriverContract {
-    if (this._config.driver === 'cookie') {
-      return new CookieDriver(this._config, ctx)
+  private _createDriver (ctx: HttpContextContract): SessionDriverContract {
+    switch (this._config.driver) {
+      case 'cookie':
+        return this._createCookieDriver(ctx)
+      case 'file':
+        return this._createFileDriver()
+      case 'redis':
+        return this._createRedisDriver()
+      default:
+        return this._createExtendedDriver(ctx)
     }
-
-    if (this._config.driver === 'file') {
-      return new FileDriver(this._config)
-    }
-
-    /**
-     * Make extended driver when it exists
-     */
-    if (this._extendedDrivers.has(this._config.driver)) {
-      return this._extendedDrivers.get(this._config.driver)!(this._container, this._config, ctx)
-    }
-
-    throw new Exception(
-      `${this._config.driver} is not a valid session driver`,
-      500,
-      'E_INVALID_SESSION_DRIVER',
-    )
   }
 
   /**
