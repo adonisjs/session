@@ -15,7 +15,9 @@ import supertest from 'supertest'
 import { createServer } from 'http'
 import { Ioc } from '@adonisjs/fold'
 import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { Filesystem } from '@poppinss/dev-utils'
 
+import { Store } from '../src/Store'
 import { SessionManager } from '../src/SessionManager'
 import { createCtx, SECRET } from '../test-helpers'
 
@@ -29,8 +31,14 @@ const config: SessionConfigContract = {
   },
 }
 
-test.group('Session Manager', () => {
-  test('do not set expiry clearWithBrowser is true', async (assert) => {
+const fs = new Filesystem()
+
+test.group('Session Manager', (group) => {
+  group.afterEach(async () => {
+    await fs.cleanup()
+  })
+
+  test('do not set expiry when clearWithBrowser is true', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res)
       ctx.request['_config'].secret = SECRET
@@ -71,5 +79,33 @@ test.group('Session Manager', () => {
 
     const expires = header['set-cookie'][0].split(';')[2].replace('Expires=', '')
     assert.equal(ms(Date.parse(expires) - Date.now()), '2h')
+  })
+
+  test('use file driver to persist session value', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+
+      const customConfig = Object.assign({}, config, {
+        driver: 'file',
+        file: {
+          location: fs.basePath,
+        },
+      })
+
+      const manager = new SessionManager(new Ioc(), customConfig)
+      const session = manager.create(ctx)
+      await session.initiate(false)
+
+      session.put('user', { username: 'virk' })
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+    const sessionId = header['set-cookie'][0].split(';')[0].split('=')[1]
+
+    const sessionContents = await fs.get(`${sessionId}.txt`)
+    assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })
   })
 })
