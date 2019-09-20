@@ -7,8 +7,7 @@
     "build/adonis-typings",
     "build/providers",
     "build/src",
-    "build/templates",
-    "build/instructions.js"
+    "build/templates"
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "dependencies": {
@@ -104,7 +103,6 @@
     "access": "public"
   },
   "adonisjs": {
-    "instructions": "./build/instructions.js",
     "templates": {
       "config": [
         "session.txt"
@@ -112,7 +110,8 @@
     },
     "env": {
       "SESSION_DRIVER": "cookie"
-    }
+    },
+    "types": "@adonisjs/session"
   },
   "np": {
     "contents": ".",
