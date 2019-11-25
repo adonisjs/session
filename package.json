@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/session",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Session provider for AdonisJs",
   "main": "build/providers/SessionProvider.js",
   "files": [
@@ -112,7 +112,9 @@
       "SESSION_DRIVER": "cookie"
     },
     "types": "@adonisjs/session",
-    "providers": ["@adonisjs/session"]
+    "providers": [
+      "@adonisjs/session"
+    ]
   },
   "np": {
     "contents": ".",
