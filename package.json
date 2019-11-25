@@ -22,7 +22,7 @@
     "uuid": "^3.3.3"
   },
   "peerDependencies": {
-    "@adonisjs/core": "2.x.x"
+    "@adonisjs/core": "^2.0.0"
   },
   "devDependencies": {
     "@adonisjs/core": "^2.6.0",
@@ -111,7 +111,8 @@
     "env": {
       "SESSION_DRIVER": "cookie"
     },
-    "types": "@adonisjs/session"
+    "types": "@adonisjs/session",
+    "providers": ["@adonisjs/session"]
   },
   "np": {
     "contents": ".",
