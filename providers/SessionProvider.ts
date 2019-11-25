@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+import { ServerContract } from '@ioc:Adonis/Core/Server'
+import { HttpContextConstructorContract } from '@ioc:Adonis/Core/HttpContext'
 import { SessionManager } from '../src/SessionManager'
 
 /**
@@ -28,9 +30,16 @@ export default class SessionProvider {
      * since Hooks guarantee the `after` execution even when any middleware or
      * controller raises exception.
      */
-    this.$container.with(['Adonis/Core/Server', 'Adonis/Addons/SessionManager'], (Server, Session) => {
+    this.$container.with([
+      'Adonis/Core/Server',
+      'Adonis/Core/HttpContext',
+      'Adonis/Addons/SessionManager',
+    ], (Server: ServerContract, HttpContext: HttpContextConstructorContract, Session: SessionManager) => {
+      HttpContext.getter('session', function session () {
+        return Session.create(this)
+      }, true)
+
       Server.hooks.before(async (ctx) => {
-        ctx.session = Session.create(ctx)
         await ctx.session.initiate(false)
       })
 
