@@ -57,10 +57,10 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Shape of a driver that every session driver must have
    */
   export interface SessionDriverContract {
-    read (sessionId: string): Promise<string>
-    write (sessionId: string, value: string): Promise<void>
-    destroy (sessionId: string): Promise<void>
-    touch (sessionId: string): Promise<void>
+    read (sessionId: string): Promise<string> | string
+    write (sessionId: string, value: string): Promise<void> | void
+    destroy (sessionId: string): Promise<void> | void
+    touch (sessionId: string): Promise<void> | void
   }
 
   /**
@@ -76,13 +76,25 @@ declare module '@ioc:Adonis/Addons/Session' {
   /**
    * The values allowed by the `session.put` method
    */
-  export type AllowedSessionValues = string
-    | boolean
-    | number
-    | object
-    | Date
-    | Array<any>
-    | ObjectID
+  export type AllowedSessionValues =
+  string |
+  boolean |
+  number |
+  object |
+  Date |
+  Array<any> |
+  ObjectID
+
+  /**
+   * Shape of message bag, used for storing flash
+   * messages
+   */
+  export interface MessageBagContract {
+    all (): any
+    get (key: string): any
+    has (key: string, checkForArraysLength?: boolean): boolean
+    update (messages: any): void
+  }
 
   /**
    * Shape of the actual session store
@@ -92,6 +104,7 @@ declare module '@ioc:Adonis/Addons/Session' {
     readonly: boolean
     fresh: boolean
     sessionId: string
+    flashMessages: MessageBagContract,
     initiate (readonly: boolean): Promise<void>
     commit (): Promise<void>
     regenerate (): void
@@ -107,6 +120,14 @@ declare module '@ioc:Adonis/Addons/Session' {
     increment (key: string, steps?: number): any
     decrement (key: string, steps?: number): any
     clear (): void
+
+    /**
+     * Flash messages API
+     */
+    flash (key: string, value: AllowedSessionValues): void
+    flashAll (): void
+    flashOnly (keys: string[]): void
+    flashExcept (keys: string[]): void
   }
 
   /**

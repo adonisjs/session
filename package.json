@@ -15,6 +15,7 @@
     "@types/bson": "^4.0.1",
     "@types/lodash": "^4.14.149",
     "bson": "^4.0.2",
+    "fast-safe-stringify": "^2.0.7",
     "fs-extra": "^8.1.0",
     "lodash": "^4.17.15",
     "ms": "^2.1.2",

@@ -223,3 +223,296 @@ test.group('Session', (group) => {
     assert.isUndefined(MemoryDriver.sessions.get('1234'))
   })
 })
+
+test.group('Session | Flash', (group) => {
+  group.afterEach(() => {
+    MemoryDriver.sessions.clear()
+  })
+
+  test('flash custom messages', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flash('success', 'User created succesfully')
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        success: 'User created succesfully',
+      },
+    })
+  })
+
+  test('flash input values', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+      ctx.request.setInitialBody({ username: 'virk', age: 28 })
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flashAll()
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+        age: 28,
+      },
+    })
+  })
+
+  test('flash selected input values', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+      ctx.request.setInitialBody({
+        username: 'virk',
+        age: 28,
+        profile: {
+          twitterHandle: '@AmanVirk1',
+        },
+      })
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flashOnly(['username', 'profile.twitterHandle'])
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+        profile: {
+          twitterHandle: '@AmanVirk1',
+        },
+      },
+    })
+  })
+
+  test('flash all input values except the defined one\'s', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+      ctx.request.setInitialBody({
+        username: 'virk',
+        age: 28,
+        profile: {
+          twitterHandle: '@AmanVirk1',
+        },
+      })
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flashExcept(['age'])
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+        profile: {
+          twitterHandle: '@AmanVirk1',
+        },
+      },
+    })
+  })
+
+  test('flash selected input values', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+      ctx.request.setInitialBody({
+        username: 'virk',
+        age: 28,
+        profile: {
+          twitterHandle: '@AmanVirk1',
+        },
+      })
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flashOnly(['username', 'profile.twitterHandle'])
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+        profile: {
+          twitterHandle: '@AmanVirk1',
+        },
+      },
+    })
+  })
+
+  test('flash input along with custom messages', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+      ctx.request.setInitialBody({
+        username: 'virk',
+        age: 28,
+      })
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flashExcept(['age'])
+      session.flash('success', 'User created')
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+        success: 'User created',
+      },
+    })
+  })
+
+  test('pull old flash values', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      assert.deepEqual(session.flashMessages.all(), {
+        username: 'virk',
+        success: 'User created',
+      })
+
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store('')
+    store.set('__flash__', {
+      username: 'virk',
+      success: 'User created',
+    })
+
+    MemoryDriver.sessions.set('1234', store.toString())
+
+    const { header } = await supertest(server)
+      .get('/')
+      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+
+    const session = MemoryDriver.sessions.get('1234')!
+    assert.deepEqual(new Store(session).all(), {})
+  })
+
+  test('pull selected old values', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res)
+      ctx.request['_config'].secret = SECRET
+      ctx.response['_config'].secret = SECRET
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      assert.deepEqual(session.flashMessages.get('username'), 'virk')
+
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store('')
+    store.set('__flash__', {
+      username: 'virk',
+      success: 'User created',
+    })
+
+    MemoryDriver.sessions.set('1234', store.toString())
+
+    const { header } = await supertest(server)
+      .get('/')
+      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+
+    const session = MemoryDriver.sessions.get('1234')!
+    assert.deepEqual(new Store(session).all(), {})
+  })
+})

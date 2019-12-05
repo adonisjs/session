@@ -12,6 +12,7 @@
 import uuid from 'uuid'
 import { Exception } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import { MessageBag } from '../MessageBag'
 
 import {
   SessionContract,
@@ -52,6 +53,11 @@ export class Session implements SessionContract {
   public sessionId = this._getSessionId()
 
   /**
+   * A copy of previously set flash messages
+   */
+  public flashMessages = new MessageBag({})
+
+  /**
    * A instance of store with values read from the driver. The store
    * in initiated inside the [[initiate]] method
    */
@@ -63,11 +69,46 @@ export class Session implements SessionContract {
    */
   private _regenerate = false
 
+  /**
+   * A copy of flash messages. The `input` messages
+   * are overwritten when any of the input related
+   * methods are used.
+   *
+   * The `others` object is expanded with each call.
+   */
+  private _flashMessagesStore: {
+    input: any,
+    others: any,
+  } = {
+    input: null,
+    others: null,
+  }
+
+  private _flashMessagesKey = '__flash__'
+
   constructor (
     private _ctx: HttpContextContract,
     private _config: SessionConfigContract,
     private _driver: SessionDriverContract,
   ) {}
+
+  /**
+   * Returns a merged copy of flash messages or null
+   * when nothing is set
+   */
+  private _setFlashMessages (): void {
+    if (
+      this._flashMessagesStore.input === null &&
+      this._flashMessagesStore.others === null
+    ) {
+      return
+    }
+
+    this.put(this._flashMessagesKey, {
+      ...this._flashMessagesStore.input,
+      ...this._flashMessagesStore.others,
+    })
+  }
 
   /**
    * Returns the existing session id or creates one.
@@ -155,6 +196,19 @@ export class Session implements SessionContract {
     try {
       const contents = await this._driver.read(this.sessionId)
       this._store = new Store(contents)
+
+      /**
+       * Pull flash messages set by the last request
+       */
+      this.flashMessages.update(this.pull(this._flashMessagesKey, null))
+
+      /**
+       * Share flash messages with views (only when view property exists)
+       */
+      if (this._ctx['view']) {
+        this._ctx['view'].share({ flashMessages: this.flashMessages })
+      }
+
       action.end()
     } catch (error) {
       action.end({ error })
@@ -219,7 +273,7 @@ export class Session implements SessionContract {
    * method raises an error when underlying value is not
    * a string
    */
-  public increment (key: string, steps: number = 1): any {
+  public increment (key: string, steps: number = 1): void {
     this._ensureIsReady()
 
     const value = this._store.get(key, 0)
@@ -235,7 +289,7 @@ export class Session implements SessionContract {
    * method raises an error when underlying value is not
    * a string
    */
-  public decrement (key: string, steps: number = 1): any {
+  public decrement (key: string, steps: number = 1): void {
     this._ensureIsReady()
 
     const value = this._store.get(key, 0)
@@ -255,10 +309,48 @@ export class Session implements SessionContract {
   }
 
   /**
+   * Add a new flash message
+   */
+  public flash (key: string, value: AllowedSessionValues): void {
+    this._ensureIsReady()
+    if (this._flashMessagesStore.others === null) {
+      this._flashMessagesStore.others = {}
+    }
+
+    this._flashMessagesStore.others[key] = value
+  }
+
+  /**
+   * Flash all form values
+   */
+  public flashAll (): void {
+    this._ensureIsReady()
+    this._flashMessagesStore.input = this._ctx.request.all()
+  }
+
+  /**
+   * Flash all form values except mentioned keys
+   */
+  public flashExcept (keys: string[]): void {
+    this._ensureIsReady()
+    this._flashMessagesStore.input = this._ctx.request.except(keys)
+  }
+
+  /**
+   * Flash only defined keys from the form values
+   */
+  public flashOnly (keys: string[]): void {
+    this._ensureIsReady()
+    this._flashMessagesStore.input = this._ctx.request.only(keys)
+  }
+
+  /**
    * Writes value to the underlying session driver.
    */
   public async commit (): Promise<void> {
-    const action = this._ctx.profiler.profile('session:commit', { driver: this._config.driver })
+    const action = this._ctx.profiler.profile('session:commit', {
+      driver: this._config.driver,
+    })
 
     try {
       /**
@@ -270,11 +362,12 @@ export class Session implements SessionContract {
       }
 
       /**
-       * Update the cookie value
+       * Touch the session cookie to keep it alive.
        */
       this._touchSessionCookie()
 
       if (this.initiated) {
+        this._setFlashMessages()
         await this._commitValuesToStore(this._store.toString())
       } else {
         await this._touchStore()
