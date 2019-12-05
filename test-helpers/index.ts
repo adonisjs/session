@@ -16,7 +16,7 @@ import { HttpContext } from '@adonisjs/http-server/build/standalone'
 
 export const SECRET = Math.random().toFixed(36).substring(2, 38)
 
-export function createCtx (req: IncomingMessage, res: ServerResponse) {
+export function createCtx (req: IncomingMessage, res: ServerResponse): HttpContextContract {
   const logger = new Logger({ enabled: true, level: 'trace', name: 'adonis' })
   const profiler = new Profiler({}).create('')
   const encryption = new Encryption(SECRET)
@@ -32,6 +32,6 @@ export function createCtx (req: IncomingMessage, res: ServerResponse) {
   ) as unknown as HttpContextContract
 }
 
-export function sleep (time) {
+export function sleep (time): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, time))
 }

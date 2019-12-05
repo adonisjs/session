@@ -83,7 +83,7 @@ test.group('Cookie driver', () => {
   test('write cookie value', async (assert) => {
     const sessionId = '1234'
 
-    const server = createServer(async (req, res) => {
+    const server = createServer((req, res) => {
       const ctx = createCtx(req, res)
       ctx.response['_config'].secret = SECRET
 

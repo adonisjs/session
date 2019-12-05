@@ -26,7 +26,7 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Read session value from the cookie
    */
-  public async read (sessionId: string): Promise<string> {
+  public read (sessionId: string): string {
     const cookieValue = this._ctx.request.cookie(sessionId)
     return cookieValue || ''
   }
@@ -34,22 +34,22 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Write session values to the cookie
    */
-  public async write (sessionId: string, value: string): Promise<void> {
+  public write (sessionId: string, value: string): void {
     this._ctx.response.cookie(sessionId, value, this._config.cookie)
   }
 
   /**
    * Removes the session cookie
    */
-  public async destroy (sessionId: string) {
+  public destroy (sessionId: string): void {
     this._ctx.response.clearCookie(sessionId)
   }
 
   /**
    * Updates the cookie with existing cookie values
    */
-  public async touch (sessionId: string) {
-    const value = await this.read(sessionId)
-    await this.write(sessionId, value)
+  public touch (sessionId: string): void {
+    const value = this.read(sessionId)
+    this.write(sessionId, value)
   }
 }

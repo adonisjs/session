@@ -31,7 +31,7 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Returns complete path to the session file
    */
-  private _getFilePath (sessionId: string) {
+  private _getFilePath (sessionId: string): string {
     return join(this._config.file!.location, `${sessionId}.txt`)
   }
 
@@ -62,7 +62,7 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Writes the value by reading it from the store
    */
-  public async touch (sessionId: string) {
+  public async touch (sessionId: string): Promise<void> {
     const value = await this.read(sessionId)
     await this.write(sessionId, value)
   }

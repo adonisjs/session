@@ -17,18 +17,19 @@ import { SessionManager } from '../src/SessionManager'
 export default class SessionProvider {
   constructor (protected $container: any) {}
 
-  public register () {
+  public register (): void {
     this.$container.singleton('Adonis/Addons/SessionManager', () => {
       const Config = this.$container.use('Adonis/Core/Config')
       return new SessionManager(this.$container, Config.get('session'))
     })
   }
 
-  public boot () {
+  public boot (): void {
     /**
-     * Hook session into ctx during request cycle. We make use of hooks over middleware,
-     * since Hooks guarantee the `after` execution even when any middleware or
-     * controller raises exception.
+     * Hook session into ctx during request cycle. We make use of
+     * hooks over middleware, since Hooks guarantee the `after`
+     * execution even when any middleware or controller raises
+     * exception.
      */
     this.$container.with([
       'Adonis/Core/Server',

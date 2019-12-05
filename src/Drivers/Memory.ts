@@ -20,23 +20,23 @@ export class MemoryDriver implements SessionDriverContract {
   /**
    * Read session id value from the memory
    */
-  public async read (sessionId: string): Promise<string> {
+  public read (sessionId: string): string {
     return MemoryDriver.sessions.get(sessionId) || ''
   }
 
   /**
    * Save in memory value for a given session id
    */
-  public async write (sessionId: string, value: string): Promise<void> {
+  public write (sessionId: string, value: string): void {
     MemoryDriver.sessions.set(sessionId, value)
   }
 
   /**
    * Cleanup for a single session
    */
-  public async destroy (sessionId: string): Promise<void> {
+  public destroy (sessionId: string): void {
     MemoryDriver.sessions.delete(sessionId)
   }
 
-  public async touch () {}
+  public touch (): void {}
 }

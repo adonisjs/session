@@ -38,9 +38,12 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Processes the config and decides the `expires` option for the cookie
    */
-  private _processConfig () {
+  private _processConfig (): void {
     if (!this._config.clearWithBrowser) {
-      const age = typeof (this._config.age) === 'string' ? ms(this._config.age) : this._config.age
+      const age = typeof (this._config.age) === 'string'
+        ? ms(this._config.age)
+        : this._config.age
+
       this._config.cookie.expires = new Date(Date.now() + age)
     } else {
       delete this._config.cookie.expires
@@ -50,7 +53,7 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Returns an instance of cookie driver
    */
-  private _createCookieDriver (ctx: HttpContextContract) {
+  private _createCookieDriver (ctx: HttpContextContract): any {
     const { CookieDriver } = require('../Drivers/Cookie')
     return new CookieDriver(this._config, ctx)
   }
@@ -58,7 +61,7 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Returns an instance of file driver
    */
-  private _createFileDriver () {
+  private _createFileDriver (): any {
     const { FileDriver } = require('../Drivers/File')
     return new FileDriver(this._config)
   }
@@ -66,7 +69,7 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Returns an instance of redis driver
    */
-  private _createRedisDriver () {
+  private _createRedisDriver (): any {
     const { RedisDriver } = require('../Drivers/Redis')
     return new RedisDriver(this._config, this._container.use('Adonis/Addons/Redis'))
   }
@@ -74,7 +77,7 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Creates an instance of extended driver
    */
-  private _createExtendedDriver (ctx: HttpContextContract) {
+  private _createExtendedDriver (ctx: HttpContextContract): any {
     if (!this._extendedDrivers.has(this._config.driver)) {
       throw new Exception(
         `${this._config.driver} is not a valid session driver`,
@@ -106,14 +109,14 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Creates a new session instance for a given HTTP request
    */
-  public create (ctx: HttpContextContract) {
+  public create (ctx: HttpContextContract): Session {
     return new Session(ctx, this._config, this._createDriver(ctx))
   }
 
   /**
    * Extend the drivers list by adding a new one.
    */
-  public extend (driver: string, callback: SessionDriverCallback) {
+  public extend (driver: string, callback: SessionDriverCallback): void {
     this._extendedDrivers.set(driver, callback)
   }
 }

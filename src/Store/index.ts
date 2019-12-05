@@ -158,7 +158,7 @@ export class Store {
    * Returns the JSON object version of serialized
    * values
    */
-  public toJSON () {
+  public toJSON (): any {
     return this._serialize()
   }
 
@@ -166,42 +166,42 @@ export class Store {
    * Returns the stringified version of serialized
    * values
    */
-  public toString () {
+  public toString (): string {
     return JSON.stringify(this.toJSON())
   }
 
   /**
    * Set key/value pair
    */
-  public set (key: string, value: AllowedSessionValues) {
+  public set (key: string, value: AllowedSessionValues): void {
     set(this._values, key, value)
   }
 
   /**
    * Get all values
    */
-  public all () {
+  public all (): any {
     return this._values
   }
 
   /**
    * Get value for a given key
    */
-  public get (key: string, defaultValue?: any) {
+  public get (key: string, defaultValue?: any): any {
     return get(this._values, key, defaultValue)
   }
 
   /**
    * Remove key
    */
-  public unset (key: string) {
+  public unset (key: string): void {
     unset(this._values, key)
   }
 
   /**
    * Reset store by clearing it's values.
    */
-  public clear () {
+  public clear (): void {
     this._values = {}
   }
 }

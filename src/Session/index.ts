@@ -85,7 +85,7 @@ export class Session implements SessionContract {
   /**
    * Ensures the session is ready for mutations
    */
-  private _ensureIsReady () {
+  private _ensureIsReady (): void {
     if (!this.initiated) {
       throw new Exception(
         'Session store is not initiated yet. Make sure you are using the session hook',
@@ -106,18 +106,20 @@ export class Session implements SessionContract {
   /**
    * Touches the session cookie
    */
-  private _touchSessionCookie () {
-    this._ctx.response.cookie(this._config.cookieName, this.sessionId, this._config.cookie!)
+  private _touchSessionCookie (): void {
+    this._ctx
+      .response
+      .cookie(this._config.cookieName, this.sessionId, this._config.cookie!)
   }
 
   /**
    * Commits the session value to the store
    */
-  private async _commitValuesToStore (value: string) {
+  private async _commitValuesToStore (value: string): Promise<void> {
     /**
-     * Delete the session values from the driver when it is empty. This results in
-     * saving lots of space when the sessions are not used but initialized in
-     * an application.
+     * Delete the session values from the driver when it is empty. This
+     * results in saving lots of space when the sessions are not used
+     * but initialized in an application.
      */
     if (value === '{}') {
       await this._driver.destroy(this.sessionId)
@@ -130,7 +132,7 @@ export class Session implements SessionContract {
   /**
    * Touches the store to make sure the session doesn't expire
    */
-  private async _touchStore () {
+  private async _touchStore (): Promise<void> {
     await this._driver.touch(this.sessionId)
   }
 
@@ -164,7 +166,7 @@ export class Session implements SessionContract {
    * Re-generates the session id. This can is used to avoid
    * session fixation attacks.
    */
-  public regenerate () {
+  public regenerate (): void {
     this._regenerate = true
   }
 
@@ -206,7 +208,7 @@ export class Session implements SessionContract {
    * by `session.forget`
    */
   public pull (key: string, defaultValue?: any): any {
-    return ((value) => {
+    return ((value): any => {
       this.forget(key)
       return value
     })(this.get(key, defaultValue))
@@ -255,7 +257,7 @@ export class Session implements SessionContract {
   /**
    * Writes value to the underlying session driver.
    */
-  public async commit () {
+  public async commit (): Promise<void> {
     const action = this._ctx.profiler.profile('session:commit', { driver: this._config.driver })
 
     try {
