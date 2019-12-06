@@ -50,7 +50,7 @@ export class Session implements SessionContract {
    * Session id for the given request. A new session id is only
    * generated when the cookie for the session id is missing
    */
-  public sessionId = this._getSessionId()
+  public sessionId = this.getSessionId()
 
   /**
    * A copy of previously set flash messages
@@ -61,13 +61,13 @@ export class Session implements SessionContract {
    * A instance of store with values read from the driver. The store
    * in initiated inside the [[initiate]] method
    */
-  private _store: Store
+  private store: Store
 
   /**
    * Whether or not to re-generate the session id before comitting
    * session values.
    */
-  private _regenerate = false
+  private regenerateSessionId = false
 
   /**
    * A copy of flash messages. The `input` messages
@@ -76,7 +76,7 @@ export class Session implements SessionContract {
    *
    * The `others` object is expanded with each call.
    */
-  private _flashMessagesStore: {
+  private flashMessagesStore: {
     input: any,
     others: any,
   } = {
@@ -84,37 +84,37 @@ export class Session implements SessionContract {
     others: null,
   }
 
-  private _flashMessagesKey = '__flash__'
+  private flashMessagesKey = '__flash__'
 
   constructor (
-    private _ctx: HttpContextContract,
-    private _config: SessionConfigContract,
-    private _driver: SessionDriverContract,
+    private ctx: HttpContextContract,
+    private config: SessionConfigContract,
+    private driver: SessionDriverContract,
   ) {}
 
   /**
    * Returns a merged copy of flash messages or null
    * when nothing is set
    */
-  private _setFlashMessages (): void {
+  private setFlashMessages (): void {
     if (
-      this._flashMessagesStore.input === null &&
-      this._flashMessagesStore.others === null
+      this.flashMessagesStore.input === null &&
+      this.flashMessagesStore.others === null
     ) {
       return
     }
 
-    this.put(this._flashMessagesKey, {
-      ...this._flashMessagesStore.input,
-      ...this._flashMessagesStore.others,
+    this.put(this.flashMessagesKey, {
+      ...this.flashMessagesStore.input,
+      ...this.flashMessagesStore.others,
     })
   }
 
   /**
    * Returns the existing session id or creates one.
    */
-  private _getSessionId (): string {
-    const sessionId = this._ctx.request.cookie(this._config.cookieName)
+  private getSessionId (): string {
+    const sessionId = this.ctx.request.cookie(this.config.cookieName)
     if (sessionId) {
       return sessionId
     }
@@ -126,7 +126,7 @@ export class Session implements SessionContract {
   /**
    * Ensures the session is ready for mutations
    */
-  private _ensureIsReady (): void {
+  private ensureIsReady (): void {
     if (!this.initiated) {
       throw new Exception(
         'Session store is not initiated yet. Make sure you are using the session hook',
@@ -147,34 +147,34 @@ export class Session implements SessionContract {
   /**
    * Touches the session cookie
    */
-  private _touchSessionCookie (): void {
-    this._ctx
+  private touchSessionCookie (): void {
+    this.ctx
       .response
-      .cookie(this._config.cookieName, this.sessionId, this._config.cookie!)
+      .cookie(this.config.cookieName, this.sessionId, this.config.cookie!)
   }
 
   /**
    * Commits the session value to the store
    */
-  private async _commitValuesToStore (value: string): Promise<void> {
+  private async commitValuesToStore (value: string): Promise<void> {
     /**
      * Delete the session values from the driver when it is empty. This
      * results in saving lots of space when the sessions are not used
      * but initialized in an application.
      */
     if (value === '{}') {
-      await this._driver.destroy(this.sessionId)
+      await this.driver.destroy(this.sessionId)
       return
     }
 
-    await this._driver.write(this.sessionId, value)
+    await this.driver.write(this.sessionId, value)
   }
 
   /**
    * Touches the store to make sure the session doesn't expire
    */
-  private async _touchStore (): Promise<void> {
-    await this._driver.touch(this.sessionId)
+  private async touchStore (): Promise<void> {
+    await this.driver.touch(this.sessionId)
   }
 
   /**
@@ -191,22 +191,22 @@ export class Session implements SessionContract {
     this.initiated = true
     this.readonly = readonly
 
-    const action = this._ctx.profiler.profile('session:initiate', { driver: this._config.driver })
+    const action = this.ctx.profiler.profile('session:initiate', { driver: this.config.driver })
 
     try {
-      const contents = await this._driver.read(this.sessionId)
-      this._store = new Store(contents)
+      const contents = await this.driver.read(this.sessionId)
+      this.store = new Store(contents)
 
       /**
        * Pull flash messages set by the last request
        */
-      this.flashMessages.update(this.pull(this._flashMessagesKey, null))
+      this.flashMessages.update(this.pull(this.flashMessagesKey, null))
 
       /**
        * Share flash messages with views (only when view property exists)
        */
-      if (this._ctx['view']) {
-        this._ctx['view'].share({ flashMessages: this.flashMessages })
+      if (this.ctx['view']) {
+        this.ctx['view'].share({ flashMessages: this.flashMessages })
       }
 
       action.end()
@@ -221,15 +221,15 @@ export class Session implements SessionContract {
    * session fixation attacks.
    */
   public regenerate (): void {
-    this._regenerate = true
+    this.regenerateSessionId = true
   }
 
   /**
    * Set/update session value
    */
   public put (key: string, value: AllowedSessionValues): void {
-    this._ensureIsReady()
-    this._store.set(key, value)
+    this.ensureIsReady()
+    this.store.set(key, value)
   }
 
   /**
@@ -237,24 +237,24 @@ export class Session implements SessionContract {
    * when actual value is `undefined`
    */
   public get (key: string, defaultValue?: any): any {
-    this._ensureIsReady()
-    return this._store.get(key, defaultValue)
+    this.ensureIsReady()
+    return this.store.get(key, defaultValue)
   }
 
   /**
    * Returns everything from the session
    */
   public all (): any {
-    this._ensureIsReady()
-    return this._store.all()
+    this.ensureIsReady()
+    return this.store.all()
   }
 
   /**
    * Remove value for a given key from the session
    */
   public forget (key: string): void {
-    this._ensureIsReady()
-    this._store.unset(key)
+    this.ensureIsReady()
+    this.store.unset(key)
   }
 
   /**
@@ -274,14 +274,14 @@ export class Session implements SessionContract {
    * a string
    */
   public increment (key: string, steps: number = 1): void {
-    this._ensureIsReady()
+    this.ensureIsReady()
 
-    const value = this._store.get(key, 0)
+    const value = this.store.get(key, 0)
     if (typeof (value) !== 'number') {
       throw new Exception(`Cannot increment ${key}, since original value is not a number`)
     }
 
-    this._store.set(key, value + steps)
+    this.store.set(key, value + steps)
   }
 
   /**
@@ -290,87 +290,87 @@ export class Session implements SessionContract {
    * a string
    */
   public decrement (key: string, steps: number = 1): void {
-    this._ensureIsReady()
+    this.ensureIsReady()
 
-    const value = this._store.get(key, 0)
+    const value = this.store.get(key, 0)
     if (typeof (value) !== 'number') {
       throw new Exception(`Cannot decrement ${key}, since original value is not a number`)
     }
 
-    this._store.set(key, value - steps)
+    this.store.set(key, value - steps)
   }
 
   /**
    * Remove everything from the session
    */
   public clear (): void {
-    this._ensureIsReady()
-    this._store.clear()
+    this.ensureIsReady()
+    this.store.clear()
   }
 
   /**
    * Add a new flash message
    */
   public flash (key: string, value: AllowedSessionValues): void {
-    this._ensureIsReady()
-    if (this._flashMessagesStore.others === null) {
-      this._flashMessagesStore.others = {}
+    this.ensureIsReady()
+    if (this.flashMessagesStore.others === null) {
+      this.flashMessagesStore.others = {}
     }
 
-    this._flashMessagesStore.others[key] = value
+    this.flashMessagesStore.others[key] = value
   }
 
   /**
    * Flash all form values
    */
   public flashAll (): void {
-    this._ensureIsReady()
-    this._flashMessagesStore.input = this._ctx.request.all()
+    this.ensureIsReady()
+    this.flashMessagesStore.input = this.ctx.request.all()
   }
 
   /**
    * Flash all form values except mentioned keys
    */
   public flashExcept (keys: string[]): void {
-    this._ensureIsReady()
-    this._flashMessagesStore.input = this._ctx.request.except(keys)
+    this.ensureIsReady()
+    this.flashMessagesStore.input = this.ctx.request.except(keys)
   }
 
   /**
    * Flash only defined keys from the form values
    */
   public flashOnly (keys: string[]): void {
-    this._ensureIsReady()
-    this._flashMessagesStore.input = this._ctx.request.only(keys)
+    this.ensureIsReady()
+    this.flashMessagesStore.input = this.ctx.request.only(keys)
   }
 
   /**
    * Writes value to the underlying session driver.
    */
   public async commit (): Promise<void> {
-    const action = this._ctx.profiler.profile('session:commit', {
-      driver: this._config.driver,
+    const action = this.ctx.profiler.profile('session:commit', {
+      driver: this.config.driver,
     })
 
     try {
       /**
        * Cleanup old session and re-generate new session
        */
-      if (this._regenerate) {
-        await this._driver.destroy(this.sessionId)
+      if (this.regenerateSessionId) {
+        await this.driver.destroy(this.sessionId)
         this.sessionId = uuid.v4()
       }
 
       /**
        * Touch the session cookie to keep it alive.
        */
-      this._touchSessionCookie()
+      this.touchSessionCookie()
 
       if (this.initiated) {
-        this._setFlashMessages()
-        await this._commitValuesToStore(this._store.toString())
+        this.setFlashMessages()
+        await this.commitValuesToStore(this.store.toString())
       } else {
-        await this._touchStore()
+        await this.touchStore()
       }
 
       action.end()

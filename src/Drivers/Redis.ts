@@ -18,13 +18,13 @@ import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons
  * File driver to read/write session to filesystem
  */
 export class RedisDriver implements SessionDriverContract {
-  private _ttl: number = typeof (this._config.age) === 'string' ? ms(this._config.age) : this._config.age
+  private _ttl: number = typeof (this.config.age) === 'string' ? ms(this.config.age) : this.config.age
 
   constructor (
-    private _config: SessionConfigContract,
-    private _redis: RedisContract,
+    private config: SessionConfigContract,
+    private redis: RedisContract,
   ) {
-    if (!this._config.redisConnection) {
+    if (!this.config.redisConnection) {
       throw new Exception(
         'Missing redisConnection for session redis driver inside config/session file',
         500,
@@ -38,7 +38,7 @@ export class RedisDriver implements SessionDriverContract {
    * missing.
    */
   public async read (sessionId: string): Promise<string> {
-    const contents = await this._redis.connection(this._config.redisConnection!).get(sessionId)
+    const contents = await this.redis.connection(this.config.redisConnection!).get(sessionId)
     return contents || ''
   }
 
@@ -46,8 +46,8 @@ export class RedisDriver implements SessionDriverContract {
    * Write session values to a file
    */
   public async write (sessionId: string, value: string): Promise<void> {
-    await this._redis
-      .connection(this._config.redisConnection!)
+    await this.redis
+      .connection(this.config.redisConnection!)
       .setex(sessionId, this._ttl, value)
   }
 
@@ -55,13 +55,13 @@ export class RedisDriver implements SessionDriverContract {
    * Cleanup session file by removing it
    */
   public async destroy (sessionId: string): Promise<void> {
-    await this._redis.connection(this._config.redisConnection!).del(sessionId)
+    await this.redis.connection(this.config.redisConnection!).del(sessionId)
   }
 
   /**
    * Updates the value expiry
    */
   public async touch (sessionId: string): Promise<void> {
-    await this._redis.connection(this._config.redisConnection!).expire(sessionId, this._ttl)
+    await this.redis.connection(this.config.redisConnection!).expire(sessionId, this._ttl)
   }
 }

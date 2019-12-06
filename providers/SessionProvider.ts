@@ -36,14 +36,23 @@ export default class SessionProvider {
       'Adonis/Core/HttpContext',
       'Adonis/Addons/SessionManager',
     ], (Server: ServerContract, HttpContext: HttpContextConstructorContract, Session: SessionManager) => {
+      /**
+       * Sharing session with the context
+       */
       HttpContext.getter('session', function session () {
         return Session.create(this)
       }, true)
 
+      /**
+       * Initiate session store
+       */
       Server.hooks.before(async (ctx) => {
         await ctx.session.initiate(false)
       })
 
+      /**
+       * Commit store mutations
+       */
       Server.hooks.after(async (ctx) => {
         await ctx.session.commit()
       })

@@ -83,17 +83,17 @@ const toOriginalType = {
  * receive and return a JSON string.
  */
 export class Store {
-  private _values: any = {}
+  private values: any = {}
 
   constructor (value: string) {
-    this._values = this._cast(value)
+    this.values = this.cast(value)
   }
 
   /**
    * Converts an existing stringified value to it's original
    * value.
    */
-  private _castValue (value: any): any {
+  private castValue (value: any): any {
     if (value && value.d !== undefined && value.t) {
       return toOriginalType[value.t](value.d)
     }
@@ -104,11 +104,11 @@ export class Store {
   /**
    * Cast serialized value string back to it's original shape.
    */
-  private _cast (value: string): any {
+  private cast (value: string): any {
     try {
       const parsed = JSON.parse(value)
       return Object.keys(parsed).reduce((result, key) => {
-        const castedValue = this._castValue(parsed[key])
+        const castedValue = this.castValue(parsed[key])
         if (!isNil(castedValue)) {
           result[key] = castedValue
         }
@@ -124,7 +124,7 @@ export class Store {
    * node contains enough information to convert the values
    * back to their original type.
    */
-  private _serializeValue (value: any): any {
+  private serializeValue (value: any): any {
     const type = Typeof.string(value)
     if (!toString[type]) {
       throw new Exception(
@@ -143,9 +143,9 @@ export class Store {
   /**
    * Serialize the store values
    */
-  private _serialize (): any {
-    return Object.keys(this._values).reduce((result, key) => {
-      const serializedValue = this._serializeValue(this._values[key])
+  private serialize (): any {
+    return Object.keys(this.values).reduce((result, key) => {
+      const serializedValue = this.serializeValue(this.values[key])
 
       if (!isNil(serializedValue)) {
         result[key] = serializedValue
@@ -159,7 +159,7 @@ export class Store {
    * values
    */
   public toJSON (): any {
-    return this._serialize()
+    return this.serialize()
   }
 
   /**
@@ -174,34 +174,34 @@ export class Store {
    * Set key/value pair
    */
   public set (key: string, value: AllowedSessionValues): void {
-    set(this._values, key, value)
+    set(this.values, key, value)
   }
 
   /**
    * Get all values
    */
   public all (): any {
-    return this._values
+    return this.values
   }
 
   /**
    * Get value for a given key
    */
   public get (key: string, defaultValue?: any): any {
-    return get(this._values, key, defaultValue)
+    return get(this.values, key, defaultValue)
   }
 
   /**
    * Remove key
    */
   public unset (key: string): void {
-    unset(this._values, key)
+    unset(this.values, key)
   }
 
   /**
    * Reset store by clearing it's values.
    */
   public clear (): void {
-    this._values = {}
+    this.values = {}
   }
 }

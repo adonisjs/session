@@ -18,8 +18,8 @@ import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons
  * File driver to read/write session to filesystem
  */
 export class FileDriver implements SessionDriverContract {
-  constructor (private _config: SessionConfigContract) {
-    if (!this._config.file || !this._config.file.location) {
+  constructor (private config: SessionConfigContract) {
+    if (!this.config.file || !this.config.file.location) {
       throw new Exception(
         'Missing file.location for session file driver inside config/session file',
         500,
@@ -32,7 +32,7 @@ export class FileDriver implements SessionDriverContract {
    * Returns complete path to the session file
    */
   private _getFilePath (sessionId: string): string {
-    return join(this._config.file!.location, `${sessionId}.txt`)
+    return join(this.config.file!.location, `${sessionId}.txt`)
   }
 
   /**

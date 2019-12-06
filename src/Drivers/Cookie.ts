@@ -19,15 +19,15 @@ import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons
  */
 export class CookieDriver implements SessionDriverContract {
   constructor (
-    private _config: SessionConfigContract,
-    private _ctx: HttpContextContract,
+    private config: SessionConfigContract,
+    private ctx: HttpContextContract,
   ) {}
 
   /**
    * Read session value from the cookie
    */
   public read (sessionId: string): string {
-    const cookieValue = this._ctx.request.cookie(sessionId)
+    const cookieValue = this.ctx.request.cookie(sessionId)
     return cookieValue || ''
   }
 
@@ -35,14 +35,14 @@ export class CookieDriver implements SessionDriverContract {
    * Write session values to the cookie
    */
   public write (sessionId: string, value: string): void {
-    this._ctx.response.cookie(sessionId, value, this._config.cookie)
+    this.ctx.response.cookie(sessionId, value, this.config.cookie)
   }
 
   /**
    * Removes the session cookie
    */
   public destroy (sessionId: string): void {
-    this._ctx.response.clearCookie(sessionId)
+    this.ctx.response.clearCookie(sessionId)
   }
 
   /**
