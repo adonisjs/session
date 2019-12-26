@@ -12,7 +12,6 @@
 import uuid from 'uuid'
 import { Exception } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import { MessageBag } from '../MessageBag'
 
 import {
   SessionContract,
@@ -22,6 +21,7 @@ import {
 } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../Store'
+import { MessageBag } from '../MessageBag'
 
 /**
  * Session class exposes the API to read/write values to the session for
@@ -116,10 +116,12 @@ export class Session implements SessionContract {
   private getSessionId (): string {
     const sessionId = this.ctx.request.cookie(this.config.cookieName)
     if (sessionId) {
+      this.ctx.logger.trace('existing session found')
       return sessionId
     }
 
     this.fresh = true
+    this.ctx.logger.trace('generating new session id')
     return uuid.v4()
   }
 
@@ -148,6 +150,8 @@ export class Session implements SessionContract {
    * Touches the session cookie
    */
   private touchSessionCookie (): void {
+    this.ctx.logger.trace('touching session cookie')
+
     this.ctx
       .response
       .cookie(this.config.cookieName, this.sessionId, this.config.cookie!)
@@ -191,28 +195,29 @@ export class Session implements SessionContract {
     this.initiated = true
     this.readonly = readonly
 
+    /**
+     * Profiling the driver read method
+     */
     const action = this.ctx.profiler.profile('session:initiate', { driver: this.config.driver })
-
     try {
       const contents = await this.driver.read(this.sessionId)
       this.store = new Store(contents)
-
-      /**
-       * Pull flash messages set by the last request
-       */
-      this.flashMessages.update(this.pull(this.flashMessagesKey, null))
-
-      /**
-       * Share flash messages with views (only when view property exists)
-       */
-      if (this.ctx['view']) {
-        this.ctx['view'].share({ flashMessages: this.flashMessages })
-      }
-
       action.end()
     } catch (error) {
       action.end({ error })
       throw error
+    }
+
+    /**
+     * Pull flash messages set by the last request
+     */
+    this.flashMessages.update(this.pull(this.flashMessagesKey, null))
+
+    /**
+     * Share flash messages with views (only when view property exists)
+     */
+    if (this.ctx['view']) {
+      this.ctx['view'].share({ flashMessages: this.flashMessages })
     }
   }
 
@@ -221,6 +226,7 @@ export class Session implements SessionContract {
    * session fixation attacks.
    */
   public regenerate (): void {
+    this.ctx.logger.trace('explicitly re-generating session id')
     this.regenerateSessionId = true
   }
 

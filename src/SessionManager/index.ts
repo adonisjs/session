@@ -93,7 +93,7 @@ export class SessionManager implements SessionManagerContract {
    * Creates an instance of driver by looking at the config value `driver`.
    * An hard exception is raised in case of invalid driver name
    */
-  private _createDriver (ctx: HttpContextContract): SessionDriverContract {
+  private createDriver (ctx: HttpContextContract): SessionDriverContract {
     switch (this.config.driver) {
       case 'cookie':
         return this.createCookieDriver(ctx)
@@ -110,7 +110,7 @@ export class SessionManager implements SessionManagerContract {
    * Creates a new session instance for a given HTTP request
    */
   public create (ctx: HttpContextContract): Session {
-    return new Session(ctx, this.config, this._createDriver(ctx))
+    return new Session(ctx, this.config, this.createDriver(ctx))
   }
 
   /**
