@@ -3,8 +3,7 @@
   "compilerOptions": {
     "skipLibCheck": true,
     "types": [
-      "@types/node",
-      "@adonisjs/core"
+      "@types/node"
     ]
   }
 }
