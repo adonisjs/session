@@ -41,13 +41,15 @@ const providers = [
 ## Maintainers
 [Harminder virk](https://github.com/thetutlage)
 
+
 [circleci-image]: https://img.shields.io/circleci/project/github/adonisjs/adonis-session/master.svg?style=for-the-badge&logo=circleci
 [circleci-url]: https://circleci.com/gh/adonisjs/adonis-session "circleci"
+
+[typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
+[typescript-url]:  "typescript"
 
 [npm-image]: https://img.shields.io/npm/v/@adonisjs/session.svg?style=for-the-badge&logo=npm
 [npm-url]: https://npmjs.org/package/@adonisjs/session "npm"
 
-[typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
-
-[license-url]: LICENSE.md
-[license-image]: https://img.shields.io/aur/license/pac.svg?style=for-the-badge
+[license-image]: https://img.shields.io/npm/l/@adonisjs/session?color=blueviolet&style=for-the-badge
+[license-url]: LICENSE.md "license"
