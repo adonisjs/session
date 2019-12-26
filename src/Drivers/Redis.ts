@@ -18,7 +18,7 @@ import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons
  * File driver to read/write session to filesystem
  */
 export class RedisDriver implements SessionDriverContract {
-  private _ttl: number = typeof (this.config.age) === 'string' ? ms(this.config.age) : this.config.age
+  private ttl: number = typeof (this.config.age) === 'string' ? ms(this.config.age) : this.config.age
 
   constructor (
     private config: SessionConfigContract,
@@ -48,7 +48,7 @@ export class RedisDriver implements SessionDriverContract {
   public async write (sessionId: string, value: string): Promise<void> {
     await this.redis
       .connection(this.config.redisConnection!)
-      .setex(sessionId, this._ttl, value)
+      .setex(sessionId, this.ttl, value)
   }
 
   /**
@@ -62,6 +62,6 @@ export class RedisDriver implements SessionDriverContract {
    * Updates the value expiry
    */
   public async touch (sessionId: string): Promise<void> {
-    await this.redis.connection(this.config.redisConnection!).expire(sessionId, this._ttl)
+    await this.redis.connection(this.config.redisConnection!).expire(sessionId, this.ttl)
   }
 }

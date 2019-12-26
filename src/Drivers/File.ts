@@ -31,7 +31,7 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Returns complete path to the session file
    */
-  private _getFilePath (sessionId: string): string {
+  private getFilePath (sessionId: string): string {
     return join(this.config.file!.location, `${sessionId}.txt`)
   }
 
@@ -40,8 +40,8 @@ export class FileDriver implements SessionDriverContract {
    * missing.
    */
   public async read (sessionId: string): Promise<string> {
-    await ensureFile(this._getFilePath(sessionId))
-    const contents = await readFile(this._getFilePath(sessionId), 'utf-8')
+    await ensureFile(this.getFilePath(sessionId))
+    const contents = await readFile(this.getFilePath(sessionId), 'utf-8')
     return contents.trim()
   }
 
@@ -49,14 +49,14 @@ export class FileDriver implements SessionDriverContract {
    * Write session values to a file
    */
   public async write (sessionId: string, value: string): Promise<void> {
-    await outputFile(this._getFilePath(sessionId), value)
+    await outputFile(this.getFilePath(sessionId), value)
   }
 
   /**
    * Cleanup session file by removing it
    */
   public async destroy (sessionId: string): Promise<void> {
-    await remove(this._getFilePath(sessionId))
+    await remove(this.getFilePath(sessionId))
   }
 
   /**
