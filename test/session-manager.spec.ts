@@ -19,8 +19,8 @@ import { Redis } from '@adonisjs/redis/build/src/Redis'
 import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../src/Store'
+import { createCtx } from '../test-helpers'
 import { SessionManager } from '../src/SessionManager'
-import { createCtx, SECRET } from '../test-helpers'
 
 const config: SessionConfigContract = {
   driver: 'cookie',
@@ -41,9 +41,7 @@ test.group('Session Manager', (group) => {
 
   test('do not set expiry when clearWithBrowser is true', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const manager = new SessionManager(new Ioc(), Object.assign({}, config, { clearWithBrowser: true }))
       const session = manager.create(ctx)
@@ -61,9 +59,7 @@ test.group('Session Manager', (group) => {
 
   test('set expiry when clearWithBrowser is false', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const manager = new SessionManager(new Ioc(), config)
       const session = manager.create(ctx)
@@ -84,7 +80,7 @@ test.group('Session Manager', (group) => {
 
   test('use file driver to persist session value', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
+      const ctx = createCtx(req, res, {})
 
       const customConfig = Object.assign({}, config, {
         driver: 'file',
@@ -122,7 +118,7 @@ test.group('Session Manager', (group) => {
     })
 
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
+      const ctx = createCtx(req, res, {})
 
       const customConfig = Object.assign({}, config, {
         driver: 'redis',

@@ -10,16 +10,32 @@
 import { IncomingMessage, ServerResponse } from 'http'
 import { Logger } from '@adonisjs/logger/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
+import { ServerConfigContract } from '@ioc:Adonis/Core/Server'
 import { Encryption } from '@adonisjs/encryption/build/standalone'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { HttpContext } from '@adonisjs/http-server/build/standalone'
 
 export const SECRET = Math.random().toFixed(36).substring(2, 38)
 
-export function createCtx (req: IncomingMessage, res: ServerResponse): HttpContextContract {
+export function createCtx (
+  req: IncomingMessage,
+  res: ServerResponse,
+  config: Partial<ServerConfigContract>,
+): HttpContextContract {
   const logger = new Logger({ enabled: true, level: 'trace', name: 'adonis' })
   const profiler = new Profiler({}).create('')
   const encryption = new Encryption(SECRET)
+
+  const serverConfig: ServerConfigContract = Object.assign({
+    secret: SECRET,
+    subdomainOffset: 2,
+    generateRequestId: false,
+    allowMethodSpoofing: false,
+    trustProxy: () => true,
+    etag: false,
+    jsonpCallbackName: 'callback',
+    cookie: {},
+  }, config)
 
   return HttpContext.create(
     '/',
@@ -29,6 +45,7 @@ export function createCtx (req: IncomingMessage, res: ServerResponse): HttpConte
     encryption,
     req,
     res,
+    serverConfig,
   ) as unknown as HttpContextContract
 }
 

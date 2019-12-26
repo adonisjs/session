@@ -33,7 +33,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const session = new CookieDriver(config, createCtx(req, res))
+      const session = new CookieDriver(config, createCtx(req, res, {}))
       const value = await session.read(sessionId)
       res.write(value)
       res.end()
@@ -47,7 +47,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const session = new CookieDriver(config, createCtx(req, res))
+      const session = new CookieDriver(config, createCtx(req, res, {}))
       const value = await session.read(sessionId)
       res.write(value)
       res.end()
@@ -64,8 +64,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const session = new CookieDriver(config, ctx)
       const value = await session.read(sessionId)
@@ -84,8 +83,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer((req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const session = new CookieDriver(config, ctx)
       session.write(sessionId, 'hello-world')
@@ -106,9 +104,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const session = new CookieDriver(config, ctx)
       await session.touch(sessionId)

@@ -37,7 +37,7 @@ test.group('Session', (group) => {
 
   test('initiate session with fresh session id when there isn\'t any session', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
+      const ctx = createCtx(req, res, {})
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
       await session.initiate(false)
@@ -52,8 +52,7 @@ test.group('Session', (group) => {
 
   test('initiate session with empty store when session id exists', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -70,9 +69,7 @@ test.group('Session', (group) => {
 
   test('write session values with driver on commit', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -94,9 +91,7 @@ test.group('Session', (group) => {
 
   test('re-use existing session id', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -121,9 +116,7 @@ test.group('Session', (group) => {
 
   test('retain driver existing values', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -155,9 +148,7 @@ test.group('Session', (group) => {
 
   test('regenerate session id when regenerate method is called', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -192,9 +183,7 @@ test.group('Session', (group) => {
 
   test('remove session values when the store is empty', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -231,9 +220,7 @@ test.group('Session | Flash', (group) => {
 
   test('flash custom messages', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -259,9 +246,7 @@ test.group('Session | Flash', (group) => {
 
   test('flash input values', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
       ctx.request.setInitialBody({ username: 'virk', age: 28 })
 
       const driver = new MemoryDriver()
@@ -289,9 +274,7 @@ test.group('Session | Flash', (group) => {
 
   test('flash selected input values', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
       ctx.request.setInitialBody({
         username: 'virk',
         age: 28,
@@ -327,9 +310,7 @@ test.group('Session | Flash', (group) => {
 
   test('flash all input values except the defined one\'s', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
       ctx.request.setInitialBody({
         username: 'virk',
         age: 28,
@@ -365,9 +346,7 @@ test.group('Session | Flash', (group) => {
 
   test('flash selected input values', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
       ctx.request.setInitialBody({
         username: 'virk',
         age: 28,
@@ -403,9 +382,7 @@ test.group('Session | Flash', (group) => {
 
   test('flash input along with custom messages', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
       ctx.request.setInitialBody({
         username: 'virk',
         age: 28,
@@ -437,9 +414,7 @@ test.group('Session | Flash', (group) => {
 
   test('pull old flash values', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)
@@ -479,9 +454,7 @@ test.group('Session | Flash', (group) => {
 
   test('pull selected old values', async (assert) => {
     const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res)
-      ctx.request['_config'].secret = SECRET
-      ctx.response['_config'].secret = SECRET
+      const ctx = createCtx(req, res, {})
 
       const driver = new MemoryDriver()
       const session = new Session(ctx, config, driver)

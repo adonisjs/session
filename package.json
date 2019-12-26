@@ -29,7 +29,7 @@
   "devDependencies": {
     "@adonisjs/encryption": "^1.0.3",
     "@adonisjs/fold": "^6.2.3",
-    "@adonisjs/http-server": "^1.6.0",
+    "@adonisjs/http-server": "^1.6.1",
     "@adonisjs/logger": "^1.1.7",
     "@adonisjs/mrm-preset": "^2.2.3",
     "@adonisjs/profiler": "^1.2.4",
