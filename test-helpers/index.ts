@@ -8,7 +8,7 @@
 */
 
 import { IncomingMessage, ServerResponse } from 'http'
-import { Logger } from '@adonisjs/logger/build/standalone'
+import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { ServerConfigContract } from '@ioc:Adonis/Core/Server'
 import { Encryption } from '@adonisjs/encryption/build/standalone'
@@ -22,7 +22,7 @@ export function createCtx (
   res: ServerResponse,
   config: Partial<ServerConfigContract>,
 ): HttpContextContract {
-  const logger = new Logger({ enabled: true, level: 'trace', name: 'adonis' })
+  const logger = new FakeLogger({ enabled: true, level: 'trace', name: 'adonis' })
   const profiler = new Profiler({}).create('')
   const encryption = new Encryption(SECRET)
 

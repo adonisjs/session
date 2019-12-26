@@ -14,12 +14,13 @@ import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
 import { Ioc } from '@adonisjs/fold'
+import { parse } from '@poppinss/cookie'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Redis } from '@adonisjs/redis/build/src/Redis'
 import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../src/Store'
-import { createCtx } from '../test-helpers'
+import { createCtx, SECRET } from '../test-helpers'
 import { SessionManager } from '../src/SessionManager'
 
 const config: SessionConfigContract = {
@@ -100,9 +101,8 @@ test.group('Session Manager', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const sessionId = header['set-cookie'][0].split(';')[0].split('=')[1]
-
-    const sessionContents = await fs.get(`${sessionId}.txt`)
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const sessionContents = await fs.get(`${cookies.signedCookies['adonis-session']}.txt`)
     assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })
   })
 
@@ -136,7 +136,8 @@ test.group('Session Manager', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const sessionId = header['set-cookie'][0].split(';')[0].split('=')[1]
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const sessionId = cookies.signedCookies['adonis-session']
 
     const sessionContents = await ioc.use('Adonis/Addons/Redis').connection('session').get(sessionId)
     assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })

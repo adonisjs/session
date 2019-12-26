@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/session.ts" />
 
-import uuid from 'uuid'
+import cuid from 'cuid'
 import { Exception } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
@@ -122,7 +122,7 @@ export class Session implements SessionContract {
 
     this.fresh = true
     this.ctx.logger.trace('generating new session id')
-    return uuid.v4()
+    return cuid()
   }
 
   /**
@@ -364,7 +364,7 @@ export class Session implements SessionContract {
        */
       if (this.regenerateSessionId) {
         await this.driver.destroy(this.sessionId)
-        this.sessionId = uuid.v4()
+        this.sessionId = cuid()
       }
 
       /**
