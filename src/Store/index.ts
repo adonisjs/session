@@ -9,10 +9,12 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import get from 'lodash.get'
+import set from 'lodash.set'
 import { ObjectId } from 'bson'
 import Typeof from 'type-of-is'
+import unset from 'lodash.unset'
 import { Exception } from '@poppinss/utils'
-import { set, unset, get, isNil } from 'lodash'
 import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
 
 /**
@@ -109,7 +111,7 @@ export class Store {
       const parsed = JSON.parse(value)
       return Object.keys(parsed).reduce((result, key) => {
         const castedValue = this.castValue(parsed[key])
-        if (!isNil(castedValue)) {
+        if (castedValue !== null && castedValue !== undefined) {
           result[key] = castedValue
         }
         return result
@@ -147,7 +149,7 @@ export class Store {
     return Object.keys(this.values).reduce((result, key) => {
       const serializedValue = this.serializeValue(this.values[key])
 
-      if (!isNil(serializedValue)) {
+      if (serializedValue !== null && serializedValue !== undefined) {
         result[key] = serializedValue
       }
       return result
