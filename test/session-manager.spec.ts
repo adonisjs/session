@@ -9,7 +9,6 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import ms from 'ms'
 import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
@@ -40,7 +39,7 @@ test.group('Session Manager', (group) => {
     await fs.cleanup()
   })
 
-  test('do not set expiry when clearWithBrowser is true', async (assert) => {
+  test('do not set maxAge when clearWithBrowser is true', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
@@ -58,7 +57,7 @@ test.group('Session Manager', (group) => {
     assert.lengthOf(header['set-cookie'][0].split(';'), 2)
   })
 
-  test('set expiry when clearWithBrowser is false', async (assert) => {
+  test('set maxAge when clearWithBrowser is false', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
@@ -75,8 +74,8 @@ test.group('Session Manager', (group) => {
     const { header } = await supertest(server).get('/')
     assert.lengthOf(header['set-cookie'][0].split(';'), 3)
 
-    const expires = header['set-cookie'][0].split(';')[2].replace('Expires=', '')
-    assert.equal(ms(Date.parse(expires) - Date.now()), '2h')
+    const maxAge = header['set-cookie'][0].split(';')[1].replace(' Max-Age=', '')
+    assert.equal(maxAge, '7200')
   })
 
   test('use file driver to persist session value', async (assert) => {

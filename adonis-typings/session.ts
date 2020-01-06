@@ -38,7 +38,7 @@ declare module '@ioc:Adonis/Addons/Session' {
      * Config for the cookie driver and also the session id
      * cookie
      */
-    cookie: Omit<Partial<CookieOptions>, 'maxAge'>,
+    cookie: Omit<Partial<CookieOptions>, 'maxAge' | 'expires'>,
 
     /**
      * Config for the file driver
