@@ -47,14 +47,22 @@ export class SessionManager implements SessionManagerContract {
    * Processes the config and decides the `expires` option for the cookie
    */
   private processConfig (config: SessionConfigContract): void {
-    const processedConfig: SessionManagerConfig = {
-      ...config,
+    /**
+     * Explicitly overwriting `cookie.expires` and `cookie.maxAge` from
+     * the user defined config
+     */
+    const processedConfig: SessionManagerConfig = Object.assign({}, config, {
       cookie: {
         ...config.cookie,
         expires: undefined,
         maxAge: undefined,
       },
-    }
+    })
+
+    /**
+     * Set the max age when `clearWithBrowser = false`. Otherwise cookie
+     * is a session cookie
+     */
     if (!processedConfig.clearWithBrowser) {
       const age = typeof (processedConfig.age) === 'string'
         ? Math.round(ms(processedConfig.age) / 1000)
@@ -62,6 +70,7 @@ export class SessionManager implements SessionManagerContract {
 
       processedConfig.cookie.maxAge = age
     }
+
     this.config = processedConfig
   }
 
