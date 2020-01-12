@@ -21,6 +21,13 @@ import {
 
 import { Session } from '../Session'
 
+type SessionManagerConfig = SessionConfigContract & {
+  cookie: {
+    expires: undefined;
+    maxAge: number | undefined;
+  }
+}
+
 /**
  * Session manager exposes the API to create session instance for a given
  * request and also add new drivers.
@@ -30,24 +37,32 @@ export class SessionManager implements SessionManagerContract {
    * A private map of drivers added from outside in.
    */
   private extendedDrivers: Map<string, SessionDriverCallback> = new Map()
+  private config: SessionManagerConfig
 
-  constructor (private container: IocContract, private config: SessionConfigContract) {
-    this.processConfig()
+  constructor (private container: IocContract, config: SessionConfigContract) {
+    this.processConfig(config)
   }
 
   /**
    * Processes the config and decides the `expires` option for the cookie
    */
-  private processConfig (): void {
-    if (!this.config.clearWithBrowser) {
-      const age = typeof (this.config.age) === 'string'
-        ? ms(this.config.age)
-        : this.config.age
-
-      this.config.cookie.expires = new Date(Date.now() + age)
-    } else {
-      delete this.config.cookie.expires
+  private processConfig (config: SessionConfigContract): void {
+    const processedConfig: SessionManagerConfig = {
+      ...config,
+      cookie: {
+        ...config.cookie,
+        expires: undefined,
+        maxAge: undefined,
+      },
     }
+    if (!processedConfig.clearWithBrowser) {
+      const age = typeof (processedConfig.age) === 'string'
+        ? Math.round(ms(processedConfig.age) / 1000)
+        : processedConfig.age
+
+      processedConfig.cookie.maxAge = age
+    }
+    this.config = processedConfig
   }
 
   /**
