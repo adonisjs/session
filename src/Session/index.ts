@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/session.ts" />
 
 import cuid from 'cuid'
+import { omit, pick } from 'lodash'
 import { Exception } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
@@ -337,7 +338,7 @@ export class Session implements SessionContract {
    */
   public flashAll (): void {
     this.ensureIsReady()
-    this.flashMessagesStore.input = this.ctx.request.all()
+    this.flashMessagesStore.input = this.ctx.request.original()
   }
 
   /**
@@ -345,7 +346,7 @@ export class Session implements SessionContract {
    */
   public flashExcept (keys: string[]): void {
     this.ensureIsReady()
-    this.flashMessagesStore.input = this.ctx.request.except(keys)
+    this.flashMessagesStore.input = omit(this.ctx.request.original(), keys)
   }
 
   /**
@@ -353,7 +354,7 @@ export class Session implements SessionContract {
    */
   public flashOnly (keys: string[]): void {
     this.ensureIsReady()
-    this.flashMessagesStore.input = this.ctx.request.only(keys)
+    this.flashMessagesStore.input = pick(this.ctx.request.original(), keys)
   }
 
   /**

@@ -9,11 +9,9 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import get from 'lodash.get'
-import set from 'lodash.set'
-import { ObjectId } from 'bson'
 import Typeof from 'type-of-is'
-import unset from 'lodash.unset'
+import { ObjectId } from 'bson'
+import { get, set, unset } from 'lodash'
 import { Exception } from '@poppinss/utils'
 import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
 
