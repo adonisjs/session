@@ -317,13 +317,19 @@ export class Session implements SessionContract {
   /**
    * Add a new flash message
    */
-  public flash (key: string, value: AllowedSessionValues): void {
+  public flash (values: { [key: string]: AllowedSessionValues }): void
+  public flash (key: string, value: AllowedSessionValues): void
+  public flash (key: string | { [key: string]: AllowedSessionValues }, value?: AllowedSessionValues): void {
     this.ensureIsReady()
     if (this.flashMessagesStore.others === null) {
       this.flashMessagesStore.others = {}
     }
 
-    this.flashMessagesStore.others[key] = value
+    if (value && typeof (key) === 'string') {
+      this.flashMessagesStore.others[key] = value
+    } else {
+      Object.assign(this.flashMessagesStore.others, key)
+    }
   }
 
   /**

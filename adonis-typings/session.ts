@@ -124,6 +124,7 @@ declare module '@ioc:Adonis/Addons/Session' {
     /**
      * Flash messages API
      */
+    flash (values: { [key: string]: AllowedSessionValues }): void
     flash (key: string, value: AllowedSessionValues): void
     flashAll (): void
     flashOnly (keys: string[]): void

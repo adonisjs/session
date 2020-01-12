@@ -488,4 +488,37 @@ test.group('Session | Flash', (group) => {
     const session = MemoryDriver.sessions.get('1234')!
     assert.deepEqual(new Store(session).all(), {})
   })
+
+  test('flash custom messages as an object', async (assert) => {
+    const server = createServer(async (req, res) => {
+      const ctx = createCtx(req, res, {})
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, config, driver)
+      await session.initiate(false)
+
+      session.flash({
+        'success': 'User created succesfully',
+      })
+      session.flash({
+        'error': 'There was an error too :wink',
+      })
+
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/')
+
+    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        success: 'User created succesfully',
+        error: 'There was an error too :wink',
+      },
+    })
+  })
 })
