@@ -23,7 +23,7 @@ export function createCtx (
   config: Partial<ServerConfigContract>,
 ): HttpContextContract {
   const logger = new FakeLogger({ enabled: true, level: 'trace', name: 'adonis' })
-  const profiler = new Profiler({}).create('')
+  const profiler = new Profiler(__dirname, logger, {}).create('')
   const encryption = new Encryption(SECRET)
 
   const serverConfig: ServerConfigContract = Object.assign({
