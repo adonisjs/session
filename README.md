@@ -1,55 +1,71 @@
-<div align="center">
-  <img src="https://res.cloudinary.com/adonisjs/image/upload/q_100/v1558612869/adonis-readme_zscycu.jpg" width="600px">
-</div>
-
-# Adonis session
-> AdonisJs package to add support for sessions
-
-[![circleci-image]][circleci-url] [![npm-image]][npm-url] ![][typescript-image] [![license-image]][license-url]
-
-This module adds support for Sessions to AdonisJs projects. Under the hood you can choose a session persistance driver from the list of available drivers. 
-
-### [Read official docs to learn more ➞](https://adonisjs.com/guides/sessions)
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of contents
 
-- [Setup](#setup)
-- [Maintainers](#maintainers)
+- [Sessions](#sessions)
+- [
+    
+      Website
+    
+     | 
+    
+      Guides
+    
+     | 
+    
+      Contributing
+    
+  ](#website%0A----%0A------%0A----%0A------guides%0A----%0A------%0A----%0A------contributing)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Setup
-Install the package from npm registry as follows:
+<div align="center">
+  <img src="https://res.cloudinary.com/adonisjs/image/upload/q_100/v1558612869/adonis-readme_zscycu.jpg" width="600px">
+</div>
 
-```sh
-npm i @adonisjs/session
+<br />
 
-# yarn
-yarn add @adonisjs/session
-```
+<div align="center">
+  <h3>Sessions</h3>
+  <p>This package adds support for sessions to AdonisJS</p>
+</div>
 
-and register the provider inside the list of providers
+<br />
 
-```ts
-const providers = [
-  '@adonisjs/session'
-]
-```
+<div align="center">
 
-## Maintainers
-[Harminder virk](https://github.com/thetutlage)
+[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
 
+</div>
 
-[circleci-image]: https://img.shields.io/circleci/project/github/adonisjs/adonis-session/master.svg?style=for-the-badge&logo=circleci
-[circleci-url]: https://circleci.com/gh/adonisjs/adonis-session "circleci"
+<div align="center">
+  <h3>
+    <a href="https://adonisjs.com">
+      Website
+    </a>
+    <span> | </span>
+    <a href="https://adonisjs.com/guides/http/sessions">
+      Guides
+    </a>
+    <span> | </span>
+    <a href="CONTRIBUTING.md">
+      Contributing
+    </a>
+  </h3>
+</div>
+
+<div align="center">
+  <sub>Built with ❤︎ by <a href="https://github.com/thetutlage">Harminder Virk</a>
+</div>
+
+[circleci-image]: https://img.shields.io/circleci/build/github/adonisjs/session/master.svg?style=for-the-badge&logo=circleci
+[circleci-url]: https://circleci.com/gh/adonisjs/session "circleci"
 
 [typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
 [typescript-url]:  "typescript"
 
-[npm-image]: https://img.shields.io/npm/v/@adonisjs/session.svg?style=for-the-badge&logo=npm
-[npm-url]: https://npmjs.org/package/@adonisjs/session "npm"
+[npm-image]: https://img.shields.io/npm/v/@adonisjs/session/alpha.svg?style=for-the-badge&logo=npm
+[npm-url]: https://www.npmjs.com/package/@adonisjs/session/v/alpha "npm"
 
 [license-image]: https://img.shields.io/npm/l/@adonisjs/session?color=blueviolet&style=for-the-badge
 [license-url]: LICENSE.md "license"
