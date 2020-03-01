@@ -22,20 +22,17 @@
     "type-of-is": "^3.5.1"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^2.0.0"
+    "@adonisjs/core": ">=5.0.0-preview"
   },
   "devDependencies": {
-    "@adonisjs/encryption": "^1.0.4",
+    "@adonisjs/core": "^5.0.0-preview.1",
     "@adonisjs/fold": "^6.3.3",
-    "@adonisjs/http-server": "^1.8.0",
-    "@adonisjs/logger": "^1.1.8",
     "@adonisjs/mrm-preset": "^2.2.4",
-    "@adonisjs/profiler": "^2.0.0",
     "@adonisjs/redis": "^3.2.0",
     "@poppinss/cookie": "^1.0.8",
     "@poppinss/dev-utils": "^1.0.4",
     "@types/ms": "^0.7.31",
-    "@types/node": "^13.7.6",
+    "@types/node": "^13.7.7",
     "@types/supertest": "^2.0.8",
     "commitizen": "^4.0.3",
     "copyfiles": "^2.2.0",
@@ -46,11 +43,11 @@
     "eslint-plugin-adonis": "^1.0.8",
     "husky": "^4.2.3",
     "japa": "^3.0.1",
-    "mrm": "^2.0.4",
+    "mrm": "^2.1.0",
     "np": "^5.2.1",
     "supertest": "^4.0.2",
     "ts-node": "^8.6.2",
-    "typescript": "^3.8.2"
+    "typescript": "^3.8.3"
   },
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
