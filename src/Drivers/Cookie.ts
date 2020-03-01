@@ -1,5 +1,5 @@
 /*
-* @adonisjs/redis
+* @adonisjs/session
 *
 * (c) Harminder Virk <virk@adonisjs.com>
 *

@@ -162,6 +162,8 @@ export class Session implements SessionContract {
    * Commits the session value to the store
    */
   private async commitValuesToStore (value: string): Promise<void> {
+    this.ctx.logger.trace('persist session value to the store')
+
     /**
      * Delete the session values from the driver when it is empty. This
      * results in saving lots of space when the sessions are not used
@@ -179,6 +181,7 @@ export class Session implements SessionContract {
    * Touches the store to make sure the session doesn't expire
    */
   private async touchStore (): Promise<void> {
+    this.ctx.logger.trace('touching session store')
     await this.driver.touch(this.sessionId)
   }
 
