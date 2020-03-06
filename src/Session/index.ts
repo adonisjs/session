@@ -218,10 +218,17 @@ export class Session implements SessionContract {
     this.flashMessages.update(this.pull(this.flashMessagesKey, null))
 
     /**
-     * Share flash messages with views (only when view property exists)
+     * Share flash messages & read only session's functions with views
+     * (only when view property exists)
      */
     if (this.ctx['view']) {
-      this.ctx['view'].share({ flashMessages: this.flashMessages })
+      this.ctx['view'].share({
+        flashMessages: this.flashMessages,
+        session: {
+          get: this.get.bind(this),
+          all: this.all.bind(this),
+        },
+      })
     }
   }
 
