@@ -17,7 +17,7 @@
     "ms": "^2.1.2"
   },
   "peerDependencies": {
-    "@adonisjs/core": ">=5.0.0-preview"
+    "@adonisjs/core": "^5.0.0-preview-rc"
   },
   "devDependencies": {
     "@adonisjs/core": "^5.0.0-preview-rc-1",
