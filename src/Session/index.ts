@@ -114,7 +114,7 @@ export class Session implements SessionContract {
    * Returns the existing session id or creates one.
    */
   private getSessionId (): string {
-    const sessionId = this.ctx.request.encryptedCookie(this.config.cookieName)
+    const sessionId = this.ctx.request.cookie(this.config.cookieName)
     if (sessionId) {
       this.ctx.logger.trace('existing session found')
       return sessionId
@@ -151,10 +151,7 @@ export class Session implements SessionContract {
    */
   private touchSessionCookie (): void {
     this.ctx.logger.trace('touching session cookie')
-
-    this.ctx
-      .response
-      .encryptedCookie(this.config.cookieName, this.sessionId, this.config.cookie!)
+    this.ctx.response.cookie(this.config.cookieName, this.sessionId, this.config.cookie!)
   }
 
   /**
