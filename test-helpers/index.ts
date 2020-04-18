@@ -8,11 +8,12 @@
 */
 
 import { IncomingMessage, ServerResponse } from 'http'
-import { FakeLogger } from '@adonisjs/logger/build/standalone'
-import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { ServerConfig } from '@ioc:Adonis/Core/Server'
-import { Encryption } from '@adonisjs/encryption/build/standalone'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
+import { Profiler } from '@adonisjs/profiler/build/standalone'
+import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import { Encryption } from '@adonisjs/encryption/build/standalone'
 import { HttpContext } from '@adonisjs/http-server/build/standalone'
 
 export const SECRET = Math.random().toFixed(36).substring(2, 38)
@@ -20,33 +21,85 @@ export const encryption = new Encryption({ secret: SECRET })
 export const logger = new FakeLogger({ enabled: true, level: 'trace', name: 'adonis' })
 export const profiler = new Profiler(__dirname, logger, {})
 
+/**
+ * Session default config
+ */
+export const sessionConfig: SessionConfig = {
+  driver: 'cookie',
+  cookieName: 'adonis-session',
+  clearWithBrowser: false,
+  age: 3000,
+  cookie: {
+    path: '/',
+  },
+}
+
+/**
+ * Default server config
+ */
+const defaultServerConfig = {
+  subdomainOffset: 2,
+  generateRequestId: false,
+  allowMethodSpoofing: false,
+  trustProxy: () => true,
+  etag: false,
+  jsonpCallbackName: 'callback',
+  cookie: {},
+}
+
+/**
+ * Returns HTTP context
+ */
 export function createCtx (
   req: IncomingMessage,
   res: ServerResponse,
   config: Partial<ServerConfig>,
 ): HttpContextContract {
-  const serverConfig: ServerConfig = Object.assign({
-    subdomainOffset: 2,
-    generateRequestId: false,
-    allowMethodSpoofing: false,
-    trustProxy: () => true,
-    etag: false,
-    jsonpCallbackName: 'callback',
-    cookie: {},
-  }, config)
-
-  return HttpContext.create(
-    '/',
-    {},
-    logger,
-    profiler.create('http:request'),
-    encryption,
-    req,
-    res,
-    serverConfig,
-  ) as unknown as HttpContextContract
+  const profilerRow = profiler.create('http:request')
+  const serverConfig = Object.assign(defaultServerConfig, config)
+  return HttpContext
+    .create('/', {}, logger, profilerRow, encryption, req, res, serverConfig) as unknown as HttpContextContract
 }
 
+/**
+ * Sleep for a while
+ */
 export function sleep (time: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, time))
+}
+
+/**
+ * Signs value to be set as cookie header
+ */
+export function signCookie (value: any, name: string) {
+  return `${name}=s:${encryption.verifier.sign(value, undefined, name)}`
+}
+
+/**
+ * Encrypt value to be set as cookie header
+ */
+export function encryptCookie (value: any, name: string) {
+  return `${name}=e:${encryption.encrypt(value, undefined, name)}`
+}
+
+/**
+ * Decrypt cookie
+ */
+export function decryptCookie (header: any, name: string) {
+  const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+    .replace(`${name}=`, '')
+    .slice(2)
+
+  return encryption.decrypt(cookieValue, name)
+}
+
+/**
+ * Unsign cookie
+ */
+export function unsignCookie (header: any, name: string) {
+  const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+    .replace(`${name}=`, '')
+    .slice(2)
+
+  return encryption.verifier.unsign(cookieValue, name)
 }

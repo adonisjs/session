@@ -12,19 +12,11 @@
 import test from 'japa'
 import { Ioc } from '@adonisjs/fold'
 import { Redis } from '@adonisjs/redis/build/src/Redis'
-import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { RedisDriver } from '../src/Drivers/Redis'
-import { sleep } from '../test-helpers'
+import { sleep, sessionConfig } from '../test-helpers'
 
-const config: SessionConfig = {
-  driver: 'redis',
-  cookieName: 'adonis-session',
-  clearWithBrowser: false,
-  age: 3000,
-  cookie: {},
-  redisConnection: 'session',
-}
+const config = Object.assign({}, sessionConfig, { driver: 'redis', redisConnection: 'session' })
 
 test.group('Redis driver', () => {
   test('return null when value is missing', async (assert) => {

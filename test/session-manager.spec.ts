@@ -16,21 +16,10 @@ import { Ioc } from '@adonisjs/fold'
 import { MessageBuilder } from '@poppinss/utils'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Redis } from '@adonisjs/redis/build/src/Redis'
-import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../src/Store'
-import { createCtx, encryption } from '../test-helpers'
 import { SessionManager } from '../src/SessionManager'
-
-const config: SessionConfig = {
-  driver: 'cookie',
-  cookieName: 'adonis-session',
-  clearWithBrowser: false,
-  age: '2h',
-  cookie: {
-    path: '/',
-  },
-}
+import { createCtx, sessionConfig, unsignCookie } from '../test-helpers'
 
 const fs = new Filesystem()
 
@@ -43,7 +32,10 @@ test.group('Session Manager', (group) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const manager = new SessionManager(new Ioc(), Object.assign({}, config, { clearWithBrowser: true }))
+      const manager = new SessionManager(
+        new Ioc(),
+        Object.assign({}, sessionConfig, { clearWithBrowser: true }),
+      )
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -61,7 +53,7 @@ test.group('Session Manager', (group) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const manager = new SessionManager(new Ioc(), config)
+      const manager = new SessionManager(new Ioc(), sessionConfig)
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -75,14 +67,14 @@ test.group('Session Manager', (group) => {
     assert.lengthOf(header['set-cookie'][0].split(';'), 3)
 
     const maxAge = header['set-cookie'][0].split(';')[1].replace(' Max-Age=', '')
-    assert.equal(maxAge, '7200')
+    assert.equal(maxAge, '3000')
   })
 
   test('use file driver to persist session value', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const customConfig = Object.assign({}, config, {
+      const customConfig = Object.assign({}, sessionConfig, {
         driver: 'file',
         file: {
           location: fs.basePath,
@@ -100,11 +92,8 @@ test.group('Session Manager', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
-      .replace('adonis-session=', '')
-      .slice(2)
 
-    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    const sessionId = unsignCookie(header, sessionConfig.cookieName)
     const sessionContents = await fs.get(`${sessionId}.txt`)
     const sessionValues = new MessageBuilder().verify(sessionContents, sessionId)
     assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
@@ -124,7 +113,7 @@ test.group('Session Manager', (group) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const customConfig = Object.assign({}, config, {
+      const customConfig = Object.assign({}, sessionConfig, {
         driver: 'redis',
         redisConnection: 'session',
       })
@@ -140,11 +129,7 @@ test.group('Session Manager', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
-      .replace('adonis-session=', '')
-      .slice(2)
-
-    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    const sessionId = unsignCookie(header, sessionConfig.cookieName)
     const sessionContents = await ioc.use('Adonis/Addons/Redis').connection('session').get(sessionId)
     const sessionValues = new MessageBuilder().verify(sessionContents, sessionId)
     assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })

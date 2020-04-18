@@ -12,20 +12,9 @@
 import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
-import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { CookieDriver } from '../src/Drivers/Cookie'
-import { createCtx, encryption } from '../test-helpers'
-
-const config: SessionConfig = {
-  driver: 'cookie',
-  cookieName: 'adonis-session',
-  clearWithBrowser: false,
-  age: 3000,
-  cookie: {
-    path: '/',
-  },
-}
+import { createCtx, encryptCookie, decryptCookie, sessionConfig } from '../test-helpers'
 
 test.group('Cookie driver', () => {
   test('return null object when cookie is missing', async (assert) => {
@@ -33,7 +22,7 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const session = new CookieDriver(config, createCtx(req, res, {}))
+      const session = new CookieDriver(sessionConfig, createCtx(req, res, {}))
       const value = session.read(sessionId)
       assert.isNull(value)
       res.end()
@@ -47,15 +36,13 @@ test.group('Cookie driver', () => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const session = new CookieDriver(config, createCtx(req, res, {}))
+      const session = new CookieDriver(sessionConfig, createCtx(req, res, {}))
       const value = session.read(sessionId)
       assert.isNull(value)
       res.end()
     })
 
-    await supertest(server)
-      .get('/')
-      .set('cookie', '1234=hello-world')
+    await supertest(server).get('/').set('cookie', '1234=hello-world')
   })
 
   test('return cookie values as an object', async (assert) => {
@@ -64,17 +51,16 @@ test.group('Cookie driver', () => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const session = new CookieDriver(config, ctx)
+      const session = new CookieDriver(sessionConfig, ctx)
       const value = session.read(sessionId)
       res.writeHead(200, { 'content-type': 'application/json' })
       res.write(JSON.stringify(value))
       res.end()
     })
 
-    const message = encryption.encrypt({ message: 'hello-world' }, undefined, sessionId)
     const { body } = await supertest(server)
       .get('/')
-      .set('cookie', `${sessionId}=e:${message}`)
+      .set('cookie', encryptCookie({ message: 'hello-world' }, sessionId))
 
     assert.deepEqual(body, { message: 'hello-world' })
   })
@@ -85,18 +71,14 @@ test.group('Cookie driver', () => {
     const server = createServer((req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const session = new CookieDriver(config, ctx)
+      const session = new CookieDriver(sessionConfig, ctx)
       session.write(sessionId, { message: 'hello-world' })
       ctx.response.send('')
       ctx.response.finish()
     })
 
     const { header } = await supertest(server).get('/')
-    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
-      .replace(`${sessionId}=`, '')
-      .slice(2)
-
-    assert.deepEqual(encryption.decrypt(cookieValue, sessionId), { message: 'hello-world' })
+    assert.deepEqual(decryptCookie(header, sessionId), { message: 'hello-world' })
   })
 
   test('update cookie with existing value', async (assert) => {
@@ -105,21 +87,16 @@ test.group('Cookie driver', () => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
-      const session = new CookieDriver(config, ctx)
+      const session = new CookieDriver(sessionConfig, ctx)
       session.touch(sessionId)
       ctx.response.send('')
       ctx.response.finish()
     })
 
-    const message = encryption.encrypt({ message: 'hello-world' }, undefined, sessionId)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', `${sessionId}=e:${message}`)
+      .set('cookie', encryptCookie({ message: 'hello-world' }, sessionId))
 
-    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
-      .replace(`${sessionId}=`, '')
-      .slice(2)
-
-    assert.deepEqual(encryption.decrypt(cookieValue, sessionId), { message: 'hello-world' })
+    assert.deepEqual(decryptCookie(header, sessionId), { message: 'hello-world' })
   })
 })

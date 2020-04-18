@@ -12,23 +12,17 @@
 import test from 'japa'
 import { join } from 'path'
 import { Filesystem } from '@poppinss/dev-utils'
-import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { FileDriver } from '../src/Drivers/File'
-import { sleep } from '../test-helpers'
+import { sleep, sessionConfig } from '../test-helpers'
 
 const fs = new Filesystem()
-
-const config: SessionConfig = {
+const config = Object.assign({}, sessionConfig, {
   driver: 'file',
-  cookieName: 'adonis-session',
-  clearWithBrowser: false,
-  age: 3000,
-  cookie: {},
   file: {
     location: fs.basePath,
   },
-}
+})
 
 test.group('File driver', (group) => {
   group.afterEach(async () => {
