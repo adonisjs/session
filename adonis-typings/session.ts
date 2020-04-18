@@ -8,15 +8,14 @@
 */
 
 declare module '@ioc:Adonis/Addons/Session' {
-  import { ObjectID } from 'bson'
   import { IocContract } from '@adonisjs/fold'
-  import { CookieOptions } from '@poppinss/cookie'
+  import { CookieOptions } from '@ioc:Adonis/Core/Response'
   import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
   /**
    * Shape of session config.
    */
-  export interface SessionConfigContract {
+  export interface SessionConfig {
     driver: string,
 
     /**
@@ -57,8 +56,8 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Shape of a driver that every session driver must have
    */
   export interface SessionDriverContract {
-    read (sessionId: string): Promise<string> | string
-    write (sessionId: string, value: string): Promise<void> | void
+    read (sessionId: string): Promise<{ [key: string]: any } | null> | { [key: string]: any } | null
+    write (sessionId: string, values: { [key: string]: any }): Promise<void> | void
     destroy (sessionId: string): Promise<void> | void
     touch (sessionId: string): Promise<void> | void
   }
@@ -67,9 +66,9 @@ declare module '@ioc:Adonis/Addons/Session' {
    * The callback to be passed to the `extend` method. It is invoked
    * for each request (if extended driver is in use).
    */
-  export type SessionDriverCallback = (
+  export type ExtendCallback = (
     container: IocContract,
-    config: SessionConfigContract,
+    config: SessionConfig,
     ctx: HttpContextContract,
   ) => SessionDriverContract
 
@@ -82,8 +81,7 @@ declare module '@ioc:Adonis/Addons/Session' {
   number |
   object |
   Date |
-  Array<any> |
-  ObjectID
+  Array<any>
 
   /**
    * Shape of message bag, used for storing flash
@@ -136,6 +134,6 @@ declare module '@ioc:Adonis/Addons/Session' {
    */
   export interface SessionManagerContract {
     create (ctx: HttpContextContract): SessionContract
-    extend (driver: string, callback: SessionDriverCallback): void
+    extend (driver: string, callback: ExtendCallback): void
   }
 }

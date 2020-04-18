@@ -13,16 +13,16 @@ import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
 import { Ioc } from '@adonisjs/fold'
-import { parse } from '@poppinss/cookie'
+import { MessageBuilder } from '@poppinss/utils'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Redis } from '@adonisjs/redis/build/src/Redis'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../src/Store'
-import { createCtx, SECRET } from '../test-helpers'
+import { createCtx, encryption } from '../test-helpers'
 import { SessionManager } from '../src/SessionManager'
 
-const config: SessionConfigContract = {
+const config: SessionConfig = {
   driver: 'cookie',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
@@ -100,9 +100,14 @@ test.group('Session Manager', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const sessionContents = await fs.get(`${cookies.signedCookies['adonis-session']}.txt`)
-    assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    const sessionContents = await fs.get(`${sessionId}.txt`)
+    const sessionValues = new MessageBuilder().verify(sessionContents, sessionId)
+    assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
   })
 
   test('use redis driver to persist session value', async (assert) => {
@@ -135,11 +140,14 @@ test.group('Session Manager', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const sessionId = cookies.signedCookies['adonis-session']
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
     const sessionContents = await ioc.use('Adonis/Addons/Redis').connection('session').get(sessionId)
-    assert.deepEqual(new Store(sessionContents).all(), { user: { username: 'virk' } })
+    const sessionValues = new MessageBuilder().verify(sessionContents, sessionId)
+    assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
 
     await ioc.use('Adonis/Addons/Redis').connection('session').del(sessionId)
   })

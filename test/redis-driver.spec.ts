@@ -12,12 +12,12 @@
 import test from 'japa'
 import { Ioc } from '@adonisjs/fold'
 import { Redis } from '@adonisjs/redis/build/src/Redis'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { RedisDriver } from '../src/Drivers/Redis'
 import { sleep } from '../test-helpers'
 
-const config: SessionConfigContract = {
+const config: SessionConfig = {
   driver: 'redis',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
@@ -27,7 +27,7 @@ const config: SessionConfigContract = {
 }
 
 test.group('Redis driver', () => {
-  test('return empty string when value is missing', async (assert) => {
+  test('return null when value is missing', async (assert) => {
     const sessionId = '1234'
     const redis = new Redis(new Ioc(), {
       connections: {
@@ -37,10 +37,10 @@ test.group('Redis driver', () => {
 
     const session = new RedisDriver(config, redis)
     const value = await session.read(sessionId)
-    assert.equal(value, '')
+    assert.isNull(value)
   })
 
-  test('write session value to the database', async (assert) => {
+  test('write session value to the redis store', async (assert) => {
     const sessionId = '1234'
     const redis = new Redis(new Ioc(), {
       connections: {
@@ -49,10 +49,13 @@ test.group('Redis driver', () => {
     } as any)
 
     const session = new RedisDriver(config, redis)
-    await session.write(sessionId, 'hello-world')
+    await session.write(sessionId, { message: 'hello-world' })
 
     const contents = await redis.connection('session').get('1234')
-    assert.equal(contents, 'hello-world')
+    assert.deepEqual(JSON.parse(contents), {
+      message: { message: 'hello-world' },
+      purpose: '1234',
+    })
     await redis.connection('session').del('1234')
   })
 
@@ -64,11 +67,14 @@ test.group('Redis driver', () => {
       },
     } as any)
 
-    await redis.connection('session').set('1234', 'hello-world')
+    await redis.connection('session').set('1234', JSON.stringify({
+      message: { message: 'hello-world' },
+      purpose: '1234',
+    }))
 
     const session = new RedisDriver(config, redis)
     const contents = await session.read(sessionId)
-    assert.equal(contents, 'hello-world')
+    assert.deepEqual(contents, { message: 'hello-world' })
     await redis.connection('session').del('1234')
   })
 
@@ -80,15 +86,18 @@ test.group('Redis driver', () => {
       },
     } as any)
 
-    await redis.connection('session').set('1234', 'hello-world')
+    await redis.connection('session').set('1234', JSON.stringify({
+      message: { message: 'hello-world' },
+      purpose: '1234',
+    }))
 
     const session = new RedisDriver(config, redis)
     let contents = await session.read(sessionId)
-    assert.equal(contents, 'hello-world')
+    assert.deepEqual(contents, { message: 'hello-world' })
 
     await session.destroy('1234')
     contents = await session.read(sessionId)
-    assert.equal(contents, '')
+    assert.isNull(contents)
   })
 
   test('update session expiry', async (assert) => {
@@ -100,7 +109,10 @@ test.group('Redis driver', () => {
     } as any)
 
     const session = new RedisDriver(config, redis)
-    await session.write(sessionId, 'hello-world')
+    await redis.connection('session').set('1234', JSON.stringify({
+      message: { message: 'hello-world' },
+      purpose: '1234',
+    }))
 
     await sleep(1000)
 
@@ -115,7 +127,7 @@ test.group('Redis driver', () => {
     assert.equal(expiry, 3000)
 
     const contents = await session.read(sessionId)
-    assert.equal(contents, 'hello-world')
+    assert.deepEqual(contents, { message: 'hello-world' })
 
     await session.destroy('1234')
   }).timeout(0)

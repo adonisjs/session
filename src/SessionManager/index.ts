@@ -13,15 +13,15 @@ import { IocContract } from '@adonisjs/fold'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import {
-  SessionConfigContract,
+  SessionConfig,
+  ExtendCallback,
   SessionDriverContract,
-  SessionDriverCallback,
   SessionManagerContract,
 } from '@ioc:Adonis/Addons/Session'
 
 import { Session } from '../Session'
 
-type SessionManagerConfig = SessionConfigContract & {
+type SessionManagerConfig = SessionConfig & {
   cookie: {
     expires: undefined;
     maxAge: number | undefined;
@@ -36,17 +36,17 @@ export class SessionManager implements SessionManagerContract {
   /**
    * A private map of drivers added from outside in.
    */
-  private extendedDrivers: Map<string, SessionDriverCallback> = new Map()
+  private extendedDrivers: Map<string, ExtendCallback> = new Map()
   private config: SessionManagerConfig
 
-  constructor (private container: IocContract, config: SessionConfigContract) {
+  constructor (private container: IocContract, config: SessionConfig) {
     this.processConfig(config)
   }
 
   /**
    * Processes the config and decides the `expires` option for the cookie
    */
-  private processConfig (config: SessionConfigContract): void {
+  private processConfig (config: SessionConfig): void {
     /**
      * Explicitly overwriting `cookie.expires` and `cookie.maxAge` from
      * the user defined config
@@ -140,7 +140,7 @@ export class SessionManager implements SessionManagerContract {
   /**
    * Extend the drivers list by adding a new one.
    */
-  public extend (driver: string, callback: SessionDriverCallback): void {
+  public extend (driver: string, callback: ExtendCallback): void {
     this.extendedDrivers.set(driver, callback)
   }
 }

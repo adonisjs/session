@@ -10,13 +10,12 @@
 /// <reference path="../../adonis-typings/session.ts" />
 
 import cuid from 'cuid'
-import { omit, pick } from 'lodash'
-import { Exception } from '@poppinss/utils'
+import { Exception, lodash } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import {
+  SessionConfig,
   SessionContract,
-  SessionConfigContract,
   SessionDriverContract,
   AllowedSessionValues,
 } from '@ioc:Adonis/Addons/Session'
@@ -89,7 +88,7 @@ export class Session implements SessionContract {
 
   constructor (
     private ctx: HttpContextContract,
-    private config: SessionConfigContract,
+    private config: SessionConfig,
     private driver: SessionDriverContract,
   ) {}
 
@@ -115,7 +114,7 @@ export class Session implements SessionContract {
    * Returns the existing session id or creates one.
    */
   private getSessionId (): string {
-    const sessionId = this.ctx.request.cookie(this.config.cookieName)
+    const sessionId = this.ctx.request.encryptedCookie(this.config.cookieName)
     if (sessionId) {
       this.ctx.logger.trace('existing session found')
       return sessionId
@@ -155,26 +154,27 @@ export class Session implements SessionContract {
 
     this.ctx
       .response
-      .cookie(this.config.cookieName, this.sessionId, this.config.cookie!)
+      .encryptedCookie(this.config.cookieName, this.sessionId, this.config.cookie!)
   }
 
   /**
    * Commits the session value to the store
    */
-  private async commitValuesToStore (value: string): Promise<void> {
+  private async commitValuesToStore (): Promise<void> {
     this.ctx.logger.trace('persist session value to the store')
+    const values = this.store.toJSON()
 
     /**
      * Delete the session values from the driver when it is empty. This
      * results in saving lots of space when the sessions are not used
      * but initialized in an application.
      */
-    if (value === '{}') {
+    if (Object.keys(values).length === 0) {
       await this.driver.destroy(this.sessionId)
       return
     }
 
-    await this.driver.write(this.sessionId, value)
+    await this.driver.write(this.sessionId, values)
   }
 
   /**
@@ -202,15 +202,10 @@ export class Session implements SessionContract {
     /**
      * Profiling the driver read method
      */
-    const action = this.ctx.profiler.profile('session:initiate', { driver: this.config.driver })
-    try {
+    await this.ctx.profiler.profileAsync('session:initiate', { driver: this.config.driver }, async () => {
       const contents = await this.driver.read(this.sessionId)
       this.store = new Store(contents)
-      action.end()
-    } catch (error) {
-      action.end({ error })
-      throw error
-    }
+    })
 
     /**
      * Pull flash messages set by the last request
@@ -279,42 +274,28 @@ export class Session implements SessionContract {
    * by `session.forget`
    */
   public pull (key: string, defaultValue?: any): any {
-    return ((value): any => {
-      this.forget(key)
-      return value
-    })(this.get(key, defaultValue))
+    this.ensureIsReady()
+    return this.store.pull(key, defaultValue)
   }
 
   /**
    * Increment value for a number inside the session store. The
    * method raises an error when underlying value is not
-   * a string
+   * a number
    */
   public increment (key: string, steps: number = 1): void {
     this.ensureIsReady()
-
-    const value = this.store.get(key, 0)
-    if (typeof (value) !== 'number') {
-      throw new Exception(`Cannot increment ${key}, since original value is not a number`)
-    }
-
-    this.store.set(key, value + steps)
+    this.store.increment(key, steps)
   }
 
   /**
    * Decrement value for a number inside the session store. The
    * method raises an error when underlying value is not
-   * a string
+   * a number
    */
   public decrement (key: string, steps: number = 1): void {
     this.ensureIsReady()
-
-    const value = this.store.get(key, 0)
-    if (typeof (value) !== 'number') {
-      throw new Exception(`Cannot decrement ${key}, since original value is not a number`)
-    }
-
-    this.store.set(key, value - steps)
+    this.store.decrement(key, steps)
   }
 
   /**
@@ -328,14 +309,20 @@ export class Session implements SessionContract {
   /**
    * Add a new flash message
    */
-  public flash (values: { [key: string]: AllowedSessionValues }): void
-  public flash (key: string, value: AllowedSessionValues): void
   public flash (key: string | { [key: string]: AllowedSessionValues }, value?: AllowedSessionValues): void {
     this.ensureIsReady()
+
+    /**
+     * Initiates others object inside flash messages
+     * store
+     */
     if (this.flashMessagesStore.others === null) {
       this.flashMessagesStore.others = {}
     }
 
+    /**
+     * Update value
+     */
     if (value && typeof (key) === 'string') {
       this.flashMessagesStore.others[key] = value
     } else {
@@ -356,7 +343,7 @@ export class Session implements SessionContract {
    */
   public flashExcept (keys: string[]): void {
     this.ensureIsReady()
-    this.flashMessagesStore.input = omit(this.ctx.request.original(), keys)
+    this.flashMessagesStore.input = lodash.omit(this.ctx.request.original(), keys)
   }
 
   /**
@@ -364,18 +351,20 @@ export class Session implements SessionContract {
    */
   public flashOnly (keys: string[]): void {
     this.ensureIsReady()
-    this.flashMessagesStore.input = pick(this.ctx.request.original(), keys)
+    this.flashMessagesStore.input = lodash.pick(this.ctx.request.original(), keys)
   }
 
   /**
    * Writes value to the underlying session driver.
    */
   public async commit (): Promise<void> {
-    const action = this.ctx.profiler.profile('session:commit', {
-      driver: this.config.driver,
-    })
+    await this.ctx.profiler.profileAsync('session:commit', { driver: this.config.driver }, async () => {
+      if (!this.initiated) {
+        this.touchSessionCookie()
+        await this.touchStore()
+        return
+      }
 
-    try {
       /**
        * Cleanup old session and re-generate new session
        */
@@ -388,18 +377,8 @@ export class Session implements SessionContract {
        * Touch the session cookie to keep it alive.
        */
       this.touchSessionCookie()
-
-      if (this.initiated) {
-        this.setFlashMessages()
-        await this.commitValuesToStore(this.store.toString())
-      } else {
-        await this.touchStore()
-      }
-
-      action.end()
-    } catch (error) {
-      action.end({ error })
-      throw error
-    }
+      this.setFlashMessages()
+      await this.commitValuesToStore()
+    })
   }
 }

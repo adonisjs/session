@@ -10,15 +10,15 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { join } from 'path'
-import { Exception } from '@poppinss/utils'
+import { Exception, MessageBuilder } from '@poppinss/utils'
 import { readFile, ensureFile, outputFile, remove } from 'fs-extra'
-import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 /**
  * File driver to read/write session to filesystem
  */
 export class FileDriver implements SessionDriverContract {
-  constructor (private config: SessionConfigContract) {
+  constructor (private config: SessionConfig) {
     if (!this.config.file || !this.config.file.location) {
       throw new Exception(
         'Missing file.location for session file driver inside config/session file',
@@ -39,17 +39,31 @@ export class FileDriver implements SessionDriverContract {
    * Returns file contents. A new file will be created if it's
    * missing.
    */
-  public async read (sessionId: string): Promise<string> {
+  public async read (sessionId: string): Promise<{ [key: string]: any } | null> {
     await ensureFile(this.getFilePath(sessionId))
     const contents = await readFile(this.getFilePath(sessionId), 'utf-8')
-    return contents.trim()
+
+    /**
+     * Verify contents with the session id and return them as an object.
+     */
+    const verifiedContents = new MessageBuilder().verify(contents.trim(), sessionId)
+    if (typeof (verifiedContents) !== 'object') {
+      return null
+    }
+
+    return verifiedContents
   }
 
   /**
    * Write session values to a file
    */
-  public async write (sessionId: string, value: string): Promise<void> {
-    await outputFile(this.getFilePath(sessionId), value)
+  public async write (sessionId: string, values: { [key: string]: any }): Promise<void> {
+    if (typeof (values) !== 'object') {
+      throw new Error('Session file driver expects an object of values')
+    }
+
+    const message = new MessageBuilder().build(values, undefined, sessionId)
+    await outputFile(this.getFilePath(sessionId), message)
   }
 
   /**
@@ -64,6 +78,10 @@ export class FileDriver implements SessionDriverContract {
    */
   public async touch (sessionId: string): Promise<void> {
     const value = await this.read(sessionId)
+    if (!value) {
+      return
+    }
+
     await this.write(sessionId, value)
   }
 }

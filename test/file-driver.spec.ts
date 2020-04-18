@@ -12,14 +12,14 @@
 import test from 'japa'
 import { join } from 'path'
 import { Filesystem } from '@poppinss/dev-utils'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { FileDriver } from '../src/Drivers/File'
 import { sleep } from '../test-helpers'
 
 const fs = new Filesystem()
 
-const config: SessionConfigContract = {
+const config: SessionConfig = {
   driver: 'file',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
@@ -35,34 +35,37 @@ test.group('File driver', (group) => {
     await fs.cleanup()
   })
 
-  test('return empty string when file is missing', async (assert) => {
+  test('return null when file is missing', async (assert) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
     const value = await session.read(sessionId)
-    assert.equal(value, '')
+    assert.isNull(value)
   })
 
   test('write session value to the file', async (assert) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
-    await session.write(sessionId, 'hello-world')
+    await session.write(sessionId, { message: 'hello-world' })
 
     const contents = await fs.get('1234.txt')
-    assert.equal(contents.trim(), 'hello-world')
+    assert.deepEqual(JSON.parse(contents), {
+      message: { message: 'hello-world' },
+      purpose: '1234',
+    })
   })
 
   test('get session existing value', async (assert) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
-    await session.write(sessionId, 'hello-world')
+    await session.write(sessionId, { message: 'hello-world' })
     const value = await session.read(sessionId)
-    assert.equal(value, 'hello-world')
+    assert.deepEqual(value, { message: 'hello-world' })
   })
 
   test('remove session file', async (assert) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
-    await session.write(sessionId, 'hello-world')
+    await session.write(sessionId, { message: 'hello-world' })
     await session.destroy(sessionId)
 
     const exists = await fs.fsExtra.pathExists(join(fs.basePath, '1234.txt'))
@@ -73,7 +76,7 @@ test.group('File driver', (group) => {
     const sessionId = '1234'
 
     const session = new FileDriver(config)
-    await session.write(sessionId, 'hello-world')
+    await session.write(sessionId, { message: 'hello-world' })
     await sleep(1000)
 
     const { mtimeMs } = await fs.fsExtra.stat(join(fs.basePath, '1234.txt'))

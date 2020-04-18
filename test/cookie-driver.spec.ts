@@ -12,13 +12,12 @@
 import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
-import { serialize, parse } from '@poppinss/cookie'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { CookieDriver } from '../src/Drivers/Cookie'
-import { createCtx, SECRET } from '../test-helpers'
+import { createCtx, encryption } from '../test-helpers'
 
-const config: SessionConfigContract = {
+const config: SessionConfig = {
   driver: 'cookie',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
@@ -29,54 +28,55 @@ const config: SessionConfigContract = {
 }
 
 test.group('Cookie driver', () => {
-  test('return empty string when cookie is missing', async (assert) => {
+  test('return null object when cookie is missing', async (assert) => {
+    assert.plan(1)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
       const session = new CookieDriver(config, createCtx(req, res, {}))
-      const value = await session.read(sessionId)
-      res.write(value)
+      const value = session.read(sessionId)
+      assert.isNull(value)
       res.end()
     })
 
-    const { text } = await supertest(server).get('/')
-    assert.equal(text, '')
+    await supertest(server).get('/')
   })
 
-  test('return empty string when cookie value is not signed', async (assert) => {
+  test('return empty object when cookie value is invalid', async (assert) => {
+    assert.plan(1)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
       const session = new CookieDriver(config, createCtx(req, res, {}))
-      const value = await session.read(sessionId)
-      res.write(value)
+      const value = session.read(sessionId)
+      assert.isNull(value)
       res.end()
     })
 
-    const { text } = await supertest(server)
+    await supertest(server)
       .get('/')
       .set('cookie', '1234=hello-world')
-
-    assert.equal(text, '')
   })
 
-  test('return cookie value as string', async (assert) => {
+  test('return cookie values as an object', async (assert) => {
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
       const session = new CookieDriver(config, ctx)
-      const value = await session.read(sessionId)
-      res.write(value)
+      const value = session.read(sessionId)
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.write(JSON.stringify(value))
       res.end()
     })
 
-    const { text } = await supertest(server)
+    const message = encryption.encrypt({ message: 'hello-world' }, undefined, sessionId)
+    const { body } = await supertest(server)
       .get('/')
-      .set('cookie', serialize('1234', 'hello-world', SECRET)!)
+      .set('cookie', `${sessionId}=e:${message}`)
 
-    assert.equal(text, 'hello-world')
+    assert.deepEqual(body, { message: 'hello-world' })
   })
 
   test('write cookie value', async (assert) => {
@@ -86,18 +86,17 @@ test.group('Cookie driver', () => {
       const ctx = createCtx(req, res, {})
 
       const session = new CookieDriver(config, ctx)
-      session.write(sessionId, 'hello-world')
+      session.write(sessionId, { message: 'hello-world' })
       ctx.response.send('')
       ctx.response.finish()
     })
 
     const { header } = await supertest(server).get('/')
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace(`${sessionId}=`, '')
+      .slice(2)
 
-    assert.deepEqual(cookies, {
-      signedCookies: { 1234: 'hello-world' },
-      plainCookies: {},
-    })
+    assert.deepEqual(encryption.decrypt(cookieValue, sessionId), { message: 'hello-world' })
   })
 
   test('update cookie with existing value', async (assert) => {
@@ -107,19 +106,20 @@ test.group('Cookie driver', () => {
       const ctx = createCtx(req, res, {})
 
       const session = new CookieDriver(config, ctx)
-      await session.touch(sessionId)
+      session.touch(sessionId)
       ctx.response.send('')
       ctx.response.finish()
     })
 
+    const message = encryption.encrypt({ message: 'hello-world' }, undefined, sessionId)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize('1234', 'hello-world', SECRET)!)
+      .set('cookie', `${sessionId}=e:${message}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.deepEqual(cookies, {
-      signedCookies: { 1234: 'hello-world' },
-      plainCookies: {},
-    })
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace(`${sessionId}=`, '')
+      .slice(2)
+
+    assert.deepEqual(encryption.decrypt(cookieValue, sessionId), { message: 'hello-world' })
   })
 })

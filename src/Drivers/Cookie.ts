@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/session.ts" />
 
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 /**
  * Cookie driver utilizes the HTTP cookies to write session value. You must
@@ -19,23 +19,30 @@ import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons
  */
 export class CookieDriver implements SessionDriverContract {
   constructor (
-    private config: SessionConfigContract,
+    private config: SessionConfig,
     private ctx: HttpContextContract,
   ) {}
 
   /**
    * Read session value from the cookie
    */
-  public read (sessionId: string): string {
-    const cookieValue = this.ctx.request.cookie(sessionId)
-    return cookieValue || ''
+  public read (sessionId: string): { [key: string]: any } | null {
+    const cookieValue = this.ctx.request.encryptedCookie(sessionId)
+    if (typeof (cookieValue) !== 'object') {
+      return null
+    }
+    return cookieValue
   }
 
   /**
    * Write session values to the cookie
    */
-  public write (sessionId: string, value: string): void {
-    this.ctx.response.cookie(sessionId, value, this.config.cookie)
+  public write (sessionId: string, values: { [key: string]: any }): void {
+    if (typeof (values) !== 'object') {
+      throw new Error('Session cookie driver expects an object of values')
+    }
+
+    this.ctx.response.encryptedCookie(sessionId, values, this.config.cookie)
   }
 
   /**
@@ -50,6 +57,10 @@ export class CookieDriver implements SessionDriverContract {
    */
   public touch (sessionId: string): void {
     const value = this.read(sessionId)
+    if (!value) {
+      return
+    }
+
     this.write(sessionId, value)
   }
 }

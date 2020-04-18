@@ -10,24 +10,22 @@
 import { IncomingMessage, ServerResponse } from 'http'
 import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
-import { ServerConfigContract } from '@ioc:Adonis/Core/Server'
+import { ServerConfig } from '@ioc:Adonis/Core/Server'
 import { Encryption } from '@adonisjs/encryption/build/standalone'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { HttpContext } from '@adonisjs/http-server/build/standalone'
 
 export const SECRET = Math.random().toFixed(36).substring(2, 38)
+export const encryption = new Encryption({ secret: SECRET })
+export const logger = new FakeLogger({ enabled: true, level: 'trace', name: 'adonis' })
+export const profiler = new Profiler(__dirname, logger, {})
 
 export function createCtx (
   req: IncomingMessage,
   res: ServerResponse,
-  config: Partial<ServerConfigContract>,
+  config: Partial<ServerConfig>,
 ): HttpContextContract {
-  const logger = new FakeLogger({ enabled: true, level: 'trace', name: 'adonis' })
-  const profiler = new Profiler(__dirname, logger, {}).create('')
-  const encryption = new Encryption(SECRET)
-
-  const serverConfig: ServerConfigContract = Object.assign({
-    secret: SECRET,
+  const serverConfig: ServerConfig = Object.assign({
     subdomainOffset: 2,
     generateRequestId: false,
     allowMethodSpoofing: false,
@@ -41,7 +39,7 @@ export function createCtx (
     '/',
     {},
     logger,
-    profiler,
+    profiler.create('http:request'),
     encryption,
     req,
     res,
@@ -49,6 +47,6 @@ export function createCtx (
   ) as unknown as HttpContextContract
 }
 
-export function sleep (time): Promise<void> {
+export function sleep (time: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, time))
 }

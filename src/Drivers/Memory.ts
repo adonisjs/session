@@ -15,20 +15,24 @@ import { SessionDriverContract } from '@ioc:Adonis/Addons/Session'
  * Memory driver is meant to be used for writing tests.
  */
 export class MemoryDriver implements SessionDriverContract {
-  public static sessions: Map<string, string> = new Map()
+  public static sessions: Map<string, Object> = new Map()
 
   /**
    * Read session id value from the memory
    */
-  public read (sessionId: string): string {
-    return MemoryDriver.sessions.get(sessionId) || ''
+  public read (sessionId: string): { [key: string]: any } | null {
+    return MemoryDriver.sessions.get(sessionId) || null
   }
 
   /**
    * Save in memory value for a given session id
    */
-  public write (sessionId: string, value: string): void {
-    MemoryDriver.sessions.set(sessionId, value)
+  public write (sessionId: string, values: { [key: string]: any }): void {
+    if (typeof (values) !== 'object') {
+      throw new Error('Session memory driver expects an object of values')
+    }
+
+    MemoryDriver.sessions.set(sessionId, values)
   }
 
   /**

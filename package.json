@@ -11,27 +11,23 @@
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "dependencies": {
-    "@poppinss/utils": "^2.2.3",
-    "@types/bson": "^4.0.2",
-    "bson": "^4.0.4",
+    "@poppinss/utils": "^2.2.4",
     "cuid": "^2.1.8",
     "fs-extra": "^9.0.0",
-    "lodash": "^4.17.15",
-    "ms": "^2.1.2",
-    "type-of-is": "^3.5.1"
+    "ms": "^2.1.2"
   },
   "peerDependencies": {
     "@adonisjs/core": ">=5.0.0-preview"
   },
   "devDependencies": {
-    "@adonisjs/core": "^5.0.0-preview.1",
-    "@adonisjs/fold": "^6.3.3",
+    "@adonisjs/core": "^5.0.0-preview-rc-1",
+    "@adonisjs/fold": "^6.3.5",
     "@adonisjs/mrm-preset": "^2.3.0",
     "@adonisjs/redis": "^3.2.0",
     "@poppinss/cookie": "^1.0.8",
-    "@poppinss/dev-utils": "^1.0.5",
+    "@poppinss/dev-utils": "^1.0.6",
     "@types/ms": "^0.7.31",
-    "@types/node": "^13.11.1",
+    "@types/node": "^13.13.0",
     "@types/supertest": "^2.0.8",
     "commitizen": "^4.0.4",
     "copyfiles": "^2.2.0",

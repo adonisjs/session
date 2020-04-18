@@ -6,9 +6,9 @@
  */
 
 import Env from '@ioc:Adonis/Core/Env'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
-const sessionConfig: SessionConfigContract = {
+const sessionConfig: SessionConfig = {
   /*
   |--------------------------------------------------------------------------
   | Driver

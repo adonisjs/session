@@ -12,15 +12,14 @@
 import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
-import { serialize, parse } from '@poppinss/cookie'
-import { SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../src/Store'
 import { Session } from '../src/Session'
 import { MemoryDriver } from '../src/Drivers/Memory'
-import { createCtx, SECRET } from '../test-helpers/index'
+import { createCtx, encryption } from '../test-helpers/index'
 
-const config: SessionConfigContract = {
+const config: SessionConfig = {
   driver: 'cookie',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
@@ -64,7 +63,8 @@ test.group('Session', (group) => {
       res.end()
     })
 
-    await supertest(server).get('/').set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
+    await supertest(server).get('/').set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
   })
 
   test('write session values with driver on commit', async (assert) => {
@@ -82,10 +82,13 @@ test.group('Session', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
-    assert.property(cookies.signedCookies, config.cookieName)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk' } })
   })
 
@@ -103,12 +106,17 @@ test.group('Session', (group) => {
       ctx.response.finish()
     })
 
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+      .set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.equal(sessionId, '1234')
 
     const session = MemoryDriver.sessions.get('1234')!
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk' } })
@@ -131,17 +139,34 @@ test.group('Session', (group) => {
     /**
      * Initial driver value
      */
-    const store = new Store('')
+    const store = new Store(null)
     store.set('user.age', 22)
-    MemoryDriver.sessions.set('1234', store.toString())
+    MemoryDriver.sessions.set('1234', store.toJSON())
 
+    /**
+     * Request
+     */
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+      .set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+    /**
+     * Parsing response header
+     */
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
+    /**
+     * Ensure session id is unchanged
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.equal(sessionId, '1234')
+
+    /**
+     * Ensure driver has existing + new values
+     */
     const session = MemoryDriver.sessions.get('1234')!
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk', age: 22 } })
   })
@@ -165,19 +190,35 @@ test.group('Session', (group) => {
     /**
      * Initial driver value
      */
-    const store = new Store('')
+    const store = new Store(null)
     store.set('user.age', 22)
-    MemoryDriver.sessions.set('1234', store.toString())
+    MemoryDriver.sessions.set('1234', store.toJSON())
 
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+      .set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.notEqual(cookies.signedCookies[config.cookieName], '1234')
+    /**
+     * Parsing response header
+     */
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    assert.notEqual(sessionId, '1234')
+
+    const session = MemoryDriver.sessions.get(sessionId)!
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk', age: 22 } })
+
+    /**
+     * Ensure old values have been cleared
+     */
     assert.isUndefined(MemoryDriver.sessions.get('1234'))
   })
 
@@ -198,18 +239,29 @@ test.group('Session', (group) => {
     /**
      * Initial driver value
      */
-    const store = new Store('')
+    const store = new Store(null)
     store.set('user.age', 22)
-    MemoryDriver.sessions.set('1234', store.toString())
+    MemoryDriver.sessions.set('1234', store.toJSON())
 
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+      .set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+    /**
+     * Parsing response header
+     */
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
-    assert.isUndefined(MemoryDriver.sessions.get('1234'))
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.equal(sessionId, '1234')
+
+    assert.isUndefined(MemoryDriver.sessions.get(sessionId))
   })
 })
 
@@ -218,7 +270,7 @@ test.group('Session | Flash', (group) => {
     MemoryDriver.sessions.clear()
   })
 
-  test('flash custom messages', async (assert) => {
+  test('set custom flash messages', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
@@ -234,8 +286,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {
@@ -261,8 +321,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {
@@ -295,8 +363,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {
@@ -331,8 +407,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {
@@ -365,8 +449,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {
@@ -376,7 +468,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('pull old flash values', async (assert) => {
+  test('read old flash values', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
@@ -397,26 +489,33 @@ test.group('Session | Flash', (group) => {
     /**
      * Initial driver value
      */
-    const store = new Store('')
+    const store = new Store(null)
     store.set('__flash__', {
       username: 'virk',
       success: 'User created',
     })
 
-    MemoryDriver.sessions.set('1234', store.toString())
+    MemoryDriver.sessions.set('1234', store.toJSON())
 
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+      .set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
-    const session = MemoryDriver.sessions.get('1234')!
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
     assert.deepEqual(new Store(session).all(), {})
   })
 
-  test('pull selected old values', async (assert) => {
+  test('read selected old values', async (assert) => {
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})
 
@@ -434,22 +533,29 @@ test.group('Session | Flash', (group) => {
     /**
      * Initial driver value
      */
-    const store = new Store('')
+    const store = new Store(null)
     store.set('__flash__', {
       username: 'virk',
       success: 'User created',
     })
 
-    MemoryDriver.sessions.set('1234', store.toString())
+    MemoryDriver.sessions.set('1234', store.toJSON())
 
+    const encryptedSessionId = encryption.encrypt('1234', undefined, config.cookieName)
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', serialize(config.cookieName, '1234', SECRET)!)
+      .set('cookie', `${config.cookieName}=e:${encryptedSessionId}`)
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    assert.equal(cookies.signedCookies[config.cookieName], '1234')
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
 
-    const session = MemoryDriver.sessions.get('1234')!
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
     assert.deepEqual(new Store(session).all(), {})
   })
 
@@ -461,13 +567,8 @@ test.group('Session | Flash', (group) => {
       const session = new Session(ctx, config, driver)
       await session.initiate(false)
 
-      session.flash({
-        'success': 'User created succesfully',
-      })
-      session.flash({
-        'error': 'There was an error too :wink',
-      })
-
+      session.flash({ 'success': 'User created succesfully' })
+      session.flash({ 'error': 'There was an error too :wink' })
       await session.commit()
       ctx.response.send('')
       ctx.response.finish()
@@ -475,8 +576,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {
@@ -504,8 +613,16 @@ test.group('Session | Flash', (group) => {
 
     const { header } = await supertest(server).get('/')
 
-    const cookies = parse(header['set-cookie'][0].split(';')[0], SECRET)
-    const session = MemoryDriver.sessions.get(cookies.signedCookies[config.cookieName])!
+    const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
+      .replace('adonis-session=', '')
+      .slice(2)
+
+    /**
+     * Ensure session id is changed
+     */
+    const sessionId = encryption.decrypt(cookieValue, 'adonis-session')
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
 
     assert.deepEqual(new Store(session).all(), {
       __flash__: {

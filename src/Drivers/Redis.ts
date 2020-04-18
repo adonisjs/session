@@ -10,9 +10,9 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import ms from 'ms'
-import { Exception } from '@poppinss/utils'
+import { Exception, MessageBuilder } from '@poppinss/utils'
 import { RedisContract } from '@ioc:Adonis/Addons/Redis'
-import { SessionDriverContract, SessionConfigContract } from '@ioc:Adonis/Addons/Session'
+import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 /**
  * File driver to read/write session to filesystem
@@ -21,12 +21,12 @@ export class RedisDriver implements SessionDriverContract {
   private ttl: number = typeof (this.config.age) === 'string' ? ms(this.config.age) : this.config.age
 
   constructor (
-    private config: SessionConfigContract,
+    private config: SessionConfig,
     private redis: RedisContract,
   ) {
     if (!this.config.redisConnection) {
       throw new Exception(
-        'Missing redisConnection for session redis driver inside config/session file',
+        'Missing redisConnection for session redis driver inside "config/session" file',
         500,
         'E_INVALID_SESSION_DRIVER_CONFIG',
       )
@@ -37,18 +37,28 @@ export class RedisDriver implements SessionDriverContract {
    * Returns file contents. A new file will be created if it's
    * missing.
    */
-  public async read (sessionId: string): Promise<string> {
+  public async read (sessionId: string): Promise<{ [key: string]: any } | null> {
     const contents = await this.redis.connection(this.config.redisConnection!).get(sessionId)
-    return contents || ''
+
+    const verifiedContents = new MessageBuilder().verify(contents, sessionId)
+    if (typeof (verifiedContents) !== 'object') {
+      return null
+    }
+
+    return verifiedContents
   }
 
   /**
    * Write session values to a file
    */
-  public async write (sessionId: string, value: string): Promise<void> {
+  public async write (sessionId: string, values: Object): Promise<void> {
+    if (typeof (values) !== 'object') {
+      throw new Error('Session file driver expects an object of values')
+    }
+
     await this.redis
       .connection(this.config.redisConnection!)
-      .setex(sessionId, this.ttl, value)
+      .setex(sessionId, this.ttl, new MessageBuilder().build(values, undefined, sessionId))
   }
 
   /**

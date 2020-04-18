@@ -9,172 +9,31 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import Typeof from 'type-of-is'
-import { ObjectId } from 'bson'
-import { get, set, unset } from 'lodash'
-import { Exception } from '@poppinss/utils'
+import { Exception, lodash } from '@poppinss/utils'
 import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
 
 /**
- * Methods to convert different data types
- * to their string counter parts
- */
-const toString = {
-  'Number' (value: number): number {
-    return value
-  },
-  'Boolean' (value: boolean): boolean {
-    return value
-  },
-  'Object' (value: any): any {
-    return value
-  },
-  'Array' (value: any): any {
-    return value
-  },
-  'Date' (value: Date): string {
-    return String(value)
-  },
-  'String' (value: string): string {
-    return value
-  },
-  'ObjectID' (value: ObjectId): string {
-    return String(value)
-  },
-  'ObjectId' (value: ObjectId): string {
-    return String(value)
-  },
-}
-
-/**
- * Methods to convert string value to their original
- * data types.
- */
-const toOriginalType = {
-  'Number' (value: number): number {
-    return value
-  },
-  'Object' (value: string): any {
-    return value
-  },
-  'Array' (value: string): any {
-    return value
-  },
-  'Boolean' (value: boolean): boolean {
-    return value
-  },
-  'Date' (value: string): Date {
-    return new Date(value)
-  },
-  'String' (value: string): string {
-    return value
-  },
-  'ObjectID' (value: string): ObjectId {
-    return new ObjectId(value)
-  },
-  'ObjectId' (value: string): ObjectId {
-    return new ObjectId(value)
-  },
-}
-
-/**
- * Store is used to serialize and cast values for the session storage. We
- * offload the task of serializing values from the drivers and they always
- * receive and return a JSON string.
+ * Session store to access values.
  */
 export class Store {
-  private values: any = {}
+  private values: { [key: string]: any }
 
-  constructor (value: string) {
-    this.values = this.cast(value)
+  constructor (values: { [key: string]: any } | null) {
+    this.values = values || {}
   }
 
   /**
-   * Converts an existing stringified value to it's original
-   * value.
-   */
-  private castValue (value: any): any {
-    if (value && value.d !== undefined && value.t) {
-      return toOriginalType[value.t](value.d)
-    }
-
-    return null
-  }
-
-  /**
-   * Cast serialized value string back to it's original shape.
-   */
-  private cast (value: string): any {
-    try {
-      const parsed = JSON.parse(value)
-      return Object.keys(parsed).reduce((result, key) => {
-        const castedValue = this.castValue(parsed[key])
-        if (castedValue !== null && castedValue !== undefined) {
-          result[key] = castedValue
-        }
-        return result
-      }, {})
-    } catch (error) {
-      return {}
-    }
-  }
-
-  /**
-   * Serializes a value to it's serialized form. The serialized
-   * node contains enough information to convert the values
-   * back to their original type.
-   */
-  private serializeValue (value: any): any {
-    const type = Typeof.string(value)
-    if (!toString[type]) {
-      throw new Exception(
-        `${type} data type cannot be saved into session`,
-        500,
-        'E_UNALLOWED_SESSION_DATA_TYPE',
-      )
-    }
-
-    return {
-      t: type,
-      d: toString[type](value),
-    }
-  }
-
-  /**
-   * Serialize the store values
-   */
-  private serialize (): any {
-    return Object.keys(this.values).reduce((result, key) => {
-      const serializedValue = this.serializeValue(this.values[key])
-
-      if (serializedValue !== null && serializedValue !== undefined) {
-        result[key] = serializedValue
-      }
-      return result
-    }, {})
-  }
-
-  /**
-   * Returns the JSON object version of serialized
-   * values
+   * Returns the store values
    */
   public toJSON (): any {
-    return this.serialize()
-  }
-
-  /**
-   * Returns the stringified version of serialized
-   * values
-   */
-  public toString (): string {
-    return JSON.stringify(this.toJSON())
+    return this.values
   }
 
   /**
    * Set key/value pair
    */
   public set (key: string, value: AllowedSessionValues): void {
-    set(this.values, key, value)
+    lodash.set(this.values, key, value)
   }
 
   /**
@@ -188,14 +47,14 @@ export class Store {
    * Get value for a given key
    */
   public get (key: string, defaultValue?: any): any {
-    return get(this.values, key, defaultValue)
+    return lodash.get(this.values, key, defaultValue)
   }
 
   /**
    * Remove key
    */
   public unset (key: string): void {
-    unset(this.values, key)
+    lodash.unset(this.values, key)
   }
 
   /**
@@ -203,5 +62,42 @@ export class Store {
    */
   public clear (): void {
     this.values = {}
+  }
+
+  /**
+   * Pull value from the store. It is same as calling
+   * store.get and then store.unset
+   */
+  public pull (key: string, defaultValue?: any): any {
+    return ((value): any => {
+      this.unset(key)
+      return value
+    })(this.get(key, defaultValue))
+  }
+
+  /**
+   * Increment number. The method raises an error when
+   * nderlying value is not a number
+   */
+  public increment (key: string, steps: number = 1): void {
+    const value = this.get(key, 0)
+    if (typeof (value) !== 'number') {
+      throw new Exception(`Cannot increment "${key}", since original value is not a number`)
+    }
+
+    this.set(key, value + steps)
+  }
+
+  /**
+   * Increment number. The method raises an error when
+   * nderlying value is not a number
+   */
+  public decrement (key: string, steps: number = 1): void {
+    const value = this.get(key, 0)
+    if (typeof (value) !== 'number') {
+      throw new Exception(`Cannot increment "${key}", since original value is not a number`)
+    }
+
+    this.set(key, value - steps)
   }
 }
