@@ -13,15 +13,10 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
 
 /**
- * Cookie driver utilizes the HTTP cookies to write session value. You must
- * not use this driver, if your session storage needs of severals megabytes,
- * since browsers have inbuilt limitations for cookie size.
+ * Cookie driver utilizes the encrypted HTTP cookies to write session value.
  */
 export class CookieDriver implements SessionDriverContract {
-  constructor (
-    private config: SessionConfig,
-    private ctx: HttpContextContract,
-  ) {}
+  constructor (private config: SessionConfig, private ctx: HttpContextContract) {}
 
   /**
    * Read session value from the cookie
@@ -49,7 +44,9 @@ export class CookieDriver implements SessionDriverContract {
    * Removes the session cookie
    */
   public destroy (sessionId: string): void {
-    this.ctx.response.clearCookie(sessionId)
+    if (this.ctx.request.cookiesList()[sessionId]) {
+      this.ctx.response.clearCookie(sessionId)
+    }
   }
 
   /**

@@ -13,7 +13,7 @@ import { Exception, lodash } from '@poppinss/utils'
 import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
 
 /**
- * Session store to access values.
+ * Session store to mutate and access values from the session object
  */
 export class Store {
   private values: { [key: string]: any }

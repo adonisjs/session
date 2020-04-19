@@ -7,14 +7,17 @@
 * file that was distributed with this source code.
 */
 
+import { Ioc } from '@adonisjs/fold'
 import { IncomingMessage, ServerResponse } from 'http'
 import { ServerConfig } from '@ioc:Adonis/Core/Server'
 import { SessionConfig } from '@ioc:Adonis/Addons/Session'
+import { Emitter } from '@adonisjs/events/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { Encryption } from '@adonisjs/encryption/build/standalone'
 import { HttpContext } from '@adonisjs/http-server/build/standalone'
+import { RedisManager } from '@adonisjs/redis/build/src/RedisManager'
 
 export const SECRET = Math.random().toFixed(36).substring(2, 38)
 export const encryption = new Encryption({ secret: SECRET })
@@ -102,4 +105,15 @@ export function unsignCookie (header: any, name: string) {
     .slice(2)
 
   return encryption.verifier.unsign(cookieValue, name)
+}
+
+/**
+ * Reference to the redis manager
+ */
+export function getRedisManager () {
+  return new RedisManager(new Ioc(), {
+    connections: {
+      session: {},
+    },
+  } as any, new Emitter(new Ioc()))
 }

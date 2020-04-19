@@ -16,8 +16,8 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import {
   SessionConfig,
   SessionContract,
-  SessionDriverContract,
   AllowedSessionValues,
+  SessionDriverContract,
 } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../Store'
@@ -84,6 +84,9 @@ export class Session implements SessionContract {
     others: null,
   }
 
+  /**
+   * Session key for setting flash messages
+   */
   private flashMessagesKey = '__flash__'
 
   constructor (
@@ -97,10 +100,7 @@ export class Session implements SessionContract {
    * when nothing is set
    */
   private setFlashMessages (): void {
-    if (
-      this.flashMessagesStore.input === null &&
-      this.flashMessagesStore.others === null
-    ) {
+    if (this.flashMessagesStore.input === null && this.flashMessagesStore.others === null) {
       return
     }
 
@@ -126,7 +126,7 @@ export class Session implements SessionContract {
   }
 
   /**
-   * Ensures the session is ready for mutations
+   * Ensures the session store is initialized
    */
   private ensureIsReady (): void {
     if (!this.initiated) {
@@ -136,7 +136,12 @@ export class Session implements SessionContract {
         'E_RUNTIME_EXCEPTION',
       )
     }
+  }
 
+  /**
+   * Raises exception when session store is in readonly mode
+   */
+  private ensureIsMutable () {
     if (this.readonly) {
       throw new Exception(
         'Session store is in readonly mode and cannot be mutated',
@@ -158,28 +163,46 @@ export class Session implements SessionContract {
    * Commits the session value to the store
    */
   private async commitValuesToStore (): Promise<void> {
-    this.ctx.logger.trace('persist session value to the store')
-    const values = this.store.toJSON()
-
-    /**
-     * Delete the session values from the driver when it is empty. This
-     * results in saving lots of space when the sessions are not used
-     * but initialized in an application.
-     */
-    if (Object.keys(values).length === 0) {
-      await this.driver.destroy(this.sessionId)
-      return
-    }
-
-    await this.driver.write(this.sessionId, values)
+    this.ctx.logger.trace('persist session store with driver')
+    await this.driver.write(this.sessionId, this.store.toJSON())
   }
 
   /**
-   * Touches the store to make sure the session doesn't expire
+   * Touches the driver to make sure the session values doesn't expire
    */
-  private async touchStore (): Promise<void> {
-    this.ctx.logger.trace('touching session store')
+  private async touchDriver (): Promise<void> {
+    this.ctx.logger.trace('touch driver for liveliness')
     await this.driver.touch(this.sessionId)
+  }
+
+  /**
+   * Reading flash messages from the last HTTP request and
+   * updating the flash messages bag
+   */
+  private readLastRequestFlashMessage () {
+    if (this.readonly) {
+      return
+    }
+
+    this.flashMessages.update(this.pull(this.flashMessagesKey, null))
+  }
+
+  /**
+   * Share flash messages & read only session's functions with views
+   * (only when view property exists)
+   */
+  private shareLocalsWithView () {
+    if (!this.ctx['view'] || typeof (this.ctx['view'].share) !== 'function') {
+      return
+    }
+
+    this.ctx['view'].share({
+      flashMessages: this.flashMessages,
+      session: {
+        get: this.get.bind(this),
+        all: this.all.bind(this),
+      },
+    })
   }
 
   /**
@@ -204,24 +227,8 @@ export class Session implements SessionContract {
       this.store = new Store(contents)
     })
 
-    /**
-     * Pull flash messages set by the last request
-     */
-    this.flashMessages.update(this.pull(this.flashMessagesKey, null))
-
-    /**
-     * Share flash messages & read only session's functions with views
-     * (only when view property exists)
-     */
-    if (this.ctx['view']) {
-      this.ctx['view'].share({
-        flashMessages: this.flashMessages,
-        session: {
-          get: this.get.bind(this),
-          all: this.all.bind(this),
-        },
-      })
-    }
+    this.readLastRequestFlashMessage()
+    this.shareLocalsWithView()
   }
 
   /**
@@ -238,6 +245,7 @@ export class Session implements SessionContract {
    */
   public put (key: string, value: AllowedSessionValues): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.store.set(key, value)
   }
 
@@ -263,6 +271,7 @@ export class Session implements SessionContract {
    */
   public forget (key: string): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.store.unset(key)
   }
 
@@ -272,6 +281,7 @@ export class Session implements SessionContract {
    */
   public pull (key: string, defaultValue?: any): any {
     this.ensureIsReady()
+    this.ensureIsMutable()
     return this.store.pull(key, defaultValue)
   }
 
@@ -282,6 +292,7 @@ export class Session implements SessionContract {
    */
   public increment (key: string, steps: number = 1): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.store.increment(key, steps)
   }
 
@@ -292,6 +303,7 @@ export class Session implements SessionContract {
    */
   public decrement (key: string, steps: number = 1): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.store.decrement(key, steps)
   }
 
@@ -300,6 +312,7 @@ export class Session implements SessionContract {
    */
   public clear (): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.store.clear()
   }
 
@@ -308,6 +321,7 @@ export class Session implements SessionContract {
    */
   public flash (key: string | { [key: string]: AllowedSessionValues }, value?: AllowedSessionValues): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
 
     /**
      * Initiates others object inside flash messages
@@ -332,6 +346,7 @@ export class Session implements SessionContract {
    */
   public flashAll (): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.flashMessagesStore.input = this.ctx.request.original()
   }
 
@@ -340,6 +355,7 @@ export class Session implements SessionContract {
    */
   public flashExcept (keys: string[]): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.flashMessagesStore.input = lodash.omit(this.ctx.request.original(), keys)
   }
 
@@ -348,6 +364,7 @@ export class Session implements SessionContract {
    */
   public flashOnly (keys: string[]): void {
     this.ensureIsReady()
+    this.ensureIsMutable()
     this.flashMessagesStore.input = lodash.pick(this.ctx.request.original(), keys)
   }
 
@@ -358,7 +375,7 @@ export class Session implements SessionContract {
     await this.ctx.profiler.profileAsync('session:commit', { driver: this.config.driver }, async () => {
       if (!this.initiated) {
         this.touchSessionCookie()
-        await this.touchStore()
+        await this.touchDriver()
         return
       }
 

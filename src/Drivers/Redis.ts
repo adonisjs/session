@@ -11,8 +11,8 @@
 
 import ms from 'ms'
 import { Exception, MessageBuilder } from '@poppinss/utils'
-import { RedisContract } from '@ioc:Adonis/Addons/Redis'
 import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
+import { RedisManagerContract, RedisConnectionContract } from '@ioc:Adonis/Addons/Redis'
 
 /**
  * File driver to read/write session to filesystem
@@ -20,10 +20,7 @@ import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session
 export class RedisDriver implements SessionDriverContract {
   private ttl: number = typeof (this.config.age) === 'string' ? ms(this.config.age) : this.config.age
 
-  constructor (
-    private config: SessionConfig,
-    private redis: RedisContract,
-  ) {
+  constructor (private config: SessionConfig, private redis: RedisManagerContract) {
     if (!this.config.redisConnection) {
       throw new Exception(
         'Missing redisConnection for session redis driver inside "config/session" file',
@@ -34,11 +31,21 @@ export class RedisDriver implements SessionDriverContract {
   }
 
   /**
+   * Returns instance of the redis connection
+   */
+  private getRedisConnection (): RedisConnectionContract {
+    return (this.redis.connection as any)(this.config.redisConnection)
+  }
+
+  /**
    * Returns file contents. A new file will be created if it's
    * missing.
    */
   public async read (sessionId: string): Promise<{ [key: string]: any } | null> {
-    const contents = await this.redis.connection(this.config.redisConnection!).get(sessionId)
+    const contents = await this.getRedisConnection().get(sessionId)
+    if (!contents) {
+      return null
+    }
 
     const verifiedContents = new MessageBuilder().verify(contents, sessionId)
     if (typeof (verifiedContents) !== 'object') {
@@ -56,8 +63,8 @@ export class RedisDriver implements SessionDriverContract {
       throw new Error('Session file driver expects an object of values')
     }
 
-    await this.redis
-      .connection(this.config.redisConnection!)
+    await this
+      .getRedisConnection()
       .setex(sessionId, this.ttl, new MessageBuilder().build(values, undefined, sessionId))
   }
 
@@ -65,13 +72,13 @@ export class RedisDriver implements SessionDriverContract {
    * Cleanup session file by removing it
    */
   public async destroy (sessionId: string): Promise<void> {
-    await this.redis.connection(this.config.redisConnection!).del(sessionId)
+    await this.getRedisConnection().del(sessionId)
   }
 
   /**
    * Updates the value expiry
    */
   public async touch (sessionId: string): Promise<void> {
-    await this.redis.connection(this.config.redisConnection!).expire(sessionId, this.ttl)
+    await this.getRedisConnection().expire(sessionId, this.ttl)
   }
 }

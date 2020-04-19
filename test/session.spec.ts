@@ -179,40 +179,6 @@ test.group('Session', (group) => {
      */
     assert.isUndefined(MemoryDriver.sessions.get('1234'))
   })
-
-  test('remove session values when the store is empty', async (assert) => {
-    const server = createServer(async (req, res) => {
-      const ctx = createCtx(req, res, {})
-
-      const driver = new MemoryDriver()
-      const session = new Session(ctx, sessionConfig, driver)
-      await session.initiate(false)
-
-      session.forget('user')
-      await session.commit()
-      ctx.response.send('')
-      ctx.response.finish()
-    })
-
-    /**
-     * Initial driver value
-     */
-    const store = new Store(null)
-    store.set('user.age', 22)
-    MemoryDriver.sessions.set('1234', store.toJSON())
-
-    const { header } = await supertest(server)
-      .get('/')
-      .set('cookie', signCookie('1234', sessionConfig.cookieName))
-
-    /**
-     * Ensure session id is changed
-     */
-    const sessionId = unsignCookie(header, sessionConfig.cookieName)
-    assert.equal(sessionId, '1234')
-
-    assert.isUndefined(MemoryDriver.sessions.get(sessionId))
-  })
 })
 
 test.group('Session | Flash', (group) => {

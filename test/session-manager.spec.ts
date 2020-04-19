@@ -15,11 +15,10 @@ import { createServer } from 'http'
 import { Ioc } from '@adonisjs/fold'
 import { MessageBuilder } from '@poppinss/utils'
 import { Filesystem } from '@poppinss/dev-utils'
-import { Redis } from '@adonisjs/redis/build/src/Redis'
 
 import { Store } from '../src/Store'
 import { SessionManager } from '../src/SessionManager'
-import { createCtx, sessionConfig, unsignCookie } from '../test-helpers'
+import { createCtx, sessionConfig, unsignCookie, getRedisManager } from '../test-helpers'
 
 const fs = new Filesystem()
 
@@ -102,13 +101,7 @@ test.group('Session Manager', (group) => {
   test('use redis driver to persist session value', async (assert) => {
     const ioc = new Ioc()
 
-    ioc.singleton('Adonis/Addons/Redis', () => {
-      return new Redis(ioc, {
-        connections: {
-          session: {},
-        },
-      } as any)
-    })
+    ioc.singleton('Adonis/Addons/Redis', () => getRedisManager())
 
     const server = createServer(async (req, res) => {
       const ctx = createCtx(req, res, {})

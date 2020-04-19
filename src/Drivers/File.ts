@@ -21,7 +21,7 @@ export class FileDriver implements SessionDriverContract {
   constructor (private config: SessionConfig) {
     if (!this.config.file || !this.config.file.location) {
       throw new Exception(
-        'Missing file.location for session file driver inside config/session file',
+        'Missing "file.location" for session file driver inside "config/session" file',
         500,
         'E_INVALID_SESSION_DRIVER_CONFIG',
       )
@@ -40,8 +40,13 @@ export class FileDriver implements SessionDriverContract {
    * missing.
    */
   public async read (sessionId: string): Promise<{ [key: string]: any } | null> {
-    await ensureFile(this.getFilePath(sessionId))
-    const contents = await readFile(this.getFilePath(sessionId), 'utf-8')
+    const filePath = this.getFilePath(sessionId)
+    await ensureFile(filePath)
+
+    const contents = await readFile(filePath, 'utf-8')
+    if (!contents.trim()) {
+      return null
+    }
 
     /**
      * Verify contents with the session id and return them as an object.

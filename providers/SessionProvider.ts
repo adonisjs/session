@@ -12,26 +12,28 @@ import { HttpContextConstructorContract } from '@ioc:Adonis/Core/HttpContext'
 import { SessionManager } from '../src/SessionManager'
 
 /**
- * Session provider for AdonisJs
+ * Session provider for AdonisJS
  */
 export default class SessionProvider {
-  constructor (protected $container: any) {}
+  constructor (protected container: any) {}
 
+  /**
+   * Register Session Manager
+   */
   public register (): void {
-    this.$container.singleton('Adonis/Addons/SessionManager', () => {
-      const Config = this.$container.use('Adonis/Core/Config')
-      return new SessionManager(this.$container, Config.get('session'))
+    this.container.singleton('Adonis/Addons/SessionManager', () => {
+      const Config = this.container.use('Adonis/Core/Config')
+      return new SessionManager(this.container, Config.get('session'))
     })
   }
 
   public boot (): void {
     /**
-     * Hook session into ctx during request cycle. We make use of
-     * hooks over middleware, since Hooks guarantee the `after`
-     * execution even when any middleware or controller raises
-     * exception.
+     * Hook session into ctx during request cycle. We make use of hooks over
+     * middleware, since Hooks guarantee the `after` execution even when
+     * any middleware or controller raises exception.
      */
-    this.$container.with([
+    this.container.with([
       'Adonis/Core/Server',
       'Adonis/Core/HttpContext',
       'Adonis/Addons/SessionManager',

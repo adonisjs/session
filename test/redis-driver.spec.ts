@@ -10,23 +10,15 @@
 /// <reference path="../adonis-typings/session.ts" />
 
 import test from 'japa'
-import { Ioc } from '@adonisjs/fold'
-import { Redis } from '@adonisjs/redis/build/src/Redis'
-
 import { RedisDriver } from '../src/Drivers/Redis'
-import { sleep, sessionConfig } from '../test-helpers'
+import { sleep, sessionConfig, getRedisManager } from '../test-helpers'
 
 const config = Object.assign({}, sessionConfig, { driver: 'redis', redisConnection: 'session' })
 
 test.group('Redis driver', () => {
   test('return null when value is missing', async (assert) => {
     const sessionId = '1234'
-    const redis = new Redis(new Ioc(), {
-      connections: {
-        session: {},
-      },
-    } as any)
-
+    const redis = getRedisManager()
     const session = new RedisDriver(config, redis)
     const value = await session.read(sessionId)
     assert.isNull(value)
@@ -34,11 +26,7 @@ test.group('Redis driver', () => {
 
   test('write session value to the redis store', async (assert) => {
     const sessionId = '1234'
-    const redis = new Redis(new Ioc(), {
-      connections: {
-        session: {},
-      },
-    } as any)
+    const redis = getRedisManager()
 
     const session = new RedisDriver(config, redis)
     await session.write(sessionId, { message: 'hello-world' })
@@ -53,11 +41,7 @@ test.group('Redis driver', () => {
 
   test('get session existing value', async (assert) => {
     const sessionId = '1234'
-    const redis = new Redis(new Ioc(), {
-      connections: {
-        session: {},
-      },
-    } as any)
+    const redis = getRedisManager()
 
     await redis.connection('session').set('1234', JSON.stringify({
       message: { message: 'hello-world' },
@@ -72,11 +56,7 @@ test.group('Redis driver', () => {
 
   test('remove session', async (assert) => {
     const sessionId = '1234'
-    const redis = new Redis(new Ioc(), {
-      connections: {
-        session: {},
-      },
-    } as any)
+    const redis = getRedisManager()
 
     await redis.connection('session').set('1234', JSON.stringify({
       message: { message: 'hello-world' },
@@ -94,11 +74,7 @@ test.group('Redis driver', () => {
 
   test('update session expiry', async (assert) => {
     const sessionId = '1234'
-    const redis = new Redis(new Ioc(), {
-      connections: {
-        session: {},
-      },
-    } as any)
+    const redis = getRedisManager()
 
     const session = new RedisDriver(config, redis)
     await redis.connection('session').set('1234', JSON.stringify({

@@ -37,6 +37,10 @@ export class SessionManager implements SessionManagerContract {
    * A private map of drivers added from outside in.
    */
   private extendedDrivers: Map<string, ExtendCallback> = new Map()
+
+  /**
+   * Reference to session config
+   */
   private config: SessionManagerConfig
 
   constructor (private container: IocContract, config: SessionConfig) {
@@ -104,7 +108,7 @@ export class SessionManager implements SessionManagerContract {
   private createExtendedDriver (ctx: HttpContextContract): any {
     if (!this.extendedDrivers.has(this.config.driver)) {
       throw new Exception(
-        `${this.config.driver} is not a valid session driver`,
+        `"${this.config.driver}" is not a valid session driver`,
         500,
         'E_INVALID_SESSION_DRIVER',
       )

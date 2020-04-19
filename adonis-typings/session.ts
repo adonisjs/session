@@ -75,13 +75,12 @@ declare module '@ioc:Adonis/Addons/Session' {
   /**
    * The values allowed by the `session.put` method
    */
-  export type AllowedSessionValues =
-  string |
-  boolean |
-  number |
-  object |
-  Date |
-  Array<any>
+  export type AllowedSessionValues = string
+  | boolean
+  | number
+  | object
+  | Date
+  | Array<any>
 
   /**
    * Shape of message bag, used for storing flash
@@ -98,13 +97,47 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Shape of the actual session store
    */
   export interface SessionContract {
+    /**
+     * Has the store being initiated
+     */
     initiated: boolean
+
+    /**
+     * Is session store readonly. Will be during Websockets
+     * request
+     */
     readonly: boolean
+
+    /**
+     * Is session just created or we read received the
+     * session id from the request
+     */
     fresh: boolean
+
+    /**
+     * Session id
+     */
     sessionId: string
+
+    /**
+     * Previous request flash messages
+     */
     flashMessages: MessageBagContract,
+
+    /**
+     * Initiate session store
+     */
     initiate (readonly: boolean): Promise<void>
+
+    /**
+     * Commit session mutations
+     */
     commit (): Promise<void>
+
+    /**
+     * Re-generate session id. This help avoid session
+     * replay attacks.
+     */
     regenerate (): void
 
     /**
