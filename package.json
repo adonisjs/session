@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/session",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Session provider for AdonisJS",
   "main": "build/providers/SessionProvider.js",
   "files": [
