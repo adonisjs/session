@@ -104,7 +104,7 @@ export function unsignCookie (header: any, name: string) {
     .replace(`${name}=`, '')
     .slice(2)
 
-  return encryption.verifier.unsign(cookieValue, name)
+  return encryption.verifier.unsign<any>(cookieValue, name)
 }
 
 /**

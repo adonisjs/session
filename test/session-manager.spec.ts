@@ -94,7 +94,7 @@ test.group('Session Manager', (group) => {
 
     const sessionId = unsignCookie(header, sessionConfig.cookieName)
     const sessionContents = await fs.get(`${sessionId}.txt`)
-    const sessionValues = new MessageBuilder().verify(sessionContents, sessionId)
+    const sessionValues = new MessageBuilder().verify<any>(sessionContents, sessionId)
     assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
   })
 
@@ -124,7 +124,7 @@ test.group('Session Manager', (group) => {
     const { header } = await supertest(server).get('/')
     const sessionId = unsignCookie(header, sessionConfig.cookieName)
     const sessionContents = await ioc.use('Adonis/Addons/Redis').connection('session').get(sessionId)
-    const sessionValues = new MessageBuilder().verify(sessionContents, sessionId)
+    const sessionValues = new MessageBuilder().verify<any>(sessionContents, sessionId)
     assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
 
     await ioc.use('Adonis/Addons/Redis').connection('session').del(sessionId)
