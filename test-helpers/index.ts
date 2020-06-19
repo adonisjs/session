@@ -16,7 +16,7 @@ import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { Encryption } from '@adonisjs/encryption/build/standalone'
-import { HttpContext } from '@adonisjs/http-server/build/standalone'
+import { HttpContext, Router } from '@adonisjs/http-server/build/standalone'
 import { RedisManager } from '@adonisjs/redis/build/src/RedisManager'
 
 export const SECRET = Math.random().toFixed(36).substring(2, 38)
@@ -61,7 +61,17 @@ export function createCtx (
   const profilerRow = profiler.create('http:request')
   const serverConfig = Object.assign(defaultServerConfig, config)
   return HttpContext
-    .create('/', {}, logger, profilerRow, encryption, req, res, serverConfig) as unknown as HttpContextContract
+    .create(
+      '/',
+      {},
+      logger,
+      profilerRow,
+      encryption,
+      new Router(encryption),
+      req,
+      res,
+      serverConfig,
+    ) as unknown as HttpContextContract
 }
 
 /**
@@ -112,6 +122,7 @@ export function unsignCookie (header: any, name: string) {
  */
 export function getRedisManager () {
   return new RedisManager(new Ioc(), {
+    connection: 'session',
     connections: {
       session: {},
     },
