@@ -164,4 +164,7 @@ declare module '@ioc:Adonis/Addons/Session' {
 		create(ctx: HttpContextContract): SessionContract
 		extend(driver: string, callback: ExtendCallback): void
 	}
+
+	const Session: SessionManagerContract
+	export default Session
 }

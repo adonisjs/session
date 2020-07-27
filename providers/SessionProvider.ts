@@ -21,7 +21,7 @@ export default class SessionProvider {
 	 * Register Session Manager
 	 */
 	public register(): void {
-		this.container.singleton('Adonis/Addons/SessionManager', () => {
+		this.container.singleton('Adonis/Addons/Session', () => {
 			const Config = this.container.use('Adonis/Core/Config')
 			return new SessionManager(this.container, Config.get('session'))
 		})
@@ -34,7 +34,7 @@ export default class SessionProvider {
 		 * any middleware or controller raises exception.
 		 */
 		this.container.with(
-			['Adonis/Core/Server', 'Adonis/Core/HttpContext', 'Adonis/Addons/SessionManager'],
+			['Adonis/Core/Server', 'Adonis/Core/HttpContext', 'Adonis/Addons/Session'],
 			(
 				Server: ServerContract,
 				HttpContext: HttpContextConstructorContract,
