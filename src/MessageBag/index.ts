@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/session.ts" />
 
-import { get } from 'lodash'
+import { lodash } from '@poppinss/utils'
 import { MessageBagContract } from '@ioc:Adonis/Addons/Session'
 
 /**
@@ -36,7 +36,7 @@ export class MessageBag implements MessageBagContract {
 	 * Returns the value from the flash messages store
 	 */
 	public get(key: string): any {
-		return get(this.messages, key, null)
+		return lodash.get(this.messages, key, null)
 	}
 
 	/**
