@@ -9,6 +9,7 @@
 
 import { ServerContract } from '@ioc:Adonis/Core/Server'
 import { HttpContextConstructorContract } from '@ioc:Adonis/Core/HttpContext'
+
 import { SessionManager } from '../src/SessionManager'
 
 /**
@@ -23,7 +24,7 @@ export default class SessionProvider {
 	public register(): void {
 		this.container.singleton('Adonis/Addons/Session', () => {
 			const Config = this.container.use('Adonis/Core/Config')
-			return new SessionManager(this.container, Config.get('session'))
+			return new SessionManager(this.container, Config.get('session', {}))
 		})
 	}
 

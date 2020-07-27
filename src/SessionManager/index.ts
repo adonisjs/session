@@ -8,8 +8,8 @@
  */
 
 import ms from 'ms'
-import { Exception } from '@poppinss/utils'
 import { IocContract } from '@adonisjs/fold'
+import { Exception, ManagerConfigValidator } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import {
@@ -44,7 +44,16 @@ export class SessionManager implements SessionManagerContract {
 	private config: SessionManagerConfig
 
 	constructor(private container: IocContract, config: SessionConfig) {
+		this.validateConfig(config)
 		this.processConfig(config)
+	}
+
+	/**
+	 * Validates the config
+	 */
+	private validateConfig(config: SessionConfig) {
+		const validator = new ManagerConfigValidator(config, 'session', 'config/session')
+		validator.validateDefault('driver')
 	}
 
 	/**
