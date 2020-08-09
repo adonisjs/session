@@ -8,9 +8,8 @@
  */
 
 import { ServerContract } from '@ioc:Adonis/Core/Server'
+import { SessionManagerContract } from '@ioc:Adonis/Addons/Session'
 import { HttpContextConstructorContract } from '@ioc:Adonis/Core/HttpContext'
-
-import { SessionManager } from '../src/SessionManager'
 
 /**
  * Session provider for AdonisJS
@@ -24,6 +23,7 @@ export default class SessionProvider {
 	public register(): void {
 		this.container.singleton('Adonis/Addons/Session', () => {
 			const Config = this.container.use('Adonis/Core/Config')
+			const { SessionManager } = require('../src/SessionManager')
 			return new SessionManager(this.container, Config.get('session', {}))
 		})
 	}
@@ -39,7 +39,7 @@ export default class SessionProvider {
 			(
 				Server: ServerContract,
 				HttpContext: HttpContextConstructorContract,
-				Session: SessionManager
+				Session: SessionManagerContract
 			) => {
 				/**
 				 * Sharing session with the context

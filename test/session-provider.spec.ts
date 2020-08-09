@@ -53,7 +53,7 @@ test.group('Session Provider', () => {
 		const fn = () => ioc.use('Adonis/Addons/Session')
 		assert.throw(
 			fn,
-			'Invalid "session" config. Missing value for "driver". Make sure set it inside "config/session"'
+			'Invalid "session" config. Missing value for "driver". Make sure to set it inside the "config/session" file'
 		)
 	})
 })
