@@ -75,7 +75,7 @@ export class Session implements SessionContract {
 	 *
 	 * The `others` object is expanded with each call.
 	 */
-	public responseFlashMessage = new Store({})
+	public responseFlashMessages = new Store({})
 
 	/**
 	 * Session key for setting flash messages
@@ -93,11 +93,11 @@ export class Session implements SessionContract {
 	 * when nothing is set
 	 */
 	private setFlashMessages(): void {
-		if (this.responseFlashMessage.isEmpty) {
+		if (this.responseFlashMessages.isEmpty) {
 			return
 		}
 
-		const { input, ...others } = this.responseFlashMessage.all()
+		const { input, ...others } = this.responseFlashMessages.all()
 		this.put(this.flashMessagesKey, { ...input, ...others })
 	}
 
@@ -326,10 +326,10 @@ export class Session implements SessionContract {
 		 */
 		if (typeof key === 'string') {
 			if (value) {
-				this.responseFlashMessage.set(key, value)
+				this.responseFlashMessages.set(key, value)
 			}
 		} else {
-			this.responseFlashMessage.merge(key)
+			this.responseFlashMessages.merge(key)
 		}
 	}
 
@@ -339,7 +339,7 @@ export class Session implements SessionContract {
 	public flashAll(): void {
 		this.ensureIsReady()
 		this.ensureIsMutable()
-		this.responseFlashMessage.set('input', this.ctx.request.original())
+		this.responseFlashMessages.set('input', this.ctx.request.original())
 	}
 
 	/**
@@ -348,7 +348,7 @@ export class Session implements SessionContract {
 	public flashExcept(keys: string[]): void {
 		this.ensureIsReady()
 		this.ensureIsMutable()
-		this.responseFlashMessage.set('input', lodash.omit(this.ctx.request.original(), keys))
+		this.responseFlashMessages.set('input', lodash.omit(this.ctx.request.original(), keys))
 	}
 
 	/**
@@ -357,7 +357,7 @@ export class Session implements SessionContract {
 	public flashOnly(keys: string[]): void {
 		this.ensureIsReady()
 		this.ensureIsMutable()
-		this.responseFlashMessage.set('input', lodash.pick(this.ctx.request.original(), keys))
+		this.responseFlashMessages.set('input', lodash.pick(this.ctx.request.original(), keys))
 	}
 
 	/**

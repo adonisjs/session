@@ -190,7 +190,7 @@ declare module '@ioc:Adonis/Addons/Session' {
 		 * Flash messages that will be sent in the current
 		 * request response
 		 */
-		responseFlashMessage: StoreContract
+		responseFlashMessages: StoreContract
 
 		/**
 		 * Initiate session store
