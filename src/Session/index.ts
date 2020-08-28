@@ -21,7 +21,6 @@ import {
 } from '@ioc:Adonis/Addons/Session'
 
 import { Store } from '../Store'
-import { MessageBag } from '../MessageBag'
 
 /**
  * Session class exposes the API to read/write values to the session for
@@ -55,7 +54,7 @@ export class Session implements SessionContract {
 	/**
 	 * A copy of previously set flash messages
 	 */
-	public flashMessages = new MessageBag({})
+	public flashMessages = new Store({})
 
 	/**
 	 * A instance of store with values read from the driver. The store
@@ -76,7 +75,7 @@ export class Session implements SessionContract {
 	 *
 	 * The `others` object is expanded with each call.
 	 */
-	public responseFlashMessage = new MessageBag({})
+	public responseFlashMessage = new Store({})
 
 	/**
 	 * Session key for setting flash messages
@@ -325,8 +324,10 @@ export class Session implements SessionContract {
 		/**
 		 * Update value
 		 */
-		if (value && typeof key === 'string') {
-			this.responseFlashMessage.set(key, value)
+		if (typeof key === 'string') {
+			if (value) {
+				this.responseFlashMessage.set(key, value)
+			}
 		} else {
 			this.responseFlashMessage.merge(key)
 		}

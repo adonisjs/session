@@ -48,4 +48,34 @@ test.group('Store', () => {
 		store.decrement('user.age')
 		assert.deepEqual(store.toJSON(), { user: { age: 21 } })
 	})
+
+	test('find if value exists in the store', (assert) => {
+		const store = new Store({})
+		assert.isFalse(store.has('username'))
+
+		store.update({ username: 'virk' })
+		assert.isTrue(store.has('username'))
+	})
+
+	test('check for arrays length', (assert) => {
+		const store = new Store({})
+		assert.isFalse(store.has('users'))
+
+		store.update({ users: [] })
+		assert.isFalse(store.has('users'))
+
+		store.update({ users: ['virk'] })
+		assert.isTrue(store.has('users'))
+	})
+
+	test('do not check for array length when explicitly said no', (assert) => {
+		const store = new Store({})
+		assert.isFalse(store.has('users'))
+
+		store.update({ users: [] })
+		assert.isTrue(store.has('users', false))
+
+		store.update({ users: ['virk'] })
+		assert.isTrue(store.has('users'))
+	})
 })

@@ -23,10 +23,10 @@ export class Store {
 	}
 
 	/**
-	 * Returns the store values
+	 * Find if store is empty or not
 	 */
-	public toJSON(): any {
-		return this.values
+	public get isEmpty() {
+		return !this.values || Object.keys(this.values).length === 0
 	}
 
 	/**
@@ -61,7 +61,7 @@ export class Store {
 	 * Reset store by clearing it's values.
 	 */
 	public clear(): void {
-		this.values = {}
+		this.update({})
 	}
 
 	/**
@@ -99,5 +99,39 @@ export class Store {
 		}
 
 		this.set(key, value - steps)
+	}
+
+	/**
+	 * Overwrite the underlying values object
+	 */
+	public update(values: { [key: string]: any }): void {
+		this.values = values
+	}
+
+	/**
+	 * Update to merge values
+	 */
+	public merge(values: { [key: string]: any }): any {
+		lodash.merge(this.values, values)
+	}
+
+	/**
+	 * A boolean to know if value exists. Extra guards to check
+	 * arrays for it's length as well.
+	 */
+	public has(key: string, checkForArraysLength: boolean = true): boolean {
+		const value = this.get(key)
+		if (!Array.isArray(value)) {
+			return !!value
+		}
+
+		return checkForArraysLength ? value.length > 0 : !!value
+	}
+
+	/**
+	 * Returns the store values
+	 */
+	public toJSON(): any {
+		return this.values
 	}
 }
