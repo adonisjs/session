@@ -10,12 +10,15 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception, lodash } from '@poppinss/utils'
-import { AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
+import { AllowedSessionValues, StoreContract } from '@ioc:Adonis/Addons/Session'
 
 /**
  * Session store to mutate and access values from the session object
  */
-export class Store {
+export class Store implements StoreContract {
+	/**
+	 * Underlying store values
+	 */
 	private values: { [key: string]: any }
 
 	constructor(values: { [key: string]: any } | null) {
@@ -34,13 +37,6 @@ export class Store {
 	 */
 	public set(key: string, value: AllowedSessionValues): void {
 		lodash.set(this.values, key, value)
-	}
-
-	/**
-	 * Get all values
-	 */
-	public all(): any {
-		return this.values
 	}
 
 	/**
@@ -129,9 +125,30 @@ export class Store {
 	}
 
 	/**
+	 * Get all values
+	 */
+	public all(): any {
+		return this.values
+	}
+
+	/**
+	 * Returns object representation of values
+	 */
+	public toObject() {
+		return this.all()
+	}
+
+	/**
 	 * Returns the store values
 	 */
 	public toJSON(): any {
-		return this.values
+		return this.all()
+	}
+
+	/**
+	 * Returns string representation of the store
+	 */
+	public toString() {
+		return JSON.stringify(this.all())
 	}
 }

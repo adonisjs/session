@@ -78,14 +78,81 @@ declare module '@ioc:Adonis/Addons/Session' {
 	export type AllowedSessionValues = string | boolean | number | object | Date | Array<any>
 
 	/**
-	 * Shape of message bag, used for storing flash
-	 * messages
+	 * Store used for storing session values + flash messages
 	 */
-	export interface MessageBagContract {
+	export interface StoreContract {
+		/**
+		 * A boolean to know if store is empty
+		 */
+		isEmpty: boolean
+
+		/**
+		 * Set value for a key
+		 */
+		set(key: string, value: AllowedSessionValues): void
+
+		/**
+		 * Increment value for a key. An exception is raised when existing
+		 * value is not a number
+		 */
+		increment(key: string, steps?: number): void
+
+		/**
+		 * Decrement value for a key. An exception is raised when existing
+		 * value is not a number
+		 */
+		decrement(key: string, steps?: number): void
+
+		/**
+		 * Replace existing values with new ones
+		 */
+		update(values: { [key: string]: any }): void
+
+		/**
+		 * Merge values with existing ones
+		 */
+		merge(values: { [key: string]: any }): any
+
+		/**
+		 * Get all values
+		 */
 		all(): any
-		get(key: string): any
+
+		/**
+		 * Get value for a given key or use the default value
+		 */
+		get(key: string, defaultValue?: any): any
+
+		/**
+		 * Find if a value exists. Optionally you can also check arrays
+		 * to have length too
+		 */
 		has(key: string, checkForArraysLength?: boolean): boolean
-		update(messages: any): void
+
+		/**
+		 * Unset value
+		 */
+		unset(key: string): void
+
+		/**
+		 * Clear all values
+		 */
+		clear(): void
+
+		/**
+		 * Read value and then unset it at the same time
+		 */
+		pull(key: string, defaultValue?: any): any
+
+		/**
+		 * Convert store values toObject
+		 */
+		toObject(): any
+
+		/**
+		 * Convert store values to toJSON
+		 */
+		toJSON(): any
 	}
 
 	/**
@@ -117,13 +184,13 @@ declare module '@ioc:Adonis/Addons/Session' {
 		/**
 		 * Previous request flash messages
 		 */
-		flashMessages: MessageBagContract
+		flashMessages: StoreContract
 
 		/**
 		 * Flash messages that will be sent in the current
 		 * request response
 		 */
-		responseFlashMessage: MessageBagContract
+		responseFlashMessage: StoreContract
 
 		/**
 		 * Initiate session store
