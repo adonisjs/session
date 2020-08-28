@@ -120,6 +120,12 @@ declare module '@ioc:Adonis/Addons/Session' {
 		flashMessages: MessageBagContract
 
 		/**
+		 * Flash messages that will be sent in the current
+		 * request response
+		 */
+		responseFlashMessage: MessageBagContract
+
+		/**
 		 * Initiate session store
 		 */
 		initiate(readonly: boolean): Promise<void>

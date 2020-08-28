@@ -76,13 +76,7 @@ export class Session implements SessionContract {
 	 *
 	 * The `others` object is expanded with each call.
 	 */
-	private flashMessagesStore: {
-		input: any
-		others: any
-	} = {
-		input: null,
-		others: null,
-	}
+	public responseFlashMessage = new MessageBag({})
 
 	/**
 	 * Session key for setting flash messages
@@ -100,14 +94,12 @@ export class Session implements SessionContract {
 	 * when nothing is set
 	 */
 	private setFlashMessages(): void {
-		if (this.flashMessagesStore.input === null && this.flashMessagesStore.others === null) {
+		if (this.responseFlashMessage.isEmpty) {
 			return
 		}
 
-		this.put(this.flashMessagesKey, {
-			...this.flashMessagesStore.input,
-			...this.flashMessagesStore.others,
-		})
+		const { input, ...others } = this.responseFlashMessage.all()
+		this.put(this.flashMessagesKey, { ...input, ...others })
 	}
 
 	/**
@@ -331,20 +323,12 @@ export class Session implements SessionContract {
 		this.ensureIsMutable()
 
 		/**
-		 * Initiates others object inside flash messages
-		 * store
-		 */
-		if (this.flashMessagesStore.others === null) {
-			this.flashMessagesStore.others = {}
-		}
-
-		/**
 		 * Update value
 		 */
 		if (value && typeof key === 'string') {
-			this.flashMessagesStore.others[key] = value
+			this.responseFlashMessage.set(key, value)
 		} else {
-			Object.assign(this.flashMessagesStore.others, key)
+			this.responseFlashMessage.merge(key)
 		}
 	}
 
@@ -354,7 +338,7 @@ export class Session implements SessionContract {
 	public flashAll(): void {
 		this.ensureIsReady()
 		this.ensureIsMutable()
-		this.flashMessagesStore.input = this.ctx.request.original()
+		this.responseFlashMessage.set('input', this.ctx.request.original())
 	}
 
 	/**
@@ -363,7 +347,7 @@ export class Session implements SessionContract {
 	public flashExcept(keys: string[]): void {
 		this.ensureIsReady()
 		this.ensureIsMutable()
-		this.flashMessagesStore.input = lodash.omit(this.ctx.request.original(), keys)
+		this.responseFlashMessage.set('input', lodash.omit(this.ctx.request.original(), keys))
 	}
 
 	/**
@@ -372,7 +356,7 @@ export class Session implements SessionContract {
 	public flashOnly(keys: string[]): void {
 		this.ensureIsReady()
 		this.ensureIsMutable()
-		this.flashMessagesStore.input = lodash.pick(this.ctx.request.original(), keys)
+		this.responseFlashMessage.set('input', lodash.pick(this.ctx.request.original(), keys))
 	}
 
 	/**

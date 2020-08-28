@@ -19,6 +19,13 @@ export class MessageBag implements MessageBagContract {
 	constructor(private messages: any) {}
 
 	/**
+	 * Find if store is empty or not
+	 */
+	public get isEmpty() {
+		return !this.messages || Object.keys(this.messages).length === 0
+	}
+
+	/**
 	 * Update the messages bad
 	 */
 	public update(messages: any): void {
@@ -37,6 +44,20 @@ export class MessageBag implements MessageBagContract {
 	 */
 	public get(key: string): any {
 		return lodash.get(this.messages, key, null)
+	}
+
+	/**
+	 * Update to set values
+	 */
+	public set(key: string, value: any): any {
+		lodash.set(this.messages, key, value)
+	}
+
+	/**
+	 * Update to merge values
+	 */
+	public merge(values: any): any {
+		lodash.merge(this.messages, values)
 	}
 
 	/**
