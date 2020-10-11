@@ -9,3 +9,4 @@
 
 /// <reference path="./session.ts" />
 /// <reference path="./context.ts" />
+/// <reference path="./container.ts" />
