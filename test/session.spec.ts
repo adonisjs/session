@@ -198,8 +198,9 @@ test.group('Session', (group) => {
 })
 
 test.group('Session | Flash', (group) => {
-	group.afterEach(() => {
+	group.afterEach(async () => {
 		MemoryDriver.sessions.clear()
+		await fs.cleanup()
 	})
 
 	test('set custom flash messages', async (assert) => {
