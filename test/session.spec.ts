@@ -16,16 +16,20 @@ import { createServer } from 'http'
 import { Store } from '../src/Store'
 import { Session } from '../src/Session'
 import { MemoryDriver } from '../src/Drivers/Memory'
-import { createCtx, sessionConfig, unsignCookie, signCookie } from '../test-helpers/index'
+import { setup, fs, sessionConfig, unsignCookie, signCookie } from '../test-helpers/index'
 
 test.group('Session', (group) => {
-	group.afterEach(() => {
+	group.afterEach(async () => {
 		MemoryDriver.sessions.clear()
+		await fs.cleanup()
 	})
 
 	test("initiate session with fresh session id when there isn't any session", async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
 			await session.initiate(false)
@@ -39,8 +43,10 @@ test.group('Session', (group) => {
 	})
 
 	test('initiate session with empty store when session id exists', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -52,12 +58,16 @@ test.group('Session', (group) => {
 			res.end()
 		})
 
-		await supertest(server).get('/').set('cookie', signCookie('1234', sessionConfig.cookieName))
+		await supertest(server)
+			.get('/')
+			.set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
 	})
 
 	test('write session values with driver on commit', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -71,15 +81,17 @@ test.group('Session', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 		assert.deepEqual(new Store(session).all(), { user: { username: 'virk' } })
 	})
 
 	test('re-use existing session id', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -93,9 +105,9 @@ test.group('Session', (group) => {
 
 		const { header } = await supertest(server)
 			.get('/')
-			.set('cookie', signCookie('1234', sessionConfig.cookieName))
+			.set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.equal(sessionId, '1234')
 
 		const session = MemoryDriver.sessions.get('1234')!
@@ -103,8 +115,10 @@ test.group('Session', (group) => {
 	})
 
 	test('retain driver existing values', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -128,9 +142,9 @@ test.group('Session', (group) => {
 		 */
 		const { header } = await supertest(server)
 			.get('/')
-			.set('cookie', signCookie('1234', sessionConfig.cookieName))
+			.set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.equal(sessionId, '1234')
 
 		/**
@@ -141,8 +155,10 @@ test.group('Session', (group) => {
 	})
 
 	test('regenerate session id when regenerate method is called', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -165,9 +181,9 @@ test.group('Session', (group) => {
 
 		const { header } = await supertest(server)
 			.get('/')
-			.set('cookie', signCookie('1234', sessionConfig.cookieName))
+			.set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		assert.notEqual(sessionId, '1234')
 
@@ -187,8 +203,10 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test('set custom flash messages', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -205,7 +223,7 @@ test.group('Session | Flash', (group) => {
 		/**
 		 * Ensure session id is changed
 		 */
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 
@@ -217,8 +235,10 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test('flash input values', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 			ctx.request.setInitialBody({ username: 'virk', age: 28 })
 
 			const driver = new MemoryDriver()
@@ -233,7 +253,7 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 
@@ -246,8 +266,11 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test('flash selected input values', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
 			ctx.request.setInitialBody({
 				username: 'virk',
 				age: 28,
@@ -268,7 +291,7 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 
 		const session = MemoryDriver.sessions.get(sessionId)!
@@ -283,8 +306,11 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test("flash all input values except the defined one's", async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
 			ctx.request.setInitialBody({
 				username: 'virk',
 				age: 28,
@@ -305,7 +331,7 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 
@@ -320,8 +346,11 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test('flash input along with custom messages', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
 			ctx.request.setInitialBody({
 				username: 'virk',
 				age: 28,
@@ -340,7 +369,7 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 
@@ -353,8 +382,10 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test('read old flash values', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -383,17 +414,19 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server)
 			.get('/')
-			.set('cookie', signCookie('1234', sessionConfig.cookieName))
+			.set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 		assert.deepEqual(new Store(session).all(), {})
 	})
 
 	test('read selected old values', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -419,17 +452,19 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server)
 			.get('/')
-			.set('cookie', signCookie('1234', sessionConfig.cookieName))
+			.set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 		assert.deepEqual(new Store(session).all(), {})
 	})
 
 	test('flash custom messages as an object', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const driver = new MemoryDriver()
 			const session = new Session(ctx, sessionConfig, driver)
@@ -444,7 +479,7 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 
@@ -457,8 +492,11 @@ test.group('Session | Flash', (group) => {
 	})
 
 	test('always flash original input values', async (assert) => {
+		const app = await setup()
+
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
 			ctx.request.setInitialBody({ username: 'virk', age: 28 })
 			ctx.request.updateBody({ username: 'nikk', age: 22 })
 
@@ -474,7 +512,7 @@ test.group('Session | Flash', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		assert.exists(sessionId)
 		const session = MemoryDriver.sessions.get(sessionId)!
 

@@ -12,15 +12,12 @@
 import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
-import { Ioc } from '@adonisjs/fold'
 import { MessageBuilder } from '@poppinss/utils'
-import { Filesystem } from '@poppinss/dev-utils'
+import { Application } from '@adonisjs/core/build/standalone'
 
 import { Store } from '../src/Store'
 import { SessionManager } from '../src/SessionManager'
-import { createCtx, sessionConfig, unsignCookie, getRedisManager } from '../test-helpers'
-
-const fs = new Filesystem()
+import { setup, fs, sessionConfig, unsignCookie, getRedisManager } from '../test-helpers'
 
 test.group('Session Manager', (group) => {
 	group.afterEach(async () => {
@@ -28,11 +25,12 @@ test.group('Session Manager', (group) => {
 	})
 
 	test('do not set maxAge when clearWithBrowser is true', async (assert) => {
+		const app = await setup()
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const manager = new SessionManager(
-				new Ioc(),
+				new Application(__dirname, 'web', {}),
 				Object.assign({}, sessionConfig, { clearWithBrowser: true })
 			)
 			const session = manager.create(ctx)
@@ -49,10 +47,11 @@ test.group('Session Manager', (group) => {
 	})
 
 	test('set maxAge when clearWithBrowser is false', async (assert) => {
+		const app = await setup()
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
-			const manager = new SessionManager(new Ioc(), sessionConfig)
+			const manager = new SessionManager(new Application(__dirname, 'web', {}), sessionConfig)
 			const session = manager.create(ctx)
 			await session.initiate(false)
 
@@ -70,8 +69,9 @@ test.group('Session Manager', (group) => {
 	})
 
 	test('use file driver to persist session value', async (assert) => {
+		const app = await setup()
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const customConfig = Object.assign({}, sessionConfig, {
 				driver: 'file',
@@ -80,7 +80,7 @@ test.group('Session Manager', (group) => {
 				},
 			})
 
-			const manager = new SessionManager(new Ioc(), customConfig)
+			const manager = new SessionManager(new Application(__dirname, 'web', {}), customConfig)
 			const session = manager.create(ctx)
 			await session.initiate(false)
 
@@ -92,26 +92,26 @@ test.group('Session Manager', (group) => {
 
 		const { header } = await supertest(server).get('/')
 
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 		const sessionContents = await fs.get(`${sessionId}.txt`)
 		const sessionValues = new MessageBuilder().verify<any>(sessionContents, sessionId)
 		assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
 	})
 
 	test('use redis driver to persist session value', async (assert) => {
-		const ioc = new Ioc()
+		const app = await setup()
 
-		ioc.singleton('Adonis/Addons/Redis', () => getRedisManager())
+		app.container.singleton('Adonis/Addons/Redis', () => getRedisManager(app))
 
 		const server = createServer(async (req, res) => {
-			const ctx = createCtx(req, res, {})
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
 			const customConfig = Object.assign({}, sessionConfig, {
 				driver: 'redis',
 				redisConnection: 'session',
 			})
 
-			const manager = new SessionManager(ioc, customConfig)
+			const manager = new SessionManager(app, customConfig)
 			const session = manager.create(ctx)
 			await session.initiate(false)
 
@@ -122,14 +122,16 @@ test.group('Session Manager', (group) => {
 		})
 
 		const { header } = await supertest(server).get('/')
-		const sessionId = unsignCookie(header, sessionConfig.cookieName)
-		const sessionContents = await ioc
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
+
+		const sessionContents = await app.container
 			.use('Adonis/Addons/Redis')
 			.connection('session')
 			.get(sessionId)
+
 		const sessionValues = new MessageBuilder().verify<any>(sessionContents, sessionId)
 		assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
 
-		await ioc.use('Adonis/Addons/Redis').connection('session').del(sessionId)
+		await app.container.use('Adonis/Addons/Redis').connection('session').del(sessionId)
 	})
 })

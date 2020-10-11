@@ -11,22 +11,31 @@
 
 import test from 'japa'
 import { RedisDriver } from '../src/Drivers/Redis'
-import { sleep, sessionConfig, getRedisManager } from '../test-helpers'
+import { fs, setup, sleep, sessionConfig, getRedisManager } from '../test-helpers'
 
 const config = Object.assign({}, sessionConfig, { driver: 'redis', redisConnection: 'session' })
 
-test.group('Redis driver', () => {
+test.group('Redis driver', (group) => {
+	group.afterEach(async () => {
+		await fs.cleanup()
+	})
+
 	test('return null when value is missing', async (assert) => {
+		const app = await setup()
+
 		const sessionId = '1234'
-		const redis = getRedisManager()
+		const redis = getRedisManager(app)
 		const session = new RedisDriver(config, redis)
+
 		const value = await session.read(sessionId)
 		assert.isNull(value)
 	})
 
 	test('write session value to the redis store', async (assert) => {
+		const app = await setup()
+
 		const sessionId = '1234'
-		const redis = getRedisManager()
+		const redis = getRedisManager(app)
 
 		const session = new RedisDriver(config, redis)
 		await session.write(sessionId, { message: 'hello-world' })
@@ -40,8 +49,10 @@ test.group('Redis driver', () => {
 	})
 
 	test('get session existing value', async (assert) => {
+		const app = await setup()
+
 		const sessionId = '1234'
-		const redis = getRedisManager()
+		const redis = getRedisManager(app)
 
 		await redis.connection('session').set(
 			'1234',
@@ -58,8 +69,10 @@ test.group('Redis driver', () => {
 	})
 
 	test('remove session', async (assert) => {
+		const app = await setup()
+
 		const sessionId = '1234'
-		const redis = getRedisManager()
+		const redis = getRedisManager(app)
 
 		await redis.connection('session').set(
 			'1234',
@@ -79,8 +92,10 @@ test.group('Redis driver', () => {
 	})
 
 	test('update session expiry', async (assert) => {
+		const app = await setup()
+
 		const sessionId = '1234'
-		const redis = getRedisManager()
+		const redis = getRedisManager(app)
 
 		const session = new RedisDriver(config, redis)
 		await redis.connection('session').set(

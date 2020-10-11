@@ -9,51 +9,73 @@
 
 import test from 'japa'
 import { join } from 'path'
-import { Registrar, Ioc } from '@adonisjs/fold'
-import { Config } from '@adonisjs/config/build/standalone'
-import { Emitter } from '@adonisjs/events/build/standalone'
+
+import { Filesystem } from '@poppinss/dev-utils'
+import { Application } from '@adonisjs/application'
 
 import { SessionManager } from '../src/SessionManager'
 
-test.group('Session Provider', () => {
+const fs = new Filesystem(join(__dirname, 'app'))
+
+async function setup(sessionConfig: any) {
+	await fs.add('.env', '')
+	await fs.add(
+		'config/app.ts',
+		`
+		export const appKey = 'averylong32charsrandomsecretkey',
+		export const http = {
+			cookie: {},
+			trustProxy: () => true,
+		}
+	`
+	)
+
+	await fs.add(
+		'config/session.ts',
+		`
+		const sessionConfig = ${JSON.stringify(sessionConfig, null, 2)}
+		export default sessionConfig
+	`
+	)
+
+	const app = new Application(fs.basePath, 'web', {
+		providers: ['@adonisjs/core', '../../providers/SessionProvider'],
+	})
+
+	app.setup()
+	app.registerProviders()
+	await app.bootProviders()
+
+	return app
+}
+
+test.group('Session Provider', (group) => {
+	group.afterEach(async () => {
+		await fs.cleanup()
+	})
+
 	test('register session provider', async (assert) => {
-		const ioc = new Ioc()
-		ioc.bind('Adonis/Core/Config', () => {
-			return new Config({
-				session: {
-					driver: 'cookie',
-				},
-			})
+		const app = await setup({
+			driver: 'cookie',
 		})
 
-		ioc.bind('Adonis/Core/Event', () => {
-			return new Emitter(ioc)
-		})
-
-		const registrar = new Registrar(ioc, join(__dirname, '..'))
-		await registrar.useProviders(['./providers/SessionProvider']).registerAndBoot()
-
-		assert.instanceOf(ioc.use('Adonis/Addons/Session'), SessionManager)
-		assert.deepEqual(ioc.use('Adonis/Addons/Session'), ioc.use('Adonis/Addons/Session'))
+		assert.instanceOf(app.container.use('Adonis/Addons/Session'), SessionManager)
+		assert.deepEqual(
+			app.container.use('Adonis/Addons/Session'),
+			app.container.use('Adonis/Addons/Session')
+		)
 	})
 
 	test('raise error when config is missing', async (assert) => {
-		const ioc = new Ioc()
-		ioc.bind('Adonis/Core/Config', () => {
-			return new Config({})
-		})
+		assert.plan(1)
 
-		ioc.bind('Adonis/Core/Event', () => {
-			return new Emitter(ioc)
-		})
-
-		const registrar = new Registrar(ioc, join(__dirname, '..'))
-		await registrar.useProviders(['./providers/SessionProvider']).registerAndBoot()
-
-		const fn = () => ioc.use('Adonis/Addons/Session')
-		assert.throw(
-			fn,
-			'Invalid "session" config. Missing value for "driver". Make sure to set it inside the "config/session" file'
-		)
+		try {
+			await setup({})
+		} catch (error) {
+			assert.equal(
+				error.message,
+				'Invalid "session" config. Missing value for "driver". Make sure to set it inside the "config/session" file'
+			)
+		}
 	})
 })

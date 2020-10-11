@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-declare module '@ioc:Adonis/Core/HttpContext' {
-	import { SessionContract } from '@ioc:Adonis/Addons/Session'
+declare module '@ioc:Adonis/Core/Application' {
+	import { SessionManagerContract } from '@ioc:Adonis/Addons/Session'
 
-	interface HttpContextContract {
-		session: SessionContract
+	interface ContainerBindings {
+		'Adonis/Addons/Session': SessionManagerContract
 	}
 }

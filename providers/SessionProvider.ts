@@ -7,24 +7,23 @@
  * file that was distributed with this source code.
  */
 
-import { ServerContract } from '@ioc:Adonis/Core/Server'
-import { SessionManagerContract } from '@ioc:Adonis/Addons/Session'
-import { HttpContextConstructorContract } from '@ioc:Adonis/Core/HttpContext'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
  * Session provider for AdonisJS
  */
 export default class SessionProvider {
-	constructor(protected container: any) {}
+	constructor(protected app: ApplicationContract) {}
+	public static needsApplication = true
 
 	/**
 	 * Register Session Manager
 	 */
 	public register(): void {
-		this.container.singleton('Adonis/Addons/Session', () => {
-			const Config = this.container.use('Adonis/Core/Config')
+		this.app.container.singleton('Adonis/Addons/Session', () => {
+			const Config = this.app.container.use('Adonis/Core/Config')
 			const { SessionManager } = require('../src/SessionManager')
-			return new SessionManager(this.container, Config.get('session', {}))
+			return new SessionManager(this.app.container, Config.get('session', {}))
 		})
 	}
 
@@ -34,13 +33,9 @@ export default class SessionProvider {
 		 * middleware, since Hooks guarantee the `after` execution even when
 		 * any middleware or controller raises exception.
 		 */
-		this.container.with(
+		this.app.container.with(
 			['Adonis/Core/Server', 'Adonis/Core/HttpContext', 'Adonis/Addons/Session'],
-			(
-				Server: ServerContract,
-				HttpContext: HttpContextConstructorContract,
-				Session: SessionManagerContract
-			) => {
+			(Server, HttpContext, Session) => {
 				/**
 				 * Sharing session with the context
 				 */

@@ -7,23 +7,15 @@
  * file that was distributed with this source code.
  */
 
-import { Ioc } from '@adonisjs/fold'
-import { IncomingMessage, ServerResponse } from 'http'
-import { ServerConfig } from '@ioc:Adonis/Core/Server'
+import { join } from 'path'
+import { Filesystem } from '@poppinss/dev-utils'
 import { SessionConfig } from '@ioc:Adonis/Addons/Session'
-import { Emitter } from '@adonisjs/events/build/standalone'
-import { Profiler } from '@adonisjs/profiler/build/standalone'
-import { FakeLogger } from '@adonisjs/logger/build/standalone'
-import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import { Application } from '@adonisjs/core/build/standalone'
 import { RedisManagerContract } from '@ioc:Adonis/Addons/Redis'
-import { Encryption } from '@adonisjs/encryption/build/standalone'
-import { HttpContext, Router } from '@adonisjs/http-server/build/standalone'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { RedisManager } from '@adonisjs/redis/build/src/RedisManager'
 
-export const SECRET = Math.random().toFixed(36).substring(2, 38)
-export const encryption = new Encryption({ secret: SECRET })
-export const logger = new FakeLogger({ enabled: true, level: 'trace', name: 'adonis' })
-export const profiler = new Profiler(__dirname, logger, {})
+export const fs = new Filesystem(join(__dirname, 'app'))
 
 /**
  * Session default config
@@ -38,40 +30,36 @@ export const sessionConfig: SessionConfig = {
 	},
 }
 
-/**
- * Default server config
- */
-const defaultServerConfig = {
-	subdomainOffset: 2,
-	generateRequestId: false,
-	allowMethodSpoofing: false,
-	trustProxy: () => true,
-	etag: false,
-	jsonpCallbackName: 'callback',
-	cookie: {},
-}
+export async function setup(config?: any) {
+	await fs.add('.env', '')
+	await fs.add(
+		'config/app.ts',
+		`
+		export const appKey = '${Math.random().toFixed(36).substring(2, 38)}',
+		export const http = {
+			cookie: {},
+			trustProxy: () => true,
+		}
+	`
+	)
 
-/**
- * Returns HTTP context
- */
-export function createCtx(
-	req: IncomingMessage,
-	res: ServerResponse,
-	config: Partial<ServerConfig>
-): HttpContextContract {
-	const profilerRow = profiler.create('http:request')
-	const serverConfig = Object.assign(defaultServerConfig, config)
-	return (HttpContext.create(
-		'/',
-		{},
-		logger,
-		profilerRow,
-		encryption,
-		new Router(encryption),
-		req,
-		res,
-		serverConfig
-	) as unknown) as HttpContextContract
+	await fs.add(
+		'config/session.ts',
+		`
+		const sessionConfig = ${JSON.stringify(config || sessionConfig, null, 2)}
+		export default sessionConfig
+	`
+	)
+
+	const app = new Application(fs.basePath, 'web', {
+		providers: ['@adonisjs/core', '../../providers/SessionProvider'],
+	})
+
+	app.setup()
+	app.registerProviders()
+	await app.bootProviders()
+
+	return app
 }
 
 /**
@@ -84,21 +72,24 @@ export function sleep(time: number): Promise<void> {
 /**
  * Signs value to be set as cookie header
  */
-export function signCookie(value: any, name: string) {
+export function signCookie(app: ApplicationContract, value: any, name: string) {
+	const encryption = app.container.use('Adonis/Core/Encryption')
 	return `${name}=s:${encryption.verifier.sign(value, undefined, name)}`
 }
 
 /**
  * Encrypt value to be set as cookie header
  */
-export function encryptCookie(value: any, name: string) {
+export function encryptCookie(app: ApplicationContract, value: any, name: string) {
+	const encryption = app.container.use('Adonis/Core/Encryption')
 	return `${name}=e:${encryption.encrypt(value, undefined, name)}`
 }
 
 /**
  * Decrypt cookie
  */
-export function decryptCookie(header: any, name: string) {
+export function decryptCookie(app: ApplicationContract, header: any, name: string) {
+	const encryption = app.container.use('Adonis/Core/Encryption')
 	const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
 		.replace(`${name}=`, '')
 		.slice(2)
@@ -109,26 +100,28 @@ export function decryptCookie(header: any, name: string) {
 /**
  * Unsign cookie
  */
-export function unsignCookie(header: any, name: string) {
+export function unsignCookie(app: ApplicationContract, header: any, name: string) {
+	const encryption = app.container.use('Adonis/Core/Encryption')
+
 	const cookieValue = decodeURIComponent(header['set-cookie'][0].split(';')[0])
 		.replace(`${name}=`, '')
 		.slice(2)
 
-	return encryption.verifier.unsign<any>(cookieValue, name)
+	return encryption.verifier.unsign(cookieValue, name)
 }
 
 /**
  * Reference to the redis manager
  */
-export function getRedisManager() {
+export function getRedisManager(application: ApplicationContract) {
 	return (new RedisManager(
-		new Ioc(),
+		application,
 		{
 			connection: 'session',
 			connections: {
 				session: {},
 			},
 		} as any,
-		new Emitter(new Ioc())
+		application.container.use('Adonis/Core/Event')
 	) as unknown) as RedisManagerContract
 }

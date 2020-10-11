@@ -8,7 +8,7 @@
  */
 
 import ms from 'ms'
-import { IocContract } from '@adonisjs/fold'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { Exception, ManagerConfigValidator } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
@@ -43,7 +43,7 @@ export class SessionManager implements SessionManagerContract {
 	 */
 	private config: SessionManagerConfig
 
-	constructor(private container: IocContract, config: SessionConfig) {
+	constructor(private application: ApplicationContract, config: SessionConfig) {
 		this.validateConfig(config)
 		this.processConfig(config)
 	}
@@ -109,7 +109,14 @@ export class SessionManager implements SessionManagerContract {
 	 */
 	private createRedisDriver(): any {
 		const { RedisDriver } = require('../Drivers/Redis')
-		return new RedisDriver(this.config, this.container.use('Adonis/Addons/Redis'))
+
+		if (!this.application.container.hasBinding('Adonis/Addons/Redis')) {
+			throw new Error(
+				'Install "@adonisjs/redis" in order to use the redis driver for storing sessions'
+			)
+		}
+
+		return new RedisDriver(this.config, this.application.container.use('Adonis/Addons/Redis'))
 	}
 
 	/**
@@ -124,7 +131,11 @@ export class SessionManager implements SessionManagerContract {
 			)
 		}
 
-		return this.extendedDrivers.get(this.config.driver)!(this.container, this.config, ctx)
+		return this.extendedDrivers.get(this.config.driver)!(
+			this.application.container,
+			this.config,
+			ctx
+		)
 	}
 
 	/**
