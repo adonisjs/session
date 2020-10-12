@@ -9,6 +9,8 @@
 
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
+import { SessionManager } from '../src/SessionManager'
+
 /**
  * Session provider for AdonisJS
  */
@@ -21,9 +23,7 @@ export default class SessionProvider {
 	 */
 	public register(): void {
 		this.app.container.singleton('Adonis/Addons/Session', () => {
-			const Config = this.app.container.use('Adonis/Core/Config')
-			const { SessionManager } = require('../src/SessionManager')
-			return new SessionManager(this.app.container, Config.get('session', {}))
+			return new SessionManager(this.app, this.app.config.get('session', {}))
 		})
 	}
 
