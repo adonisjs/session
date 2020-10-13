@@ -524,4 +524,41 @@ test.group('Session | Flash', (group) => {
 			},
 		})
 	})
+
+	test('do not attempt to commit when initiate raises an exception', async (assert) => {
+		assert.plan(3)
+		const app = await setup()
+
+		const server = createServer(async (req, res) => {
+			const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
+			ctx.request.setInitialBody({ username: 'virk', age: 28 })
+			ctx.request.updateBody({ username: 'nikk', age: 22 })
+
+			const driver = new MemoryDriver()
+			driver.read = function () {
+				throw new Error('Blowup')
+			}
+
+			const session = new Session(ctx, sessionConfig, driver)
+
+			try {
+				await session.initiate(false)
+			} catch (error) {
+				assert.equal(error.message, 'Blowup')
+			}
+
+			await session.commit()
+			ctx.response.send('')
+			ctx.response.finish()
+		})
+
+		const { header } = await supertest(server).get('/')
+
+		const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
+		assert.exists(sessionId)
+		const session = MemoryDriver.sessions.get(sessionId)!
+
+		assert.deepEqual(new Store(session).all(), {})
+	})
 })

@@ -207,7 +207,6 @@ export class Session implements SessionContract {
 			return
 		}
 
-		this.initiated = true
 		this.readonly = readonly
 
 		/**
@@ -222,6 +221,7 @@ export class Session implements SessionContract {
 			}
 		)
 
+		this.initiated = true
 		this.readLastRequestFlashMessage()
 		this.shareLocalsWithView()
 	}
