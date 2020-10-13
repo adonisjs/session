@@ -134,4 +134,38 @@ test.group('Session Manager', (group) => {
 
 		await app.container.use('Adonis/Addons/Redis').connection('session').del(sessionId)
 	})
+
+	test('extend by adding a custom driver', async (assert) => {
+		assert.plan(1)
+
+		const app = await setup(
+			Object.assign({}, sessionConfig, {
+				driver: 'mongo',
+			})
+		)
+
+		class MongoDriver {
+			public read() {
+				return {}
+			}
+			public write(_, data: any) {
+				assert.deepEqual(data, { name: 'virk' })
+			}
+			public touch() {}
+			public destroy() {}
+		}
+
+		app.container.singleton('Adonis/Addons/Redis', () => getRedisManager(app))
+		app.container.use('Adonis/Addons/Session').extend('mongo', () => {
+			return new MongoDriver()
+		})
+
+		const session = app.container
+			.use('Adonis/Addons/Session')
+			.create(app.container.use('Adonis/Core/HttpContext').create('/', {}))
+
+		await session.initiate(false)
+		session.put('name', 'virk')
+		await session.commit()
+	})
 })
