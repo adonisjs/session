@@ -26,6 +26,7 @@ test.group('Session Provider', (group) => {
 			app.container.use('Adonis/Addons/Session'),
 			app.container.use('Adonis/Addons/Session')
 		)
+		assert.deepEqual(app.container.use('Adonis/Addons/Session')['application'], app)
 	})
 
 	test('raise error when config is missing', async (assert) => {
