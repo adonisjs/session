@@ -24,7 +24,7 @@ const sessionConfig: SessionConfig = {
   | Note: Switching drivers will make existing sessions invalid.
   |
   */
-  driver: Env.get('SESSION_DRIVER', 'cookie') as string,
+  driver: Env.get('SESSION_DRIVER'),
 
   /*
   |--------------------------------------------------------------------------
@@ -80,7 +80,7 @@ const sessionConfig: SessionConfig = {
 
   /*
   |--------------------------------------------------------------------------
-  | Configuration for file driver
+  | Configuration for the file driver
   |--------------------------------------------------------------------------
   |
   | The file driver needs absolute path to the directory in which sessions
@@ -97,10 +97,10 @@ const sessionConfig: SessionConfig = {
   |--------------------------------------------------------------------------
   |
   | The redis connection you want session driver to use. The same connection
-  | must be defined inside `config/redis.ts` file
+  | must be defined inside `config/redis.ts` file as well.
   |
   */
-  redisConnection: 'session',
+  redisConnection: 'local',
 }
 
 export default sessionConfig

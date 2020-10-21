@@ -8,7 +8,8 @@
 		"build/adonis-typings",
 		"build/providers",
 		"build/src",
-		"build/templates"
+		"build/templates",
+		"build/instructions.md"
 	],
 	"dependencies": {
 		"@poppinss/utils": "^2.5.7",
@@ -52,7 +53,7 @@
 		"test": "node japaFile.js",
 		"clean": "del build",
 		"compile": "npm run lint && npm run clean && tsc",
-		"copyfiles": "copyfiles \"templates/*\" build",
+		"copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
 		"build": "npm run compile && npm run copyfiles",
 		"commit": "git-cz",
 		"release": "np",
@@ -100,6 +101,7 @@
 		"access": "public"
 	},
 	"adonisjs": {
+		"instructionsMd": "./build/instructions.md",
 		"templates": {
 			"config": [
 				"session.txt"
