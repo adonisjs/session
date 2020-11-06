@@ -18,7 +18,7 @@ import { RedisManagerContract, RedisConnectionContract } from '@ioc:Adonis/Addon
  * File driver to read/write session to filesystem
  */
 export class RedisDriver implements SessionDriverContract {
-	private ttl: number = typeof this.config.age === 'string' ? ms(this.config.age) : this.config.age
+	private ttl: number = typeof this.config.age === 'string' ? Math.round(ms(this.config.age) / 1000) : this.config.age
 
 	constructor(private config: SessionConfig, private redis: RedisManagerContract) {
 		if (!this.config.redisConnection) {
