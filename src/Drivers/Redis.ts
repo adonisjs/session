@@ -18,7 +18,12 @@ import { RedisManagerContract, RedisConnectionContract } from '@ioc:Adonis/Addon
  * File driver to read/write session to filesystem
  */
 export class RedisDriver implements SessionDriverContract {
-	private ttl: number = typeof this.config.age === 'string' ? ms(this.config.age) : this.config.age
+	/**
+	 * Convert milliseconds to seconds
+	 */
+	private ttl: number = Math.round(
+		(typeof this.config.age === 'string' ? ms(this.config.age) : this.config.age) / 1000
+	)
 
 	constructor(private config: SessionConfig, private redis: RedisManagerContract) {
 		if (!this.config.redisConnection) {

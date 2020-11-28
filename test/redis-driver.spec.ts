@@ -109,14 +109,14 @@ test.group('Redis driver', (group) => {
 		await sleep(1000)
 
 		let expiry = await redis.connection('session').ttl('1234')
-		assert.isBelow(expiry, 3000)
+		assert.isBelow(expiry, 3)
 
 		/**
 		 * Update expiry
 		 */
 		await session.touch(sessionId)
 		expiry = await redis.connection('session').ttl('1234')
-		assert.equal(expiry, 3000)
+		assert.equal(expiry, 3)
 
 		const contents = await session.read(sessionId)
 		assert.deepEqual(contents, { message: 'hello-world' })
