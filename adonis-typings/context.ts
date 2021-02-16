@@ -8,9 +8,9 @@
  */
 
 declare module '@ioc:Adonis/Core/HttpContext' {
-	import { SessionContract } from '@ioc:Adonis/Addons/Session'
+  import { SessionContract } from '@ioc:Adonis/Addons/Session'
 
-	interface HttpContextContract {
-		session: SessionContract
-	}
+  interface HttpContextContract {
+    session: SessionContract
+  }
 }

@@ -12,33 +12,33 @@ import { SessionManager } from '../src/SessionManager'
 import { fs, setup } from '../test-helpers'
 
 test.group('Session Provider', (group) => {
-	group.afterEach(async () => {
-		await fs.cleanup()
-	})
+  group.afterEach(async () => {
+    await fs.cleanup()
+  })
 
-	test('register session provider', async (assert) => {
-		const app = await setup({
-			driver: 'cookie',
-		})
+  test('register session provider', async (assert) => {
+    const app = await setup({
+      driver: 'cookie',
+    })
 
-		assert.instanceOf(app.container.use('Adonis/Addons/Session'), SessionManager)
-		assert.deepEqual(
-			app.container.use('Adonis/Addons/Session'),
-			app.container.use('Adonis/Addons/Session')
-		)
-		assert.deepEqual(app.container.use('Adonis/Addons/Session')['application'], app)
-	})
+    assert.instanceOf(app.container.use('Adonis/Addons/Session'), SessionManager)
+    assert.deepEqual(
+      app.container.use('Adonis/Addons/Session'),
+      app.container.use('Adonis/Addons/Session')
+    )
+    assert.deepEqual(app.container.use('Adonis/Addons/Session')['application'], app)
+  })
 
-	test('raise error when config is missing', async (assert) => {
-		assert.plan(1)
+  test('raise error when config is missing', async (assert) => {
+    assert.plan(1)
 
-		try {
-			await setup({})
-		} catch (error) {
-			assert.equal(
-				error.message,
-				'Invalid "session" config. Missing value for "driver". Make sure to set it inside the "config/session" file'
-			)
-		}
-	})
+    try {
+      await setup({})
+    } catch (error) {
+      assert.equal(
+        error.message,
+        'Invalid "session" config. Missing value for "driver". Make sure to set it inside the "config/session" file'
+      )
+    }
+  })
 })

@@ -8,9 +8,9 @@
  */
 
 declare module '@ioc:Adonis/Core/Application' {
-	import { SessionManagerContract } from '@ioc:Adonis/Addons/Session'
+  import { SessionManagerContract } from '@ioc:Adonis/Addons/Session'
 
-	interface ContainerBindings {
-		'Adonis/Addons/Session': SessionManagerContract
-	}
+  interface ContainerBindings {
+    'Adonis/Addons/Session': SessionManagerContract
+  }
 }

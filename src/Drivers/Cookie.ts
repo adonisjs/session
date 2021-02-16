@@ -16,48 +16,48 @@ import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session
  * Cookie driver utilizes the encrypted HTTP cookies to write session value.
  */
 export class CookieDriver implements SessionDriverContract {
-	constructor(private config: SessionConfig, private ctx: HttpContextContract) {}
+  constructor(private config: SessionConfig, private ctx: HttpContextContract) {}
 
-	/**
-	 * Read session value from the cookie
-	 */
-	public read(sessionId: string): { [key: string]: any } | null {
-		const cookieValue = this.ctx.request.encryptedCookie(sessionId)
-		if (typeof cookieValue !== 'object') {
-			return null
-		}
-		return cookieValue
-	}
+  /**
+   * Read session value from the cookie
+   */
+  public read(sessionId: string): { [key: string]: any } | null {
+    const cookieValue = this.ctx.request.encryptedCookie(sessionId)
+    if (typeof cookieValue !== 'object') {
+      return null
+    }
+    return cookieValue
+  }
 
-	/**
-	 * Write session values to the cookie
-	 */
-	public write(sessionId: string, values: { [key: string]: any }): void {
-		if (typeof values !== 'object') {
-			throw new Error('Session cookie driver expects an object of values')
-		}
+  /**
+   * Write session values to the cookie
+   */
+  public write(sessionId: string, values: { [key: string]: any }): void {
+    if (typeof values !== 'object') {
+      throw new Error('Session cookie driver expects an object of values')
+    }
 
-		this.ctx.response.encryptedCookie(sessionId, values, this.config.cookie)
-	}
+    this.ctx.response.encryptedCookie(sessionId, values, this.config.cookie)
+  }
 
-	/**
-	 * Removes the session cookie
-	 */
-	public destroy(sessionId: string): void {
-		if (this.ctx.request.cookiesList()[sessionId]) {
-			this.ctx.response.clearCookie(sessionId)
-		}
-	}
+  /**
+   * Removes the session cookie
+   */
+  public destroy(sessionId: string): void {
+    if (this.ctx.request.cookiesList()[sessionId]) {
+      this.ctx.response.clearCookie(sessionId)
+    }
+  }
 
-	/**
-	 * Updates the cookie with existing cookie values
-	 */
-	public touch(sessionId: string): void {
-		const value = this.read(sessionId)
-		if (!value) {
-			return
-		}
+  /**
+   * Updates the cookie with existing cookie values
+   */
+  public touch(sessionId: string): void {
+    const value = this.read(sessionId)
+    if (!value) {
+      return
+    }
 
-		this.write(sessionId, value)
-	}
+    this.write(sessionId, value)
+  }
 }
