@@ -47,6 +47,13 @@ export default class SessionProvider {
         )
 
         /**
+         * Do not register hooks when sessions are disabled
+         */
+        if (!this.app.config.get('session.enabled', true)) {
+          return
+        }
+
+        /**
          * Initiate session store
          */
         Server.hooks.before(async (ctx) => {

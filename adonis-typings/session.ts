@@ -16,6 +16,14 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Shape of session config.
    */
   export interface SessionConfig {
+    /**
+     * Enable/disable session for the entire application lifecycle
+     */
+    enabled: boolean
+
+    /**
+     * The driver in play
+     */
     driver: string
 
     /**

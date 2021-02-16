@@ -12,6 +12,17 @@ import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 const sessionConfig: SessionConfig = {
   /*
   |--------------------------------------------------------------------------
+  | Enable/Disable sessions
+  |--------------------------------------------------------------------------
+  |
+  | Setting the following property to "false" will disable the session for the
+  | entire application
+  |
+  */
+  enabled: true
+
+  /*
+  |--------------------------------------------------------------------------
   | Driver
   |--------------------------------------------------------------------------
   |
