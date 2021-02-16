@@ -21,6 +21,7 @@ export const fs = new Filesystem(join(__dirname, 'app'))
  * Session default config
  */
 export const sessionConfig: SessionConfig = {
+  enabled: true,
   driver: 'cookie',
   cookieName: 'adonis-session',
   clearWithBrowser: false,
