@@ -1,117 +1,117 @@
 {
-	"name": "@adonisjs/session",
-	"version": "4.0.6",
-	"description": "Session provider for AdonisJS",
-	"typings": "./build/adonis-typings/index.d.ts",
-	"main": "build/providers/SessionProvider.js",
-	"files": [
-		"build/adonis-typings",
-		"build/providers",
-		"build/src",
-		"build/templates",
-		"build/instructions.md"
-	],
-	"dependencies": {
-		"@poppinss/utils": "^3.0.3",
-		"fs-extra": "^9.1.0"
-	},
-	"peerDependencies": {
-		"@adonisjs/core": "^5.0.5-canary-rc"
-	},
-	"devDependencies": {
-		"@adonisjs/core": "^5.0.5-canary-rc-2",
-		"@adonisjs/mrm-preset": "^3.0.0",
-		"@adonisjs/redis": "^6.0.1",
-		"@adonisjs/require-ts": "^2.0.2",
-		"@poppinss/dev-utils": "^1.1.0",
-		"@types/node": "^14.14.28",
-		"@types/supertest": "^2.0.10",
-		"commitizen": "^4.2.3",
-		"copyfiles": "^2.4.1",
-		"cz-conventional-changelog": "^3.3.0",
-		"del-cli": "^3.0.1",
-		"eslint": "^7.20.0",
-		"eslint-config-prettier": "^7.2.0",
-		"eslint-plugin-adonis": "^1.2.1",
-		"eslint-plugin-prettier": "^3.3.1",
-		"github-label-sync": "^2.0.0",
-		"husky": "^5.0.9",
-		"japa": "^3.1.1",
-		"mrm": "^2.5.18",
-		"np": "^7.4.0",
-		"prettier": "^2.2.1",
-		"supertest": "^6.1.3",
-		"typescript": "^4.1.5"
-	},
-	"scripts": {
-		"mrm": "mrm --preset=@adonisjs/mrm-preset",
-		"pretest": "npm run lint",
-		"test": "node japaFile.js",
-		"clean": "del build",
-		"compile": "npm run lint && npm run clean && tsc",
-		"copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
-		"build": "npm run compile && npm run copyfiles",
-		"commit": "git-cz",
-		"release": "np",
-		"version": "npm run build",
-		"prepublishOnly": "npm run build",
-		"lint": "eslint . --ext=.ts",
-		"format": "prettier --write .",
-		"sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/session"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/adonisjs/adonis-session.git"
-	},
-	"keywords": [
-		"session",
-		"adonisjs"
-	],
-	"author": "virk,adonisjs",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/adonisjs/adonis-session/issues"
-	},
-	"homepage": "https://github.com/adonisjs/adonis-session#readme",
-	"nyc": {
-		"exclude": [
-			"test"
-		],
-		"extension": [
-			".ts"
-		]
-	},
-	"husky": {
-		"hooks": {
-			"commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
-		}
-	},
-	"config": {
-		"commitizen": {
-			"path": "cz-conventional-changelog"
-		}
-	},
-	"publishConfig": {
-		"tag": "next",
-		"access": "public"
-	},
-	"adonisjs": {
-		"instructionsMd": "./build/instructions.md",
-		"templates": {
-			"config": [
-				"session.txt"
-			]
-		},
-		"env": {
-			"SESSION_DRIVER": "cookie"
-		},
-		"types": "@adonisjs/session",
-		"providers": [
-			"@adonisjs/session"
-		]
-	},
-	"np": {
-		"contents": ".",
-		"anyBranch": false
-	}
+  "name": "@adonisjs/session",
+  "version": "4.0.6",
+  "description": "Session provider for AdonisJS",
+  "typings": "./build/adonis-typings/index.d.ts",
+  "main": "build/providers/SessionProvider.js",
+  "files": [
+    "build/adonis-typings",
+    "build/providers",
+    "build/src",
+    "build/templates",
+    "build/instructions.md"
+  ],
+  "dependencies": {
+    "@poppinss/utils": "^3.0.3",
+    "fs-extra": "^9.1.0"
+  },
+  "peerDependencies": {
+    "@adonisjs/core": "^5.0.5-canary-rc"
+  },
+  "devDependencies": {
+    "@adonisjs/core": "^5.0.5-canary-rc-2",
+    "@adonisjs/mrm-preset": "^3.0.0",
+    "@adonisjs/redis": "^6.0.1",
+    "@adonisjs/require-ts": "^2.0.2",
+    "@poppinss/dev-utils": "^1.1.0",
+    "@types/node": "^14.14.28",
+    "@types/supertest": "^2.0.10",
+    "commitizen": "^4.2.3",
+    "copyfiles": "^2.4.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "del-cli": "^3.0.1",
+    "eslint": "^7.20.0",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-plugin-adonis": "^1.2.1",
+    "eslint-plugin-prettier": "^3.3.1",
+    "github-label-sync": "^2.0.0",
+    "husky": "^5.0.9",
+    "japa": "^3.1.1",
+    "mrm": "^2.5.18",
+    "np": "^7.4.0",
+    "prettier": "^2.2.1",
+    "supertest": "^6.1.3",
+    "typescript": "^4.1.5"
+  },
+  "scripts": {
+    "mrm": "mrm --preset=@adonisjs/mrm-preset",
+    "pretest": "npm run lint",
+    "test": "node japaFile.js",
+    "clean": "del build",
+    "compile": "npm run lint && npm run clean && tsc",
+    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
+    "build": "npm run compile && npm run copyfiles",
+    "commit": "git-cz",
+    "release": "np",
+    "version": "npm run build",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint . --ext=.ts",
+    "format": "prettier --write .",
+    "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/session"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/adonis-session.git"
+  },
+  "keywords": [
+    "session",
+    "adonisjs"
+  ],
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adonisjs/adonis-session/issues"
+  },
+  "homepage": "https://github.com/adonisjs/adonis-session#readme",
+  "nyc": {
+    "exclude": [
+      "test"
+    ],
+    "extension": [
+      ".ts"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "publishConfig": {
+    "tag": "next",
+    "access": "public"
+  },
+  "adonisjs": {
+    "instructionsMd": "./build/instructions.md",
+    "templates": {
+      "config": [
+        "session.txt"
+      ]
+    },
+    "env": {
+      "SESSION_DRIVER": "cookie"
+    },
+    "types": "@adonisjs/session",
+    "providers": [
+      "@adonisjs/session"
+    ]
+  },
+  "np": {
+    "contents": ".",
+    "anyBranch": false
+  }
 }
