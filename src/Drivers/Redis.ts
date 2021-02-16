@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import ms from 'ms'
-import { Exception, MessageBuilder } from '@poppinss/utils'
+import { Exception } from '@poppinss/utils'
+import { MessageBuilder, string } from '@poppinss/utils/build/helpers'
 import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
 import { RedisManagerContract, RedisConnectionContract } from '@ioc:Adonis/Addons/Redis'
 
@@ -22,7 +22,7 @@ export class RedisDriver implements SessionDriverContract {
 	 * Convert milliseconds to seconds
 	 */
 	private ttl: number = Math.round(
-		(typeof this.config.age === 'string' ? ms(this.config.age) : this.config.age) / 1000
+		(typeof this.config.age === 'string' ? string.toMs(this.config.age) : this.config.age) / 1000
 	)
 
 	constructor(private config: SessionConfig, private redis: RedisManagerContract) {

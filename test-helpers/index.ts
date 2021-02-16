@@ -55,8 +55,8 @@ export async function setup(config?: any) {
 		providers: ['@adonisjs/core', '../../providers/SessionProvider'],
 	})
 
-	app.setup()
-	app.registerProviders()
+	await app.setup()
+	await app.registerProviders()
 	await app.bootProviders()
 
 	return app

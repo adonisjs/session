@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/session.ts" />
 
-import cuid from 'cuid'
 import { Exception, lodash } from '@poppinss/utils'
+import { cuid } from '@poppinss/utils/build/helpers'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import {

@@ -32,7 +32,7 @@ export default class SessionProvider {
 		 * middleware, since Hooks guarantee the `after` execution even when
 		 * any middleware or controller raises exception.
 		 */
-		this.app.container.with(
+		this.app.container.withBindings(
 			['Adonis/Core/Server', 'Adonis/Core/HttpContext', 'Adonis/Addons/Session'],
 			(Server, HttpContext, Session) => {
 				/**

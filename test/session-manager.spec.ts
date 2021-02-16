@@ -12,7 +12,7 @@
 import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
-import { MessageBuilder } from '@poppinss/utils'
+import { MessageBuilder } from '@poppinss/utils/build/helpers'
 import { Application } from '@adonisjs/core/build/standalone'
 
 import { Store } from '../src/Store'

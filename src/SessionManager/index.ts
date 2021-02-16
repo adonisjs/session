@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import ms from 'ms'
+import { string } from '@poppinss/utils/build/helpers'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { Exception, ManagerConfigValidator } from '@poppinss/utils'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
@@ -79,7 +79,7 @@ export class SessionManager implements SessionManagerContract {
 		if (!processedConfig.clearWithBrowser) {
 			const age =
 				typeof processedConfig.age === 'string'
-					? Math.round(ms(processedConfig.age) / 1000)
+					? Math.round(string.toMs(processedConfig.age) / 1000)
 					: processedConfig.age
 
 			processedConfig.cookie.maxAge = age
