@@ -8,9 +8,9 @@
  */
 
 declare module '@ioc:Adonis/Addons/Session' {
-  import { IocContract } from '@adonisjs/fold'
   import { CookieOptions } from '@ioc:Adonis/Core/Response'
   import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+  import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
   /**
    * Shape of session config.
@@ -67,7 +67,7 @@ declare module '@ioc:Adonis/Addons/Session' {
    * for each request (if extended driver is in use).
    */
   export type ExtendCallback = (
-    container: IocContract,
+    manager: SessionManagerContract,
     config: SessionConfig,
     ctx: HttpContextContract
   ) => SessionDriverContract
@@ -234,6 +234,7 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Session manager shape
    */
   export interface SessionManagerContract {
+    application: ApplicationContract
     create(ctx: HttpContextContract): SessionContract
     extend(driver: string, callback: ExtendCallback): void
   }

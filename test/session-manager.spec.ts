@@ -136,7 +136,7 @@ test.group('Session Manager', (group) => {
   })
 
   test('extend by adding a custom driver', async (assert) => {
-    assert.plan(1)
+    assert.plan(2)
 
     const app = await setup(
       Object.assign({}, sessionConfig, {
@@ -156,7 +156,8 @@ test.group('Session Manager', (group) => {
     }
 
     app.container.singleton('Adonis/Addons/Redis', () => getRedisManager(app))
-    app.container.use('Adonis/Addons/Session').extend('mongo', () => {
+    app.container.use('Adonis/Addons/Session').extend('mongo', (manager) => {
+      assert.deepEqual(app.container.use('Adonis/Addons/Session'), manager)
       return new MongoDriver()
     })
 

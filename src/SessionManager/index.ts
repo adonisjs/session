@@ -43,7 +43,7 @@ export class SessionManager implements SessionManagerContract {
    */
   private config: SessionManagerConfig
 
-  constructor(private application: ApplicationContract, config: SessionConfig) {
+  constructor(public application: ApplicationContract, config: SessionConfig) {
     this.validateConfig(config)
     this.processConfig(config)
   }
@@ -131,11 +131,7 @@ export class SessionManager implements SessionManagerContract {
       )
     }
 
-    return this.extendedDrivers.get(this.config.driver)!(
-      this.application.container,
-      this.config,
-      ctx
-    )
+    return this.extendedDrivers.get(this.config.driver)!(this, this.config, ctx)
   }
 
   /**
