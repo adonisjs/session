@@ -64,8 +64,8 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Shape of a driver that every session driver must have
    */
   export interface SessionDriverContract {
-    read(sessionId: string): Promise<{ [key: string]: any } | null> | { [key: string]: any } | null
-    write(sessionId: string, values: { [key: string]: any }): Promise<void> | void
+    read(sessionId: string): Promise<Record<string, any> | null> | Record<string, any> | null
+    write(sessionId: string, values: Record<string, any>): Promise<void> | void
     destroy(sessionId: string): Promise<void> | void
     touch(sessionId: string): Promise<void> | void
   }
@@ -114,12 +114,12 @@ declare module '@ioc:Adonis/Addons/Session' {
     /**
      * Replace existing values with new ones
      */
-    update(values: { [key: string]: any }): void
+    update(values: Record<string, any>): void
 
     /**
      * Merge values with existing ones
      */
-    merge(values: { [key: string]: any }): any
+    merge(values: Record<string, any>): any
 
     /**
      * Get all values
