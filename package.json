@@ -92,7 +92,7 @@
     }
   },
   "publishConfig": {
-    "tag": "next",
+    "tag": "latest",
     "access": "public"
   },
   "adonisjs": {
