@@ -19,7 +19,7 @@ const sessionConfig: SessionConfig = {
   | entire application
   |
   */
-  enabled: true
+  enabled: true,
 
   /*
   |--------------------------------------------------------------------------
