@@ -191,6 +191,7 @@ export class Session implements SessionContract {
       flashMessages: this.flashMessages,
       session: {
         get: this.get.bind(this),
+        has: this.has.bind(this),
         all: this.all.bind(this),
       },
     })
@@ -242,6 +243,14 @@ export class Session implements SessionContract {
     this.ensureIsReady()
     this.ensureIsMutable()
     this.store.set(key, value)
+  }
+
+  /**
+   * Find if the value exists in the session
+   */
+  public has(key: string): boolean {
+    this.ensureIsReady()
+    return this.store.has(key)
   }
 
   /**

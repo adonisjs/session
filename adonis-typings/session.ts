@@ -219,6 +219,7 @@ declare module '@ioc:Adonis/Addons/Session' {
     /**
      * Store API
      */
+    has(key: string): boolean
     put(key: string, value: AllowedSessionValues): void
     get(key: string, defaultValue?: any): any
     all(): any

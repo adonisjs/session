@@ -195,6 +195,68 @@ test.group('Session', (group) => {
      */
     assert.isUndefined(MemoryDriver.sessions.get('1234'))
   })
+
+  test('get session value', async (assert) => {
+    const app = await setup()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, sessionConfig, driver)
+      await session.initiate(false)
+      ctx.response.send(session.get('user.age'))
+      await session.commit()
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store(null)
+    store.set('user.age', 22)
+    MemoryDriver.sessions.set('1234', store.toJSON())
+
+    /**
+     * Request
+     */
+    const { text } = await supertest(server)
+      .get('/')
+      .set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
+
+    assert.equal(text, '22')
+  })
+
+  test('get nested value using form input syntax', async (assert) => {
+    const app = await setup()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, sessionConfig, driver)
+      await session.initiate(false)
+      ctx.response.send(session.get('user[age]'))
+      await session.commit()
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store(null)
+    store.set('user.age', 22)
+    MemoryDriver.sessions.set('1234', store.toJSON())
+
+    /**
+     * Request
+     */
+    const { text } = await supertest(server)
+      .get('/')
+      .set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
+
+    assert.equal(text, '22')
+  })
 })
 
 test.group('Session | Flash', (group) => {
