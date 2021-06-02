@@ -120,7 +120,10 @@ export function getRedisManager(application: ApplicationContract) {
     {
       connection: 'session',
       connections: {
-        session: {},
+        session: {
+          host: process.env.REDIS_HOST || '0.0.0.0',
+          port: process.env.REDIS_PORT || 6379,
+        },
       },
     } as any,
     application.container.use('Adonis/Core/Event')
