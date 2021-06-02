@@ -115,7 +115,7 @@ export function unsignCookie(app: ApplicationContract, header: any, name: string
  * Reference to the redis manager
  */
 export function getRedisManager(application: ApplicationContract) {
-  return (new RedisManager(
+  return new RedisManager(
     application,
     {
       connection: 'session',
@@ -124,5 +124,5 @@ export function getRedisManager(application: ApplicationContract) {
       },
     } as any,
     application.container.use('Adonis/Core/Event')
-  ) as unknown) as RedisManagerContract
+  ) as unknown as RedisManagerContract
 }
