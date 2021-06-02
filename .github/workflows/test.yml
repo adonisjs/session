@@ -5,6 +5,9 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
     strategy:
       matrix:
         node-version:
