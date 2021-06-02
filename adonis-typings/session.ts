@@ -230,13 +230,42 @@ declare module '@ioc:Adonis/Addons/Session' {
     clear(): void
 
     /**
-     * Flash messages API
+     * Flash a key-value pair
      */
     flash(values: { [key: string]: AllowedSessionValues }): void
     flash(key: string, value: AllowedSessionValues): void
+
+    /**
+     * Flash request body
+     */
     flashAll(): void
+
+    /**
+     * Flash selected keys from the request body
+     */
     flashOnly(keys: string[]): void
+
+    /**
+     * Omit selected keys from the request data and flash
+     * the rest of values
+     */
     flashExcept(keys: string[]): void
+
+    /**
+     * Reflash existing flash messages
+     */
+    reflash(): void
+
+    /**
+     * Reflash selected keys from the existing flash messages
+     */
+    reflashOnly(keys: string[]): void
+
+    /**
+     * Omit selected keys from the existing flash messages
+     * and flash the rest of values
+     */
+    reflashExcept(keys: string[]): void
   }
 
   /**

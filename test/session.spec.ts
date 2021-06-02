@@ -623,4 +623,129 @@ test.group('Session | Flash', (group) => {
 
     assert.deepEqual(new Store(session).all(), {})
   })
+
+  test('reflash existing flash values', async (assert) => {
+    const app = await setup()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, sessionConfig, driver)
+      await session.initiate(false)
+      session.reflash()
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store(null)
+    store.set('__flash__', {
+      username: 'virk',
+      success: 'User created',
+    })
+
+    MemoryDriver.sessions.set('1234', store.toJSON())
+
+    const { header } = await supertest(server)
+      .get('/')
+      .set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
+
+    const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+        success: 'User created',
+      },
+    })
+  })
+
+  test('cherry pick keys during reflash', async (assert) => {
+    const app = await setup()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, sessionConfig, driver)
+      await session.initiate(false)
+
+      session.reflashOnly(['username'])
+
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store(null)
+    store.set('__flash__', {
+      username: 'virk',
+      success: 'User created',
+    })
+
+    MemoryDriver.sessions.set('1234', store.toJSON())
+
+    const { header } = await supertest(server)
+      .get('/')
+      .set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
+
+    const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        username: 'virk',
+      },
+    })
+  })
+
+  test('ignore keys during reflash', async (assert) => {
+    const app = await setup()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+
+      const driver = new MemoryDriver()
+      const session = new Session(ctx, sessionConfig, driver)
+      await session.initiate(false)
+
+      session.reflashExcept(['username'])
+
+      await session.commit()
+      ctx.response.send('')
+      ctx.response.finish()
+    })
+
+    /**
+     * Initial driver value
+     */
+    const store = new Store(null)
+    store.set('__flash__', {
+      username: 'virk',
+      success: 'User created',
+    })
+
+    MemoryDriver.sessions.set('1234', store.toJSON())
+
+    const { header } = await supertest(server)
+      .get('/')
+      .set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
+
+    const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
+    assert.exists(sessionId)
+    const session = MemoryDriver.sessions.get(sessionId)!
+    assert.deepEqual(new Store(session).all(), {
+      __flash__: {
+        success: 'User created',
+      },
+    })
+  })
 })

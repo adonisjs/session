@@ -370,6 +370,28 @@ export class Session implements SessionContract {
   }
 
   /**
+   * Reflash existing flash messages
+   */
+  public reflash() {
+    this.flash(this.flashMessages.all())
+  }
+
+  /**
+   * Reflash selected keys from the existing flash messages
+   */
+  public reflashOnly(keys: string[]) {
+    this.flash(lodash.pick(this.flashMessages.all(), keys))
+  }
+
+  /**
+   * Omit selected keys from the existing flash messages
+   * and flash the rest of values
+   */
+  public reflashExcept(keys: string[]) {
+    this.flash(lodash.omit(this.flashMessages.all(), keys))
+  }
+
+  /**
    * Writes value to the underlying session driver.
    */
   public async commit(): Promise<void> {
