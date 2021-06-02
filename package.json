@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/session",
-  "version": "6.0.4",
+  "version": "6.0.5",
   "description": "Session provider for AdonisJS",
   "typings": "./build/adonis-typings/index.d.ts",
   "main": "build/providers/SessionProvider.js",
