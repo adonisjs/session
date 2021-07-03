@@ -17,6 +17,7 @@ import {
   ExtendCallback,
   SessionDriverContract,
   SessionManagerContract,
+  SessionClientContract,
 } from '@ioc:Adonis/Addons/Session'
 
 import { Session } from '../Session'
@@ -97,6 +98,14 @@ export class SessionManager implements SessionManagerContract {
   }
 
   /**
+   * Returns an instance of the memory driver
+   */
+  private createMemoryDriver(): any {
+    const { MemoryDriver } = require('../Drivers/Memory')
+    return new MemoryDriver()
+  }
+
+  /**
    * Returns an instance of file driver
    */
   private createFileDriver(): any {
@@ -146,9 +155,21 @@ export class SessionManager implements SessionManagerContract {
         return this.createFileDriver()
       case 'redis':
         return this.createRedisDriver()
+      case 'memory':
+        return this.createMemoryDriver()
       default:
         return this.createExtendedDriver(ctx)
     }
+  }
+
+  /**
+   * Creates an instance of the session client
+   */
+  public client(): SessionClientContract {
+    const { SessionClient } = require('../Client')
+    const CookieClient = this.application.container.resolveBinding('Adonis/Core/CookieClient')
+
+    return new SessionClient(this.config, this.createMemoryDriver(), CookieClient, {})
   }
 
   /**

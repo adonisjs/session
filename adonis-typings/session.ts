@@ -269,10 +269,28 @@ declare module '@ioc:Adonis/Addons/Session' {
   }
 
   /**
+   * SessionClient exposes the API to set session data as a client
+   */
+  export interface SessionClientContract extends StoreContract {
+    /**
+     * Commits the session data to the session store and returns
+     * the session id and cookie name for it to be accessible
+     * by the server
+     */
+    commit(): Promise<{ cookieName: string; sessionId: string }>
+
+    /**
+     * Forget the session data.
+     */
+    forget(): Promise<void>
+  }
+
+  /**
    * Session manager shape
    */
   export interface SessionManagerContract {
     application: ApplicationContract
+    client(): SessionClientContract
     create(ctx: HttpContextContract): SessionContract
     extend(driver: string, callback: ExtendCallback): void
   }
