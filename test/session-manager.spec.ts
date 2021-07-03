@@ -13,7 +13,6 @@ import test from 'japa'
 import supertest from 'supertest'
 import { createServer } from 'http'
 import { MessageBuilder } from '@poppinss/utils/build/helpers'
-import { Application } from '@adonisjs/core/build/standalone'
 
 import { Store } from '../src/Store'
 import { SessionManager } from '../src/SessionManager'
@@ -26,13 +25,11 @@ test.group('Session Manager', (group) => {
 
   test('do not set maxAge when clearWithBrowser is true', async (assert) => {
     const app = await setup()
+    const config = Object.assign({}, sessionConfig, { clearWithBrowser: true })
+    const manager = new SessionManager(app, config)
+
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
-
-      const manager = new SessionManager(
-        new Application(__dirname, 'web', {}),
-        Object.assign({}, sessionConfig, { clearWithBrowser: true })
-      )
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -48,10 +45,11 @@ test.group('Session Manager', (group) => {
 
   test('set maxAge when clearWithBrowser is false', async (assert) => {
     const app = await setup()
+    const manager = new SessionManager(app, sessionConfig)
+
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
 
-      const manager = new SessionManager(new Application(__dirname, 'web', {}), sessionConfig)
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -70,17 +68,16 @@ test.group('Session Manager', (group) => {
 
   test('use file driver to persist session value', async (assert) => {
     const app = await setup()
+    const config = Object.assign({}, sessionConfig, {
+      driver: 'file',
+      file: {
+        location: fs.basePath,
+      },
+    })
+    const manager = new SessionManager(app, config)
+
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
-
-      const customConfig = Object.assign({}, sessionConfig, {
-        driver: 'file',
-        file: {
-          location: fs.basePath,
-        },
-      })
-
-      const manager = new SessionManager(new Application(__dirname, 'web', {}), customConfig)
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -100,18 +97,16 @@ test.group('Session Manager', (group) => {
 
   test('use redis driver to persist session value', async (assert) => {
     const app = await setup()
+    const config = Object.assign({}, sessionConfig, {
+      driver: 'redis',
+      redisConnection: 'session',
+    })
+    const manager = new SessionManager(app, config)
 
     app.container.singleton('Adonis/Addons/Redis', () => getRedisManager(app))
 
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
-
-      const customConfig = Object.assign({}, sessionConfig, {
-        driver: 'redis',
-        redisConnection: 'session',
-      })
-
-      const manager = new SessionManager(app, customConfig)
       const session = manager.create(ctx)
       await session.initiate(false)
 

@@ -25,11 +25,8 @@ test.group('Session Client', (group) => {
     assert.plan(1)
     const app = await setup()
 
-    const manager = new SessionManager(
-      app,
-      Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    )
-
+    const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
+    const manager = new SessionManager(app, config)
     const client = manager.client()
 
     client.set('username', 'virk')
@@ -51,11 +48,8 @@ test.group('Session Client', (group) => {
     assert.plan(1)
     const app = await setup()
 
-    const manager = new SessionManager(
-      app,
-      Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    )
-
+    const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
+    const manager = new SessionManager(app, config)
     const client = manager.client()
 
     client.set('username', 'virk')
