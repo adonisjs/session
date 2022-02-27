@@ -5,6 +5,16 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     strategy:
       matrix:
         node-version:
@@ -20,8 +30,21 @@ jobs:
         run: npm install
       - name: Run tests
         run: npm test
+        env:
+          REDIS_HOST: 0.0.0.0
+          REDIS_PORT: 6379
   windows:
     runs-on: windows-latest
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     strategy:
       matrix:
         node-version:
@@ -37,3 +60,6 @@ jobs:
         run: npm install
       - name: Run tests
         run: npm test
+        env:
+          REDIS_HOST: 0.0.0.0
+          REDIS_PORT: 6379
