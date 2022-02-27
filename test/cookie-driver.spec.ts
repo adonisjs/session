@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 
@@ -17,11 +17,11 @@ import { CookieDriver } from '../src/Drivers/Cookie'
 import { setup, fs, encryptCookie, decryptCookie, sessionConfig } from '../test-helpers'
 
 test.group('Cookie driver', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('return null object when cookie is missing', async (assert) => {
+  test('return null object when cookie is missing', async ({ assert }) => {
     assert.plan(1)
 
     const app = await setup()
@@ -38,7 +38,7 @@ test.group('Cookie driver', (group) => {
     await supertest(server).get('/')
   })
 
-  test('return empty object when cookie value is invalid', async (assert) => {
+  test('return empty object when cookie value is invalid', async ({ assert }) => {
     assert.plan(1)
 
     const app = await setup()
@@ -55,7 +55,7 @@ test.group('Cookie driver', (group) => {
     await supertest(server).get('/').set('cookie', '1234=hello-world')
   })
 
-  test('return cookie values as an object', async (assert) => {
+  test('return cookie values as an object', async ({ assert }) => {
     const app = await setup()
     const sessionId = '1234'
 
@@ -77,7 +77,7 @@ test.group('Cookie driver', (group) => {
     assert.deepEqual(body, { message: 'hello-world' })
   })
 
-  test('write cookie value', async (assert) => {
+  test('write cookie value', async ({ assert }) => {
     const app = await setup()
     const sessionId = '1234'
 
@@ -95,7 +95,7 @@ test.group('Cookie driver', (group) => {
     assert.deepEqual(decryptCookie(app, header, sessionId), { message: 'hello-world' })
   })
 
-  test('update cookie with existing value', async (assert) => {
+  test('update cookie with existing value', async ({ assert }) => {
     const app = await setup()
     const sessionId = '1234'
 

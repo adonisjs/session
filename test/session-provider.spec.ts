@@ -7,16 +7,16 @@
  * file that was distributed with this source code.
  */
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { SessionManager } from '../src/SessionManager'
 import { fs, setup } from '../test-helpers'
 
 test.group('Session Provider', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('register session provider', async (assert) => {
+  test('register session provider', async ({ assert }) => {
     const app = await setup({
       driver: 'cookie',
     })
@@ -31,7 +31,7 @@ test.group('Session Provider', (group) => {
     assert.equal(app.container.use('Adonis/Core/Server').hooks['hooks'].after.length, 1)
   })
 
-  test('raise error when config is missing', async (assert) => {
+  test('raise error when config is missing', async ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -44,7 +44,7 @@ test.group('Session Provider', (group) => {
     }
   })
 
-  test('do not register hooks when session is disabled', async (assert) => {
+  test('do not register hooks when session is disabled', async ({ assert }) => {
     const app = await setup({
       enabled: false,
       driver: 'cookie',

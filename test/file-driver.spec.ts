@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { join } from 'path'
 import { Filesystem } from '@poppinss/dev-utils'
 
@@ -25,18 +25,18 @@ const config = Object.assign({}, sessionConfig, {
 })
 
 test.group('File driver', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('return null when file is missing', async (assert) => {
+  test('return null when file is missing', async ({ assert }) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
     const value = await session.read(sessionId)
     assert.isNull(value)
   })
 
-  test('write session value to the file', async (assert) => {
+  test('write session value to the file', async ({ assert }) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
     await session.write(sessionId, { message: 'hello-world' })
@@ -48,7 +48,7 @@ test.group('File driver', (group) => {
     })
   })
 
-  test('get session existing value', async (assert) => {
+  test('get session existing value', async ({ assert }) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
     await session.write(sessionId, { message: 'hello-world' })
@@ -56,7 +56,7 @@ test.group('File driver', (group) => {
     assert.deepEqual(value, { message: 'hello-world' })
   })
 
-  test('remove session file', async (assert) => {
+  test('remove session file', async ({ assert }) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
     await session.write(sessionId, { message: 'hello-world' })
@@ -66,7 +66,7 @@ test.group('File driver', (group) => {
     assert.isFalse(exists)
   })
 
-  test('update session expiry', async (assert) => {
+  test('update session expiry', async ({ assert }) => {
     const sessionId = '1234'
 
     const session = new FileDriver(config)

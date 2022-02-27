@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 
@@ -17,11 +17,11 @@ import { SessionManager } from '../src/SessionManager'
 import { setup, fs, sessionConfig } from '../test-helpers'
 
 test.group('Session Client', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('set session using the session client', async (assert) => {
+  test('set session using the session client', async ({ assert }) => {
     assert.plan(1)
     const app = await setup()
 
@@ -44,7 +44,7 @@ test.group('Session Client', (group) => {
     await supertest(server).get('/').set('Cookie', `${cookieName}=${sessionId}`)
   })
 
-  test('clear session store', async (assert) => {
+  test('clear session store', async ({ assert }) => {
     assert.plan(1)
     const app = await setup()
 

@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 
@@ -19,12 +19,14 @@ import { MemoryDriver } from '../src/Drivers/Memory'
 import { setup, fs, sessionConfig, unsignCookie, signCookie } from '../test-helpers/index'
 
 test.group('Session', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     MemoryDriver.sessions.clear()
     await fs.cleanup()
   })
 
-  test("initiate session with fresh session id when there isn't any session", async (assert) => {
+  test("initiate session with fresh session id when there isn't any session", async ({
+    assert,
+  }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -42,7 +44,7 @@ test.group('Session', (group) => {
     await supertest(server).get('/')
   })
 
-  test('initiate session with empty store when session id exists', async (assert) => {
+  test('initiate session with empty store when session id exists', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -63,7 +65,7 @@ test.group('Session', (group) => {
       .set('cookie', signCookie(app, '1234', sessionConfig.cookieName))
   })
 
-  test('write session values with driver on commit', async (assert) => {
+  test('write session values with driver on commit', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -87,7 +89,7 @@ test.group('Session', (group) => {
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk' } })
   })
 
-  test('re-use existing session id', async (assert) => {
+  test('re-use existing session id', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -114,7 +116,7 @@ test.group('Session', (group) => {
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk' } })
   })
 
-  test('retain driver existing values', async (assert) => {
+  test('retain driver existing values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -154,7 +156,7 @@ test.group('Session', (group) => {
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk', age: 22 } })
   })
 
-  test('regenerate session id when regenerate method is called', async (assert) => {
+  test('regenerate session id when regenerate method is called', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -196,7 +198,7 @@ test.group('Session', (group) => {
     assert.isUndefined(MemoryDriver.sessions.get('1234'))
   })
 
-  test('get session value', async (assert) => {
+  test('get session value', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -227,7 +229,7 @@ test.group('Session', (group) => {
     assert.equal(text, '22')
   })
 
-  test('get nested value using form input syntax', async (assert) => {
+  test('get nested value using form input syntax', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -260,12 +262,12 @@ test.group('Session', (group) => {
 })
 
 test.group('Session | Flash', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     MemoryDriver.sessions.clear()
     await fs.cleanup()
   })
 
-  test('set custom flash messages', async (assert) => {
+  test('set custom flash messages', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -297,7 +299,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('flash input values', async (assert) => {
+  test('flash input values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -328,7 +330,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('flash selected input values', async (assert) => {
+  test('flash selected input values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -368,7 +370,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test("flash all input values except the defined one's", async (assert) => {
+  test("flash all input values except the defined one's", async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -408,7 +410,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('flash input along with custom messages', async (assert) => {
+  test('flash input along with custom messages', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -444,7 +446,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('read old flash values', async (assert) => {
+  test('read old flash values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -485,7 +487,7 @@ test.group('Session | Flash', (group) => {
     assert.deepEqual(new Store(session).all(), {})
   })
 
-  test('read selected old values', async (assert) => {
+  test('read selected old values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -523,7 +525,7 @@ test.group('Session | Flash', (group) => {
     assert.deepEqual(new Store(session).all(), {})
   })
 
-  test('flash custom messages as an object', async (assert) => {
+  test('flash custom messages as an object', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -554,7 +556,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('always flash original input values', async (assert) => {
+  test('always flash original input values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -587,7 +589,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('do not attempt to commit when initiate raises an exception', async (assert) => {
+  test('do not attempt to commit when initiate raises an exception', async ({ assert }) => {
     assert.plan(3)
     const app = await setup()
 
@@ -624,7 +626,7 @@ test.group('Session | Flash', (group) => {
     assert.deepEqual(new Store(session).all(), {})
   })
 
-  test('reflash existing flash values', async (assert) => {
+  test('reflash existing flash values', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -665,7 +667,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('cherry pick keys during reflash', async (assert) => {
+  test('cherry pick keys during reflash', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {
@@ -707,7 +709,7 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('ignore keys during reflash', async (assert) => {
+  test('ignore keys during reflash', async ({ assert }) => {
     const app = await setup()
 
     const server = createServer(async (req, res) => {

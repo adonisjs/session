@@ -9,18 +9,18 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { RedisDriver } from '../src/Drivers/Redis'
 import { fs, setup, sleep, sessionConfig, getRedisManager } from '../test-helpers'
 
 const config = Object.assign({}, sessionConfig, { driver: 'redis', redisConnection: 'session' })
 
 test.group('Redis driver', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('return null when value is missing', async (assert) => {
+  test('return null when value is missing', async ({ assert }) => {
     const app = await setup()
 
     const sessionId = '1234'
@@ -31,7 +31,7 @@ test.group('Redis driver', (group) => {
     assert.isNull(value)
   })
 
-  test('write session value to the redis store', async (assert) => {
+  test('write session value to the redis store', async ({ assert }) => {
     const app = await setup()
 
     const sessionId = '1234'
@@ -48,7 +48,7 @@ test.group('Redis driver', (group) => {
     await redis.connection('session').del('1234')
   })
 
-  test('get session existing value', async (assert) => {
+  test('get session existing value', async ({ assert }) => {
     const app = await setup()
 
     const sessionId = '1234'
@@ -68,7 +68,7 @@ test.group('Redis driver', (group) => {
     await redis.connection('session').del('1234')
   })
 
-  test('remove session', async (assert) => {
+  test('remove session', async ({ assert }) => {
     const app = await setup()
 
     const sessionId = '1234'
@@ -91,7 +91,7 @@ test.group('Redis driver', (group) => {
     assert.isNull(contents)
   })
 
-  test('update session expiry', async (assert) => {
+  test('update session expiry', async ({ assert }) => {
     const app = await setup()
 
     const sessionId = '1234'
