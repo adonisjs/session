@@ -50,7 +50,7 @@
     "clean": "del build",
     "compile": "npm run lint && npm run clean && tsc",
     "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
-    "build": "npm run compile",
+    "build": "npm run compile && npm run copyfiles",
     "commit": "git-cz",
     "release": "np --message=\"chore(release): %s\"",
     "version": "npm run build",
