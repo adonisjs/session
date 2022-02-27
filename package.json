@@ -16,7 +16,7 @@
     "fs-extra": "^10.0.1"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^5.1.0"
+    "@adonisjs/core": "^5.5.0"
   },
   "devDependencies": {
     "@adonisjs/core": "^5.5.0",
