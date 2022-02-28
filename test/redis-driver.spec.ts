@@ -28,6 +28,7 @@ test.group('Redis driver', (group) => {
     const session = new RedisDriver(config, redis)
 
     const value = await session.read(sessionId)
+    await redis.disconnectAll()
     assert.isNull(value)
   })
 
@@ -41,11 +42,13 @@ test.group('Redis driver', (group) => {
     await session.write(sessionId, { message: 'hello-world' })
 
     const contents = await redis.connection('session').get('1234')
+    await redis.connection('session').del('1234')
+    await redis.disconnectAll()
+
     assert.deepEqual(JSON.parse(contents!), {
       message: { message: 'hello-world' },
       purpose: '1234',
     })
-    await redis.connection('session').del('1234')
   })
 
   test('get session existing value', async ({ assert }) => {
@@ -64,8 +67,10 @@ test.group('Redis driver', (group) => {
 
     const session = new RedisDriver(config, redis)
     const contents = await session.read(sessionId)
-    assert.deepEqual(contents, { message: 'hello-world' })
     await redis.connection('session').del('1234')
+    await redis.disconnectAll()
+
+    assert.deepEqual(contents, { message: 'hello-world' })
   })
 
   test('remove session', async ({ assert }) => {
@@ -88,6 +93,8 @@ test.group('Redis driver', (group) => {
 
     await session.destroy('1234')
     contents = await session.read(sessionId)
+
+    await redis.disconnectAll()
     assert.isNull(contents)
   })
 
@@ -119,8 +126,9 @@ test.group('Redis driver', (group) => {
     assert.equal(expiry, 3)
 
     const contents = await session.read(sessionId)
-    assert.deepEqual(contents, { message: 'hello-world' })
-
     await session.destroy('1234')
+    await redis.disconnectAll()
+
+    assert.deepEqual(contents, { message: 'hello-world' })
   }).timeout(0)
 })

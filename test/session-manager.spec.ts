@@ -101,9 +101,11 @@ test.group('Session Manager', (group) => {
       driver: 'redis',
       redisConnection: 'session',
     })
+
+    const redis = getRedisManager(app)
     const manager = new SessionManager(app, config)
 
-    app.container.singleton('Adonis/Addons/Redis', () => getRedisManager(app))
+    app.container.singleton('Adonis/Addons/Redis', () => redis)
 
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
@@ -119,15 +121,13 @@ test.group('Session Manager', (group) => {
     const { header } = await supertest(server).get('/')
     const sessionId = unsignCookie(app, header, sessionConfig.cookieName)
 
-    const sessionContents = await app.container
-      .use('Adonis/Addons/Redis')
-      .connection('session')
-      .get(sessionId)
-
+    const sessionContents = await redis.connection('session').get(sessionId)
     const sessionValues = new MessageBuilder().verify<any>(sessionContents, sessionId)
-    assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
 
-    await app.container.use('Adonis/Addons/Redis').connection('session').del(sessionId)
+    await redis.connection('session').del(sessionId)
+    await redis.disconnectAll()
+
+    assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
   })
 
   test('extend by adding a custom driver', async ({ assert }) => {

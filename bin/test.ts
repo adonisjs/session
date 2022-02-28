@@ -23,7 +23,6 @@ configure({
     plugins: [assert(), runFailedTests()],
     reporters: [specReporter()],
     importer: (filePath: string) => import(filePath),
-    forceExit: true,
   },
 })
 
