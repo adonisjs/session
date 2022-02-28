@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/session.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 import { MessageBuilder } from '@poppinss/utils/build/helpers'
@@ -19,11 +19,11 @@ import { SessionManager } from '../src/SessionManager'
 import { setup, fs, sessionConfig, unsignCookie, getRedisManager } from '../test-helpers'
 
 test.group('Session Manager', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('do not set maxAge when clearWithBrowser is true', async (assert) => {
+  test('do not set maxAge when clearWithBrowser is true', async ({ assert }) => {
     const app = await setup()
     const config = Object.assign({}, sessionConfig, { clearWithBrowser: true })
     const manager = new SessionManager(app, config)
@@ -43,7 +43,7 @@ test.group('Session Manager', (group) => {
     assert.lengthOf(header['set-cookie'][0].split(';'), 2)
   })
 
-  test('set maxAge when clearWithBrowser is false', async (assert) => {
+  test('set maxAge when clearWithBrowser is false', async ({ assert }) => {
     const app = await setup()
     const manager = new SessionManager(app, sessionConfig)
 
@@ -66,7 +66,7 @@ test.group('Session Manager', (group) => {
     assert.equal(maxAge, '3000')
   })
 
-  test('use file driver to persist session value', async (assert) => {
+  test('use file driver to persist session value', async ({ assert }) => {
     const app = await setup()
     const config = Object.assign({}, sessionConfig, {
       driver: 'file',
@@ -95,7 +95,7 @@ test.group('Session Manager', (group) => {
     assert.deepEqual(new Store(sessionValues).all(), { user: { username: 'virk' } })
   })
 
-  test('use redis driver to persist session value', async (assert) => {
+  test('use redis driver to persist session value', async ({ assert }) => {
     const app = await setup()
     const config = Object.assign({}, sessionConfig, {
       driver: 'redis',
@@ -130,7 +130,7 @@ test.group('Session Manager', (group) => {
     await app.container.use('Adonis/Addons/Redis').connection('session').del(sessionId)
   })
 
-  test('extend by adding a custom driver', async (assert) => {
+  test('extend by adding a custom driver', async ({ assert }) => {
     assert.plan(2)
 
     const app = await setup(
