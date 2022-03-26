@@ -273,11 +273,29 @@ declare module '@ioc:Adonis/Addons/Session' {
    */
   export interface SessionClientContract extends StoreContract {
     /**
+     * Find if the sessions are enabled
+     */
+    isEnabled(): boolean
+
+    /**
+     * Flash messages store to set flash messages
+     */
+    flashMessages: StoreContract
+
+    /**
+     * Load session data from the driver
+     */
+    load(): Promise<{
+      session: Record<string, any>
+      flashMessages: Record<string, any> | null
+    }>
+
+    /**
      * Commits the session data to the session store and returns
      * the session id and cookie name for it to be accessible
      * by the server
      */
-    commit(): Promise<{ cookieName: string; sessionId: string }>
+    commit(): Promise<{ cookieName: string; sessionId: string; signedSessionId: string }>
 
     /**
      * Forget the session data.
@@ -289,6 +307,7 @@ declare module '@ioc:Adonis/Addons/Session' {
    * Session manager shape
    */
   export interface SessionManagerContract {
+    isEnabled(): boolean
     application: ApplicationContract
     client(): SessionClientContract
     create(ctx: HttpContextContract): SessionContract

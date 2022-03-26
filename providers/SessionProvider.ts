@@ -26,47 +26,39 @@ export default class SessionProvider {
     })
   }
 
-  public boot(): void {
-    /**
-     * Hook session into ctx during request cycle. We make use of hooks over
-     * middleware, since Hooks guarantee the `after` execution even when
-     * any middleware or controller raises exception.
-     */
+  /**
+   * Register bindings for tests
+   */
+  protected registerTestsBindings() {
+    this.app.container.withBindings(
+      [
+        'Japa/Preset/ApiRequest',
+        'Japa/Preset/ApiResponse',
+        'Japa/Preset/ApiClient',
+        'Adonis/Addons/Session',
+      ],
+      (ApiRequest, ApiResponse, ApiClient, Session) => {
+        const { defineTestsBindings } = require('../src/Bindings/Tests')
+        defineTestsBindings(ApiRequest, ApiResponse, ApiClient, Session)
+      }
+    )
+  }
+
+  /**
+   * Register server bindings
+   */
+  protected registerServerBindings() {
     this.app.container.withBindings(
       ['Adonis/Core/Server', 'Adonis/Core/HttpContext', 'Adonis/Addons/Session'],
       (Server, HttpContext, Session) => {
-        /**
-         * Sharing session with the context
-         */
-        HttpContext.getter(
-          'session',
-          function session() {
-            return Session.create(this)
-          },
-          true
-        )
-
-        /**
-         * Do not register hooks when sessions are disabled
-         */
-        if (!this.app.config.get('session.enabled', true)) {
-          return
-        }
-
-        /**
-         * Initiate session store
-         */
-        Server.hooks.before(async (ctx) => {
-          await ctx.session.initiate(false)
-        })
-
-        /**
-         * Commit store mutations
-         */
-        Server.hooks.after(async (ctx) => {
-          await ctx.session.commit()
-        })
+        const { defineServerBindings } = require('../src/Bindings/Server')
+        defineServerBindings(HttpContext, Server, Session)
       }
     )
+  }
+
+  public boot(): void {
+    this.registerServerBindings()
+    this.registerTestsBindings()
   }
 }

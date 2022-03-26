@@ -13,11 +13,13 @@ import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 
+import { MemoryDriver } from '../src/Drivers/Memory'
 import { SessionManager } from '../src/SessionManager'
 import { setup, fs, sessionConfig } from '../test-helpers'
 
 test.group('Session Client', (group) => {
   group.each.teardown(async () => {
+    MemoryDriver.sessions = new Map()
     await fs.cleanup()
   })
 
@@ -27,10 +29,10 @@ test.group('Session Client', (group) => {
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
     const manager = new SessionManager(app, config)
-    const client = manager.client()
 
+    const client = manager.client()
     client.set('username', 'virk')
-    const { sessionId, cookieName } = await client.commit()
+    const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
@@ -41,7 +43,30 @@ test.group('Session Client', (group) => {
       ctx.response.finish()
     })
 
-    await supertest(server).get('/').set('Cookie', `${cookieName}=${sessionId}`)
+    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
+  })
+
+  test('set flash messages', async ({ assert }) => {
+    assert.plan(1)
+    const app = await setup()
+
+    const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
+    const manager = new SessionManager(app, config)
+
+    const client = manager.client()
+    client.flashMessages.merge({ foo: 'bar' })
+    const { signedSessionId, cookieName } = await client.commit()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const session = manager.create(ctx)
+      await session.initiate(false)
+
+      assert.deepEqual(session.flashMessages.all(), { foo: 'bar' })
+      ctx.response.finish()
+    })
+
+    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
   })
 
   test('clear session store', async ({ assert }) => {
@@ -50,10 +75,10 @@ test.group('Session Client', (group) => {
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
     const manager = new SessionManager(app, config)
-    const client = manager.client()
 
+    const client = manager.client()
     client.set('username', 'virk')
-    const { sessionId, cookieName } = await client.commit()
+    const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
       const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
@@ -65,6 +90,61 @@ test.group('Session Client', (group) => {
     })
 
     await client.forget()
-    await supertest(server).get('/').set('Cookie', `${cookieName}=${sessionId}`)
+    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
+  })
+
+  test('get session data from the driver', async ({ assert }) => {
+    const app = await setup()
+
+    const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
+    const manager = new SessionManager(app, config)
+
+    const client = manager.client()
+    client.set('username', 'virk')
+    const { signedSessionId, cookieName } = await client.commit()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const session = manager.create(ctx)
+      await session.initiate(false)
+      session.put('age', 22)
+
+      await session.commit()
+      ctx.response.finish()
+    })
+
+    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
+    const { session, flashMessages } = await client.load()
+
+    assert.deepEqual(session, { username: 'virk', age: 22 })
+    assert.isNull(flashMessages)
+  })
+
+  test('get flash messages from the driver', async ({ assert }) => {
+    const app = await setup()
+
+    const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
+    const manager = new SessionManager(app, config)
+
+    const client = manager.client()
+    const { signedSessionId, cookieName } = await client.commit()
+
+    const server = createServer(async (req, res) => {
+      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const session = manager.create(ctx)
+      await session.initiate(false)
+
+      session.flash({ foo: 'bar' })
+      session.put('username', 'virk')
+
+      await session.commit()
+      ctx.response.finish()
+    })
+
+    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
+    const { session, flashMessages } = await client.load()
+
+    assert.deepEqual(session, { username: 'virk' })
+    assert.deepEqual(flashMessages, { foo: 'bar' })
   })
 })

@@ -36,24 +36,28 @@ export async function setup(config?: any) {
   await fs.add(
     'config/app.ts',
     `
-		export const appKey = '${Math.random().toFixed(36).substring(2, 38)}',
-		export const http = {
-			cookie: {},
-			trustProxy: () => true,
-		}
-	`
+    export const appKey = '${Math.random().toFixed(36).substring(2, 38)}',
+    export const http = {
+      cookie: {},
+      trustProxy: () => true,
+    }
+  `
   )
 
   await fs.add(
     'config/session.ts',
     `
-		const sessionConfig = ${JSON.stringify(config || sessionConfig, null, 2)}
-		export default sessionConfig
-	`
+    const sessionConfig = ${JSON.stringify(config || sessionConfig, null, 2)}
+    export default sessionConfig
+  `
   )
 
   const app = new Application(fs.basePath, 'web', {
-    providers: ['@adonisjs/core', '../../providers/SessionProvider'],
+    providers: [
+      '@adonisjs/core',
+      '../../providers/SessionProvider',
+      '@japa/preset-adonis/TestsProvider',
+    ],
   })
 
   await app.setup()

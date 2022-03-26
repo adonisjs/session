@@ -65,7 +65,7 @@ export class SessionManager implements SessionManagerContract {
      * Explicitly overwriting `cookie.expires` and `cookie.maxAge` from
      * the user defined config
      */
-    const processedConfig: SessionManagerConfig = Object.assign({}, config, {
+    const processedConfig: SessionManagerConfig = Object.assign({ enabled: true }, config, {
       cookie: {
         ...config.cookie,
         expires: undefined,
@@ -160,6 +160,13 @@ export class SessionManager implements SessionManagerContract {
       default:
         return this.createExtendedDriver(ctx)
     }
+  }
+
+  /**
+   * Find if the sessions are enabled
+   */
+  public isEnabled() {
+    return this.config.enabled
   }
 
   /**
