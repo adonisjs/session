@@ -76,8 +76,8 @@ test.group('Session Provider', (group) => {
       app.container.use('Adonis/Addons/Session')
     )
 
-    assert.isTrue(app.container.use('Japa/Preset/ApiRequest').hasMacro('withSession'))
-    assert.isTrue(app.container.use('Japa/Preset/ApiRequest').hasMacro('withFlashMessages'))
+    assert.isTrue(app.container.use('Japa/Preset/ApiRequest').hasMacro('session'))
+    assert.isTrue(app.container.use('Japa/Preset/ApiRequest').hasMacro('flashMessages'))
     assert.isTrue(app.container.use('Japa/Preset/ApiRequest').hasGetter('sessionClient'))
   })
 
@@ -102,7 +102,7 @@ test.group('Session Provider', (group) => {
     server.listen(3333)
 
     const client = new (app.container.use('Japa/Preset/ApiClient'))('http://localhost:3333')
-    const response = await client.get('/').withSession({ username: 'virk' })
+    const response = await client.get('/').session({ username: 'virk' })
     server.close()
 
     assert.deepEqual(response.status(), 200)

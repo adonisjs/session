@@ -17,12 +17,12 @@ declare module '@japa/api-client' {
     /**
      * Send session values in the request
      */
-    withSession(session: Record<string, AllowedSessionValues>): this
+    session(session: Record<string, AllowedSessionValues>): this
 
     /**
      * Send flash messages in the request
      */
-    withFlashMessages(messages: Record<string, AllowedSessionValues>): this
+    flashMessages(messages: Record<string, AllowedSessionValues>): this
   }
 
   export interface ApiResponse {

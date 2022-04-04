@@ -35,7 +35,7 @@ export function defineTestsBindings(
   /**
    * Send session values in the request
    */
-  ApiRequest.macro('withSession', function (session: Record<string, AllowedSessionValues>) {
+  ApiRequest.macro('session', function (session: Record<string, AllowedSessionValues>) {
     if (!this.sessionClient.isEnabled()) {
       throw new Error('Cannot set session. Make sure to enable it inside "config/session" file')
     }
@@ -47,7 +47,7 @@ export function defineTestsBindings(
   /**
    * Send flash messages in the request
    */
-  ApiRequest.macro('withFlashMessages', function (messages: Record<string, AllowedSessionValues>) {
+  ApiRequest.macro('flashMessages', function (messages: Record<string, AllowedSessionValues>) {
     if (!this.sessionClient.isEnabled()) {
       throw new Error(
         'Cannot set flash messages. Make sure to enable the session inside "config/session" file'
