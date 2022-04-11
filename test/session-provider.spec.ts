@@ -18,6 +18,7 @@ test.group('Session Provider', (group) => {
   group.each.teardown(async () => {
     ApiClient.clearSetupHooks()
     ApiClient.clearTeardownHooks()
+    ApiClient.clearRequestHandlers()
     await fs.cleanup()
   })
 

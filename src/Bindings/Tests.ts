@@ -117,37 +117,43 @@ export function defineTestsBindings(
   })
 
   /**
-   * Hook into request and persist session data to be available
-   * on the server during the request.
+   * Adding hooks directly on the request object moves the hooks to
+   * the end of the queue (basically after the globally hooks)
    */
-  ApiClient.setup(async (request) => {
+  ApiClient.onRequest((req) => {
     /**
-     * Persist session data and set the session id within the
-     * cookie
+     * Hook into request and persist session data to be available
+     * on the server during the request.
      */
-    const { cookieName, sessionId } = await request.sessionClient.commit()
-    request.cookie(cookieName, sessionId)
+    req.setup(async (request) => {
+      /**
+       * Persist session data and set the session id within the
+       * cookie
+       */
+      const { cookieName, sessionId } = await request.sessionClient.commit()
+      request.cookie(cookieName, sessionId)
 
-    /**
-     * Cleanup if request has error. Otherwise the teardown
-     * hook will clear
-     */
-    return async (error: any) => {
-      if (error) {
-        await request.sessionClient.forget()
+      /**
+       * Cleanup if request has error. Otherwise the teardown
+       * hook will clear
+       */
+      return async (error: any) => {
+        if (error) {
+          await request.sessionClient.forget()
+        }
       }
-    }
-  })
+    })
 
-  /**
-   * Load messages from the session store and keep a reference to it
-   * inside the response object.
-   *
-   * We also destroy the session after getting a copy of the session
-   * data
-   */
-  ApiClient.teardown(async (response) => {
-    response.sessionJar = await response.request.sessionClient.load()
-    await response.request.sessionClient.forget()
+    /**
+     * Load messages from the session store and keep a reference to it
+     * inside the response object.
+     *
+     * We also destroy the session after getting a copy of the session
+     * data
+     */
+    req.teardown(async (response) => {
+      response.sessionJar = await response.request.sessionClient.load()
+      await response.request.sessionClient.forget()
+    })
   })
 }
