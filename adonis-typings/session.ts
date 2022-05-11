@@ -285,7 +285,7 @@ declare module '@ioc:Adonis/Addons/Session' {
     /**
      * Load session data from the driver
      */
-    load(): Promise<{
+    load(cookies: Record<string, any>): Promise<{
       session: Record<string, any>
       flashMessages: Record<string, any> | null
     }>

@@ -152,7 +152,7 @@ export function defineTestsBindings(
      * data
      */
     req.teardown(async (response) => {
-      response.sessionJar = await response.request.sessionClient.load()
+      response.sessionJar = await response.request.sessionClient.load(response.cookies())
       await response.request.sessionClient.forget()
     })
   })

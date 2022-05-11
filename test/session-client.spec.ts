@@ -12,6 +12,7 @@
 import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
+import setCookieParser from 'set-cookie-parser'
 
 import { MemoryDriver } from '../src/Drivers/Memory'
 import { SessionManager } from '../src/SessionManager'
@@ -98,6 +99,7 @@ test.group('Session Client', (group) => {
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
     const manager = new SessionManager(app, config)
+    const cookieClient = app.container.resolveBinding('Adonis/Core/CookieClient')
 
     const client = manager.client()
     client.set('username', 'virk')
@@ -108,13 +110,25 @@ test.group('Session Client', (group) => {
       const session = manager.create(ctx)
       await session.initiate(false)
       session.put('age', 22)
+      session.regenerate()
 
       await session.commit()
       ctx.response.finish()
     })
 
-    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
-    const { session, flashMessages } = await client.load()
+    const response = await supertest(server)
+      .get('/')
+      .set('Cookie', `${cookieName}=${signedSessionId}`)
+
+    const cookies = setCookieParser.parse(response.header['set-cookie'], { map: true })
+    const parsedCookies = Object.keys(cookies).reduce((result, key) => {
+      const value = cookies[key]
+      value.value = cookieClient.parse(value.name, value.value)
+      result[key] = value
+      return result
+    }, {})
+
+    const { session, flashMessages } = await client.load(parsedCookies)
 
     assert.deepEqual(session, { username: 'virk', age: 22 })
     assert.isNull(flashMessages)
@@ -125,6 +139,7 @@ test.group('Session Client', (group) => {
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
     const manager = new SessionManager(app, config)
+    const cookieClient = app.container.resolveBinding('Adonis/Core/CookieClient')
 
     const client = manager.client()
     const { signedSessionId, cookieName } = await client.commit()
@@ -141,8 +156,19 @@ test.group('Session Client', (group) => {
       ctx.response.finish()
     })
 
-    await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
-    const { session, flashMessages } = await client.load()
+    const response = await supertest(server)
+      .get('/')
+      .set('Cookie', `${cookieName}=${signedSessionId}`)
+
+    const cookies = setCookieParser.parse(response.header['set-cookie'], { map: true })
+    const parsedCookies = Object.keys(cookies).reduce((result, key) => {
+      const value = cookies[key]
+      value.value = cookieClient.parse(value.name, value.value)
+      result[key] = value
+      return result
+    }, {})
+
+    const { session, flashMessages } = await client.load(parsedCookies)
 
     assert.deepEqual(session, { username: 'virk' })
     assert.deepEqual(flashMessages, { foo: 'bar' })

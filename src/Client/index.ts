@@ -59,8 +59,11 @@ export class SessionClient extends Store implements SessionClientContract {
   /**
    * Load session from the driver
    */
-  public async load() {
-    const contents = await this.driver.read(this.sessionId)
+  public async load(cookies: Record<string, any>) {
+    const sessionIdCookie = cookies[this.config.cookieName]
+    const sessionId = sessionIdCookie ? sessionIdCookie.value : this.sessionId
+
+    const contents = await this.driver.read(sessionId)
     const store = new Store(contents)
     const flashMessages = store.pull(this.flashMessagesKey, null)
 
