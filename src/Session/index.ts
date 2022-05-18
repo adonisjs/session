@@ -57,6 +57,12 @@ export class Session implements SessionContract {
   public flashMessages = new Store({})
 
   /**
+   * Session id for the current request. It will be different
+   * from the "this.sessionId" when regenerate is called.
+   */
+  private currentSessionId = this.sessionId
+
+  /**
    * A instance of store with values read from the driver. The store
    * in initiated inside the [[initiate]] method
    */
@@ -66,7 +72,7 @@ export class Session implements SessionContract {
    * Whether or not to re-generate the session id before comitting
    * session values.
    */
-  private regenerateSessionId = false
+  private regeneratedSessionId = false
 
   /**
    * A copy of flash messages. The `input` messages
@@ -233,7 +239,8 @@ export class Session implements SessionContract {
    */
   public regenerate(): void {
     this.ctx.logger.trace('explicitly re-generating session id')
-    this.regenerateSessionId = true
+    this.sessionId = cuid()
+    this.regeneratedSessionId = true
   }
 
   /**
@@ -408,9 +415,8 @@ export class Session implements SessionContract {
         /**
          * Cleanup old session and re-generate new session
          */
-        if (this.regenerateSessionId) {
-          await this.driver.destroy(this.sessionId)
-          this.sessionId = cuid()
+        if (this.regeneratedSessionId) {
+          await this.driver.destroy(this.currentSessionId)
         }
 
         /**

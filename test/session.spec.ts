@@ -190,6 +190,7 @@ test.group('Session', (group) => {
     assert.notEqual(sessionId, '1234')
 
     const session = MemoryDriver.sessions.get(sessionId)!
+    assert.equal(MemoryDriver.sessions.size, 1)
     assert.deepEqual(new Store(session).all(), { user: { username: 'virk', age: 22 } })
 
     /**
