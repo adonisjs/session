@@ -13,7 +13,7 @@ import { SessionConfig } from '@ioc:Adonis/Addons/Session'
 import { Application } from '@adonisjs/core/build/standalone'
 import { RedisManagerContract } from '@ioc:Adonis/Addons/Redis'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { RedisManager } from '@adonisjs/redis/build/src/RedisManager'
+import { RedisManager } from '@adonisjs/redis/build/src/RedisManager/index.js'
 
 export const fs = new Filesystem(join(__dirname, 'app'))
 
