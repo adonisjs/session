@@ -8,6 +8,7 @@
  */
 
 import '@japa/api-client'
+import { InspectOptions } from 'util'
 import { AllowedSessionValues, SessionClientContract } from '@ioc:Adonis/Addons/Session'
 
 declare module '@japa/api-client' {
@@ -38,6 +39,11 @@ declare module '@japa/api-client' {
      * Get session data
      */
     session(): Record<string, any>
+
+    /**
+     * Dump session
+     */
+    dumpSession(options?: InspectOptions): this
 
     /**
      * Get flash messages set by the server

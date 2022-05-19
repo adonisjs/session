@@ -11,6 +11,7 @@
 
 import { ContainerBindings } from '@ioc:Adonis/Core/Application'
 import { SessionManagerContract, AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
+import { inspect, InspectOptions } from 'util'
 
 /**
  * Define test bindings
@@ -114,6 +115,15 @@ export function defineTestsBindings(
   ApiResponse.macro('assertFlashMissing', function (name: string) {
     this.ensureHasAssert()
     this.assert!.notProperty(this.flashMessages(), name)
+  })
+
+  /**
+   * Dump session to the console
+   */
+  ApiResponse.macro('dumpSession', function (options?: InspectOptions) {
+    const inspectOptions = { depth: 2, showHidden: false, colors: true, ...options }
+    console.log(`"session"        => ${inspect(this.session(), inspectOptions)}`)
+    console.log(`"flashMessages"  => ${inspect(this.flashMessages(), inspectOptions)}`)
   })
 
   /**
