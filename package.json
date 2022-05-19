@@ -8,6 +8,8 @@
     "build/adonis-typings",
     "build/providers",
     "build/src",
+    "build/config.js",
+    "build/config.d.ts",
     "build/templates",
     "build/instructions.md"
   ],
@@ -16,7 +18,7 @@
     "fs-extra": "^10.1.0"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^5.5.0"
+    "@adonisjs/core": "^5.8.0"
   },
   "devDependencies": {
     "@adonisjs/core": "^5.8.2",
