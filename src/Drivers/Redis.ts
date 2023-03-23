@@ -68,6 +68,11 @@ export class RedisDriver implements SessionDriverContract {
       throw new Error('Session file driver expects an object of values')
     }
 
+    if (Object.keys(values).length === 0) {
+      await this.getRedisConnection().del(sessionId)
+      return
+    }
+
     await this.getRedisConnection().setex(
       sessionId,
       this.ttl,
