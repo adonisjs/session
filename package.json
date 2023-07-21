@@ -113,8 +113,6 @@
     ],
     "exclude": [
       "tests/**",
-      "src/drivers/**",
-      "src/abstract_drivers/**",
       "stubs/**"
     ]
   }
