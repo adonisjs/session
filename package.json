@@ -2,6 +2,9 @@
   "name": "@adonisjs/session",
   "description": "Session provider for AdonisJS",
   "version": "6.4.0",
+  "engines": {
+    "node": ">=18.16.0"
+  },
   "main": "build/index.js",
   "type": "module",
   "files": [
