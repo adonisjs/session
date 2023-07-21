@@ -48,10 +48,7 @@ export async function setup(fs: FileSystem, config?: any) {
     .withCoreProviders()
     .merge({
       rcFileContents: {
-        providers: [
-          '../../providers/session_provider.js',
-          '@adonisjs/redis/providers/redis_provider',
-        ],
+        providers: ['../../providers/session_provider.js', '@adonisjs/redis/redis_provider'],
       },
       config: config || { session: sessionConfig },
     })

@@ -43,7 +43,7 @@
     "@adonisjs/core": "6.1.5-8",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",
-    "@adonisjs/redis": "8.0.0-1",
+    "@adonisjs/redis": "8.0.0-2",
     "@adonisjs/tsconfig": "^1.1.8",
     "@adonisjs/view": "7.0.0-4",
     "@japa/api-client": "2.0.0-0",
