@@ -82,83 +82,35 @@
     "url": "https://github.com/adonisjs/adonis-session/issues"
   },
   "homepage": "https://github.com/adonisjs/adonis-session#readme",
-  "nyc": {
-    "exclude": [
-      "test"
-    ],
-    "extension": [
-      ".ts"
-    ]
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
-    }
-  },
   "publishConfig": {
-    "tag": "latest",
-    "access": "public"
-  },
-  "adonisjs": {
-    "instructionsMd": "./build/instructions.md",
-    "templates": {
-      "config": [
-        "session.txt"
-      ]
-    },
-    "env": {
-      "SESSION_DRIVER": "cookie"
-    },
-    "types": "@adonisjs/session",
-    "providers": [
-      "@adonisjs/session"
-    ]
+    "access": "public",
+    "tag": "next"
   },
   "np": {
-    "contents": ".",
+    "message": "chore(release): %s",
+    "tag": "next",
+    "branch": "main",
     "anyBranch": false
   },
-  "mrmConfig": {
-    "core": true,
-    "license": "MIT",
-    "services": [
-      "github-actions"
-    ],
-    "minNodeVersion": "14.15.4",
-    "probotApps": [
-      "stale",
-      "lock"
-    ],
-    "runGhActionsOnWindows": false
-  },
+  "prettier": "@adonisjs/prettier-config",
   "eslintConfig": {
-    "extends": [
-      "plugin:adonis/typescriptPackage",
-      "prettier"
-    ],
-    "plugins": [
-      "prettier"
-    ],
-    "rules": {
-      "prettier/prettier": [
-        "error",
-        {
-          "endOfLine": "auto"
-        }
-      ]
-    }
+    "extends": "@adonisjs/eslint-config/package"
   },
-  "eslintIgnore": [
-    "build"
-  ],
-  "prettier": {
-    "trailingComma": "es5",
-    "semi": false,
-    "singleQuote": true,
-    "useTabs": false,
-    "quoteProps": "consistent",
-    "bracketSpacing": true,
-    "arrowParens": "always",
-    "printWidth": 100
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**",
+      "src/drivers/**",
+      "src/abstract_drivers/**",
+      "stubs/**"
+    ]
   }
 }
