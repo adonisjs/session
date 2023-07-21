@@ -1,32 +1,63 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/session.ts" />
+import type { SessionConfig, SessionDriverContract, AllowedSessionValues } from './types.js'
+import type { HttpContext } from '@adonisjs/core/http'
+import { Exception } from '@poppinss/utils'
+import lodash from '@poppinss/utils/lodash'
+import { cuid } from '@adonisjs/core/helpers'
 
-import { Exception, lodash } from '@poppinss/utils'
-import { cuid } from '@poppinss/utils/build/helpers'
-import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-
-import {
-  SessionConfig,
-  SessionContract,
-  AllowedSessionValues,
-  SessionDriverContract,
-} from '@ioc:Adonis/Addons/Session'
-
-import { Store } from '../Store'
+import { Store } from './store.js'
 
 /**
  * Session class exposes the API to read/write values to the session for
  * a given request.
  */
-export class Session implements SessionContract {
+export class Session {
+  /**
+   * Session id for the current request. It will be different
+   * from the "this.sessionId" when regenerate is called.
+   */
+  #currentSessionId: string
+
+  /**
+   * A instance of store with values read from the driver. The store
+   * in initiated inside the [[initiate]] method
+   */
+  #store!: Store
+
+  /**
+   * Whether or not to re-generate the session id before committing
+   * session values.
+   */
+  #regeneratedSessionId = false
+
+  /**
+   * Session key for setting flash messages
+   */
+  #flashMessagesKey = '__flash__'
+
+  /**
+   * The HTTP context for the current request.
+   */
+  #ctx: HttpContext
+
+  /**
+   * Configuration for the session
+   */
+  #config: SessionConfig
+
+  /**
+   * The session driver instance used to read and write session data.
+   */
+  #driver: SessionDriverContract
+
   /**
    * Set to true inside the `initiate` method
    */
@@ -49,30 +80,12 @@ export class Session implements SessionContract {
    * Session id for the given request. A new session id is only
    * generated when the cookie for the session id is missing
    */
-  public sessionId = this.getSessionId()
+  public sessionId: string
 
   /**
    * A copy of previously set flash messages
    */
   public flashMessages = new Store({})
-
-  /**
-   * Session id for the current request. It will be different
-   * from the "this.sessionId" when regenerate is called.
-   */
-  private currentSessionId = this.sessionId
-
-  /**
-   * A instance of store with values read from the driver. The store
-   * in initiated inside the [[initiate]] method
-   */
-  private store: Store
-
-  /**
-   * Whether or not to re-generate the session id before comitting
-   * session values.
-   */
-  private regeneratedSessionId = false
 
   /**
    * A copy of flash messages. The `input` messages
@@ -83,54 +96,49 @@ export class Session implements SessionContract {
    */
   public responseFlashMessages = new Store({})
 
-  /**
-   * Session key for setting flash messages
-   */
-  private flashMessagesKey = '__flash__'
+  constructor(ctx: HttpContext, config: SessionConfig, driver: SessionDriverContract) {
+    this.#ctx = ctx
+    this.#config = config
+    this.#driver = driver
 
-  constructor(
-    private ctx: HttpContextContract,
-    private config: SessionConfig,
-    private driver: SessionDriverContract
-  ) {}
+    this.sessionId = this.#getSessionId()
+    this.#currentSessionId = this.sessionId
+  }
 
   /**
    * Returns a merged copy of flash messages or null
    * when nothing is set
    */
-  private setFlashMessages(): void {
+  #setFlashMessages(): void {
     if (this.responseFlashMessages.isEmpty) {
       return
     }
 
     const { input, ...others } = this.responseFlashMessages.all()
-    this.put(this.flashMessagesKey, { ...input, ...others })
+    this.put(this.#flashMessagesKey, { ...input, ...others })
   }
 
   /**
    * Returns the existing session id or creates one.
    */
-  private getSessionId(): string {
-    const sessionId = this.ctx.request.cookie(this.config.cookieName)
+  #getSessionId(): string {
+    const sessionId = this.#ctx.request.cookie(this.#config.cookieName)
     if (sessionId) {
-      this.ctx.logger.trace('existing session found')
       return sessionId
     }
 
     this.fresh = true
-    this.ctx.logger.trace('generating new session id')
     return cuid()
   }
 
   /**
    * Ensures the session store is initialized
    */
-  private ensureIsReady(): void {
+  #ensureIsReady(): void {
     if (!this.initiated) {
       throw new Exception(
         'Session store is not initiated yet. Make sure you are using the session hook',
-        500,
-        'E_RUNTIME_EXCEPTION'
+        { code: 'E_RUNTIME_EXCEPTION', status: 500 }
       )
     }
   }
@@ -138,62 +146,61 @@ export class Session implements SessionContract {
   /**
    * Raises exception when session store is in readonly mode
    */
-  private ensureIsMutable() {
+  #ensureIsMutable() {
     if (this.readonly) {
-      throw new Exception(
-        'Session store is in readonly mode and cannot be mutated',
-        500,
-        'E_RUNTIME_EXCEPTION'
-      )
+      throw new Exception('Session store is in readonly mode and cannot be mutated', {
+        status: 500,
+        code: 'E_RUNTIME_EXCEPTION',
+      })
     }
   }
 
   /**
    * Touches the session cookie
    */
-  private touchSessionCookie(): void {
-    this.ctx.logger.trace('touching session cookie')
-    this.ctx.response.cookie(this.config.cookieName, this.sessionId, this.config.cookie!)
+  #touchSessionCookie(): void {
+    this.#ctx.logger.trace('touching session cookie')
+    this.#ctx.response.cookie(this.#config.cookieName, this.sessionId, this.#config.cookie!)
   }
 
   /**
    * Commits the session value to the store
    */
-  private async commitValuesToStore(): Promise<void> {
-    this.ctx.logger.trace('persist session store with driver')
-    await this.driver.write(this.sessionId, this.store.toJSON())
+  async #commitValuesToStore(): Promise<void> {
+    this.#ctx.logger.trace('persist session store with driver')
+    await this.#driver.write(this.sessionId, this.#store.toJSON())
   }
 
   /**
    * Touches the driver to make sure the session values doesn't expire
    */
-  private async touchDriver(): Promise<void> {
-    this.ctx.logger.trace('touch driver for liveliness')
-    await this.driver.touch(this.sessionId)
+  async #touchDriver(): Promise<void> {
+    this.#ctx.logger.trace('touch driver for liveliness')
+    await this.#driver.touch(this.sessionId)
   }
 
   /**
    * Reading flash messages from the last HTTP request and
    * updating the flash messages bag
    */
-  private readLastRequestFlashMessage() {
+  #readLastRequestFlashMessage() {
     if (this.readonly) {
       return
     }
 
-    this.flashMessages.update(this.pull(this.flashMessagesKey, null))
+    this.flashMessages.update(this.pull(this.#flashMessagesKey, null))
   }
 
   /**
    * Share flash messages & read only session's functions with views
    * (only when view property exists)
    */
-  private shareLocalsWithView() {
-    if (!this.ctx['view'] || typeof this.ctx['view'].share !== 'function') {
+  #shareLocalsWithView() {
+    if (!this.#ctx['view'] || typeof this.#ctx['view'].share !== 'function') {
       return
     }
 
-    this.ctx['view'].share({
+    this.#ctx['view'].share({
       flashMessages: this.flashMessages,
       session: {
         get: this.get.bind(this),
@@ -216,21 +223,12 @@ export class Session implements SessionContract {
 
     this.readonly = readonly
 
-    /**
-     * Profiling the driver read method
-     */
-    await this.ctx.profiler.profileAsync(
-      'session:initiate',
-      { driver: this.config.driver },
-      async () => {
-        const contents = await this.driver.read(this.sessionId)
-        this.store = new Store(contents)
-      }
-    )
+    const contents = await this.#driver.read(this.sessionId)
+    this.#store = new Store(contents)
 
     this.initiated = true
-    this.readLastRequestFlashMessage()
-    this.shareLocalsWithView()
+    this.#readLastRequestFlashMessage()
+    this.#shareLocalsWithView()
   }
 
   /**
@@ -238,26 +236,26 @@ export class Session implements SessionContract {
    * session fixation attacks.
    */
   public regenerate(): void {
-    this.ctx.logger.trace('explicitly re-generating session id')
+    this.#ctx.logger.trace('explicitly re-generating session id')
     this.sessionId = cuid()
-    this.regeneratedSessionId = true
+    this.#regeneratedSessionId = true
   }
 
   /**
    * Set/update session value
    */
   public put(key: string, value: AllowedSessionValues): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.store.set(key, value)
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.#store.set(key, value)
   }
 
   /**
    * Find if the value exists in the session
    */
   public has(key: string): boolean {
-    this.ensureIsReady()
-    return this.store.has(key)
+    this.#ensureIsReady()
+    return this.#store.has(key)
   }
 
   /**
@@ -265,25 +263,25 @@ export class Session implements SessionContract {
    * when actual value is `undefined`
    */
   public get(key: string, defaultValue?: any): any {
-    this.ensureIsReady()
-    return this.store.get(key, defaultValue)
+    this.#ensureIsReady()
+    return this.#store.get(key, defaultValue)
   }
 
   /**
    * Returns everything from the session
    */
   public all(): any {
-    this.ensureIsReady()
-    return this.store.all()
+    this.#ensureIsReady()
+    return this.#store.all()
   }
 
   /**
    * Remove value for a given key from the session
    */
   public forget(key: string): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.store.unset(key)
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.#store.unset(key)
   }
 
   /**
@@ -291,9 +289,9 @@ export class Session implements SessionContract {
    * by `session.forget`
    */
   public pull(key: string, defaultValue?: any): any {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    return this.store.pull(key, defaultValue)
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    return this.#store.pull(key, defaultValue)
   }
 
   /**
@@ -302,9 +300,9 @@ export class Session implements SessionContract {
    * a number
    */
   public increment(key: string, steps: number = 1): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.store.increment(key, steps)
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.#store.increment(key, steps)
   }
 
   /**
@@ -313,18 +311,18 @@ export class Session implements SessionContract {
    * a number
    */
   public decrement(key: string, steps: number = 1): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.store.decrement(key, steps)
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.#store.decrement(key, steps)
   }
 
   /**
    * Remove everything from the session
    */
   public clear(): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.store.clear()
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.#store.clear()
   }
 
   /**
@@ -334,8 +332,8 @@ export class Session implements SessionContract {
     key: string | { [key: string]: AllowedSessionValues },
     value?: AllowedSessionValues
   ): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
 
     /**
      * Update value
@@ -353,27 +351,27 @@ export class Session implements SessionContract {
    * Flash all form values
    */
   public flashAll(): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.responseFlashMessages.set('input', this.ctx.request.original())
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.responseFlashMessages.set('input', this.#ctx.request.original())
   }
 
   /**
    * Flash all form values except mentioned keys
    */
   public flashExcept(keys: string[]): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.responseFlashMessages.set('input', lodash.omit(this.ctx.request.original(), keys))
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.responseFlashMessages.set('input', lodash.omit(this.#ctx.request.original(), keys))
   }
 
   /**
    * Flash only defined keys from the form values
    */
   public flashOnly(keys: string[]): void {
-    this.ensureIsReady()
-    this.ensureIsMutable()
-    this.responseFlashMessages.set('input', lodash.pick(this.ctx.request.original(), keys))
+    this.#ensureIsReady()
+    this.#ensureIsMutable()
+    this.responseFlashMessages.set('input', lodash.pick(this.#ctx.request.original(), keys))
   }
 
   /**
@@ -402,30 +400,25 @@ export class Session implements SessionContract {
    * Writes value to the underlying session driver.
    */
   public async commit(): Promise<void> {
-    await this.ctx.profiler.profileAsync(
-      'session:commit',
-      { driver: this.config.driver },
-      async () => {
-        if (!this.initiated) {
-          this.touchSessionCookie()
-          await this.touchDriver()
-          return
-        }
+    if (!this.initiated) {
+      console.log('session not initiated')
+      this.#touchSessionCookie()
+      await this.#touchDriver()
+      return
+    }
 
-        /**
-         * Cleanup old session and re-generate new session
-         */
-        if (this.regeneratedSessionId) {
-          await this.driver.destroy(this.currentSessionId)
-        }
+    /**
+     * Cleanup old session and re-generate new session
+     */
+    if (this.#regeneratedSessionId) {
+      await this.#driver.destroy(this.#currentSessionId)
+    }
 
-        /**
-         * Touch the session cookie to keep it alive.
-         */
-        this.touchSessionCookie()
-        this.setFlashMessages()
-        await this.commitValuesToStore()
-      }
-    )
+    /**
+     * Touch the session cookie to keep it alive.
+     */
+    this.#touchSessionCookie()
+    this.#setFlashMessages()
+    await this.#commitValuesToStore()
   }
 }

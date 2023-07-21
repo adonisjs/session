@@ -7,28 +7,19 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
+import { ApiRequest, ApiResponse, ApiClient } from '@japa/api-client'
+import { InspectOptions, inspect } from 'util'
+import { SessionManager } from '../session_manager.js'
+import { AllowedSessionValues } from '../types.js'
 
-import { ContainerBindings } from '@ioc:Adonis/Core/Application'
-import { SessionManagerContract, AllowedSessionValues } from '@ioc:Adonis/Addons/Session'
-import { inspect, InspectOptions } from 'util'
-
-/**
- * Define test bindings
- */
-export function defineTestsBindings(
-  ApiRequest: ContainerBindings['Japa/Preset/ApiRequest'],
-  ApiResponse: ContainerBindings['Japa/Preset/ApiResponse'],
-  ApiClient: ContainerBindings['Japa/Preset/ApiClient'],
-  SessionManager: SessionManagerContract
-) {
+export function extendApiClient(sessionManager: SessionManager) {
   /**
    * Set "sessionClient" on the api request
    */
   ApiRequest.getter(
     'sessionClient',
     function () {
-      return SessionManager.client()
+      return sessionManager.client()
     },
     true
   )
@@ -42,6 +33,7 @@ export function defineTestsBindings(
     }
 
     this.sessionClient.merge(session)
+
     return this
   })
 
@@ -141,7 +133,7 @@ export function defineTestsBindings(
        * cookie
        */
       const { cookieName, sessionId } = await request.sessionClient.commit()
-      request.cookie(cookieName, sessionId)
+      request.withCookie(cookieName, sessionId)
 
       /**
        * Cleanup if request has error. Otherwise the teardown

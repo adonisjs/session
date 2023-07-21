@@ -1,56 +1,56 @@
 /*
  * @adonisjs/redis
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
+import { Exception } from '@poppinss/utils'
+import lodash from '@poppinss/utils/lodash'
 
-import { Exception, lodash } from '@poppinss/utils'
-import { AllowedSessionValues, StoreContract } from '@ioc:Adonis/Addons/Session'
+import type { AllowedSessionValues } from './types.js'
 
 /**
  * Session store to mutate and access values from the session object
  */
-export class Store implements StoreContract {
+export class Store {
   /**
    * Underlying store values
    */
-  private values: { [key: string]: any }
+  #values: { [key: string]: any }
 
   constructor(values: { [key: string]: any } | null) {
-    this.values = values || {}
+    this.#values = values || {}
   }
 
   /**
    * Find if store is empty or not
    */
   public get isEmpty() {
-    return !this.values || Object.keys(this.values).length === 0
+    return !this.#values || Object.keys(this.#values).length === 0
   }
 
   /**
    * Set key/value pair
    */
   public set(key: string, value: AllowedSessionValues): void {
-    lodash.set(this.values, key, value)
+    lodash.set(this.#values, key, value)
   }
 
   /**
    * Get value for a given key
    */
   public get(key: string, defaultValue?: any): any {
-    return lodash.get(this.values, key, defaultValue)
+    return lodash.get(this.#values, key, defaultValue)
   }
 
   /**
    * Remove key
    */
   public unset(key: string): void {
-    lodash.unset(this.values, key)
+    lodash.unset(this.#values, key)
   }
 
   /**
@@ -101,14 +101,14 @@ export class Store implements StoreContract {
    * Overwrite the underlying values object
    */
   public update(values: { [key: string]: any }): void {
-    this.values = values
+    this.#values = values
   }
 
   /**
    * Update to merge values
    */
   public merge(values: { [key: string]: any }): any {
-    lodash.merge(this.values, values)
+    lodash.merge(this.#values, values)
   }
 
   /**
@@ -128,7 +128,7 @@ export class Store implements StoreContract {
    * Get all values
    */
   public all(): any {
-    return this.values
+    return this.#values
   }
 
   /**

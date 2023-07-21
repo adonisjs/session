@@ -1,27 +1,21 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../adonis-typings/session.ts" />
-
 import { test } from '@japa/runner'
-import { RedisDriver } from '../src/Drivers/Redis'
-import { fs, setup, sleep, sessionConfig, getRedisManager } from '../test-helpers'
+import { RedisDriver } from '../src/drivers/redis.js'
+import { setup, sleep, sessionConfig, getRedisManager } from '../test_helpers/index.js'
 
 const config = Object.assign({}, sessionConfig, { driver: 'redis', redisConnection: 'session' })
 
-test.group('Redis driver', (group) => {
-  group.each.teardown(async () => {
-    await fs.cleanup()
-  })
-
-  test('return null when value is missing', async ({ assert }) => {
-    const app = await setup()
+test.group('Redis driver', () => {
+  test('return null when value is missing', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
 
     const sessionId = '1234'
     const redis = getRedisManager(app)
@@ -32,8 +26,8 @@ test.group('Redis driver', (group) => {
     assert.isNull(value)
   })
 
-  test('write session value to the redis store', async ({ assert }) => {
-    const app = await setup()
+  test('write session value to the redis store', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
 
     const sessionId = '1234'
     const redis = getRedisManager(app)
@@ -51,8 +45,8 @@ test.group('Redis driver', (group) => {
     })
   })
 
-  test('get session existing value', async ({ assert }) => {
-    const app = await setup()
+  test('get session existing value', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
 
     const sessionId = '1234'
     const redis = getRedisManager(app)
@@ -73,8 +67,8 @@ test.group('Redis driver', (group) => {
     assert.deepEqual(contents, { message: 'hello-world' })
   })
 
-  test('remove session', async ({ assert }) => {
-    const app = await setup()
+  test('remove session', async ({ assert, fs }) => {
+    const { app } = await setup(fs)
 
     const sessionId = '1234'
     const redis = getRedisManager(app)
@@ -98,8 +92,8 @@ test.group('Redis driver', (group) => {
     assert.isNull(contents)
   })
 
-  test('update session expiry', async ({ assert }) => {
-    const app = await setup()
+  test('update session expiry', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
 
     const sessionId = '1234'
     const redis = getRedisManager(app)

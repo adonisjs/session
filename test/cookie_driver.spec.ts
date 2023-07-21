@@ -1,34 +1,35 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../adonis-typings/session.ts" />
-
 import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 
-import { CookieDriver } from '../src/Drivers/Cookie'
-import { setup, fs, encryptCookie, decryptCookie, sessionConfig } from '../test-helpers'
+import { CookieDriver } from '../src/drivers/cookie.js'
+import {
+  setup,
+  sessionConfig,
+  encryptCookie,
+  decryptCookie,
+  createHttpContext,
+} from '../test_helpers/index.js'
 
-test.group('Cookie driver', (group) => {
-  group.each.teardown(async () => {
-    await fs.cleanup()
-  })
-
-  test('return null object when cookie is missing', async ({ assert }) => {
+test.group('Cookie driver', () => {
+  test('return null object when cookie is missing', async ({ fs, assert }) => {
     assert.plan(1)
 
-    const app = await setup()
+    const { app } = await setup(fs)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
+
       const session = new CookieDriver(sessionConfig, ctx)
       const value = session.read(sessionId)
       assert.isNull(value)
@@ -38,14 +39,15 @@ test.group('Cookie driver', (group) => {
     await supertest(server).get('/')
   })
 
-  test('return empty object when cookie value is invalid', async ({ assert }) => {
+  test('return empty object when cookie value is invalid', async ({ fs, assert }) => {
     assert.plan(1)
 
-    const app = await setup()
+    const { app } = await setup(fs)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
+
       const session = new CookieDriver(sessionConfig, ctx)
       const value = session.read(sessionId)
       assert.isNull(value)
@@ -55,12 +57,12 @@ test.group('Cookie driver', (group) => {
     await supertest(server).get('/').set('cookie', '1234=hello-world')
   })
 
-  test('return cookie values as an object', async ({ assert }) => {
-    const app = await setup()
+  test('return cookie values as an object', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
 
       const session = new CookieDriver(sessionConfig, ctx)
       const value = session.read(sessionId)
@@ -72,17 +74,17 @@ test.group('Cookie driver', (group) => {
 
     const { body } = await supertest(server)
       .get('/')
-      .set('cookie', encryptCookie(app, { message: 'hello-world' }, sessionId))
+      .set('cookie', await encryptCookie(app, { message: 'hello-world' }, sessionId))
 
     assert.deepEqual(body, { message: 'hello-world' })
   })
 
-  test('write cookie value', async ({ assert }) => {
-    const app = await setup()
+  test('write cookie value', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
 
       const session = new CookieDriver(sessionConfig, ctx)
       session.write(sessionId, { message: 'hello-world' })
@@ -92,15 +94,15 @@ test.group('Cookie driver', (group) => {
     })
 
     const { header } = await supertest(server).get('/')
-    assert.deepEqual(decryptCookie(app, header, sessionId), { message: 'hello-world' })
+    assert.deepEqual(await decryptCookie(app, header, sessionId), { message: 'hello-world' })
   })
 
-  test('update cookie with existing value', async ({ assert }) => {
-    const app = await setup()
+  test('update cookie with existing value', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
     const sessionId = '1234'
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
 
       const session = new CookieDriver(sessionConfig, ctx)
       session.touch(sessionId)
@@ -111,8 +113,8 @@ test.group('Cookie driver', (group) => {
 
     const { header } = await supertest(server)
       .get('/')
-      .set('cookie', encryptCookie(app, { message: 'hello-world' }, sessionId))
+      .set('cookie', await encryptCookie(app, { message: 'hello-world' }, sessionId))
 
-    assert.deepEqual(decryptCookie(app, header, sessionId), { message: 'hello-world' })
+    assert.deepEqual(await decryptCookie(app, header, sessionId), { message: 'hello-world' })
   })
 })

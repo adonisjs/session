@@ -1,30 +1,32 @@
 /**
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { join } from 'path'
 import { Exception } from '@poppinss/utils'
-import { MessageBuilder } from '@poppinss/utils/build/helpers'
-import { readFile, ensureFile, outputFile, remove } from 'fs-extra'
-import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
+import { MessageBuilder } from '@poppinss/utils'
+import { ensureFile, outputFile, remove } from 'fs-extra/esm'
+import { readFile } from 'node:fs/promises'
+import { SessionConfig, SessionDriverContract } from '../types.js'
 
 /**
  * File driver to read/write session to filesystem
  */
 export class FileDriver implements SessionDriverContract {
-  constructor(private config: SessionConfig) {
-    if (!this.config.file || !this.config.file.location) {
+  #config: SessionConfig
+
+  constructor(config: SessionConfig) {
+    this.#config = config
+
+    if (!this.#config.file || !this.#config.file.location) {
       throw new Exception(
         'Missing "file.location" for session file driver inside "config/session" file',
-        500,
-        'E_INVALID_SESSION_DRIVER_CONFIG'
+        { code: 'E_INVALID_SESSION_DRIVER_CONFIG', status: 500 }
       )
     }
   }
@@ -32,8 +34,8 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Returns complete path to the session file
    */
-  private getFilePath(sessionId: string): string {
-    return join(this.config.file!.location, `${sessionId}.txt`)
+  #getFilePath(sessionId: string): string {
+    return join(this.#config.file!.location, `${sessionId}.txt`)
   }
 
   /**
@@ -41,7 +43,7 @@ export class FileDriver implements SessionDriverContract {
    * missing.
    */
   public async read(sessionId: string): Promise<{ [key: string]: any } | null> {
-    const filePath = this.getFilePath(sessionId)
+    const filePath = this.#getFilePath(sessionId)
     await ensureFile(filePath)
 
     const contents = await readFile(filePath, 'utf-8')
@@ -69,14 +71,14 @@ export class FileDriver implements SessionDriverContract {
     }
 
     const message = new MessageBuilder().build(values, undefined, sessionId)
-    await outputFile(this.getFilePath(sessionId), message)
+    await outputFile(this.#getFilePath(sessionId), message)
   }
 
   /**
    * Cleanup session file by removing it
    */
   public async destroy(sessionId: string): Promise<void> {
-    await remove(this.getFilePath(sessionId))
+    await remove(this.#getFilePath(sessionId))
   }
 
   /**

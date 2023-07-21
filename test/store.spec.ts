@@ -1,14 +1,14 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 import { test } from '@japa/runner'
-import { Store } from '../src/Store'
+import { Store } from '../src/store.js'
 
 test.group('Store', () => {
   test('return empty object for empty store', ({ assert }) => {

@@ -1,32 +1,31 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../adonis-typings/session.ts" />
-
 import { test } from '@japa/runner'
 import { join } from 'path'
-import { Filesystem } from '@poppinss/dev-utils'
+import { FileDriver } from '../src/drivers/file.js'
+import { sleep, sessionConfig, BASE_URL } from '../test_helpers/index.js'
+import { fileURLToPath } from 'url'
 
-import { FileDriver } from '../src/Drivers/File'
-import { sleep, sessionConfig } from '../test-helpers'
-
-const fs = new Filesystem()
 const config = Object.assign({}, sessionConfig, {
   driver: 'file',
-  file: {
-    location: fs.basePath,
-  },
+  file: { location: fileURLToPath(BASE_URL) },
 })
 
-test.group('File driver', (group) => {
-  group.each.teardown(async () => {
-    await fs.cleanup()
+test.group('File driver', () => {
+  test('throws if location is missing', ({ assert }) => {
+    // @ts-ignore
+    const session = () => new FileDriver({ driver: 'file', file: {} })
+    assert.throws(
+      session,
+      'Missing "file.location" for session file driver inside "config/session" file'
+    )
   })
 
   test('return null when file is missing', async ({ assert }) => {
@@ -41,11 +40,10 @@ test.group('File driver', (group) => {
     const session = new FileDriver(config)
     await session.write(sessionId, { message: 'hello-world' })
 
-    const contents = await fs.get('1234.txt')
-    assert.deepEqual(JSON.parse(contents), {
-      message: { message: 'hello-world' },
-      purpose: '1234',
-    })
+    await assert.fileEquals(
+      '1234.txt',
+      JSON.stringify({ message: { message: 'hello-world' }, purpose: '1234' })
+    )
   })
 
   test('get session existing value', async ({ assert }) => {
@@ -62,22 +60,21 @@ test.group('File driver', (group) => {
     await session.write(sessionId, { message: 'hello-world' })
     await session.destroy(sessionId)
 
-    const exists = await fs.fsExtra.pathExists(join(fs.basePath, '1234.txt'))
-    assert.isFalse(exists)
+    await assert.fileNotExists('1234.txt')
   })
 
-  test('update session expiry', async ({ assert }) => {
+  test('update session expiry', async ({ assert, fs }) => {
     const sessionId = '1234'
 
     const session = new FileDriver(config)
     await session.write(sessionId, { message: 'hello-world' })
     await sleep(1000)
 
-    const { mtimeMs } = await fs.fsExtra.stat(join(fs.basePath, '1234.txt'))
+    const { mtimeMs } = await fs.adapter.stat(join(fs.basePath, '1234.txt'))
     assert.isBelow(mtimeMs, Date.now())
 
     await session.touch(sessionId)
-    let { mtimeMs: newMtimeMs } = await fs.fsExtra.stat(join(fs.basePath, '1234.txt'))
+    let { mtimeMs: newMtimeMs } = await fs.adapter.stat(join(fs.basePath, '1234.txt'))
     assert.isAbove(newMtimeMs, mtimeMs)
   }).timeout(0)
 })

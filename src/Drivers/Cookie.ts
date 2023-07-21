@@ -1,28 +1,32 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/session.ts" />
-
-import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import { SessionDriverContract, SessionConfig } from '@ioc:Adonis/Addons/Session'
+import type { HttpContext } from '@adonisjs/core/http'
+import type { SessionConfig, SessionDriverContract } from '../types.js'
 
 /**
  * Cookie driver utilizes the encrypted HTTP cookies to write session value.
  */
 export class CookieDriver implements SessionDriverContract {
-  constructor(private config: SessionConfig, private ctx: HttpContextContract) {}
+  #config: SessionConfig
+  #ctx: HttpContext
+
+  constructor(config: SessionConfig, ctx: HttpContext) {
+    this.#config = config
+    this.#ctx = ctx
+  }
 
   /**
    * Read session value from the cookie
    */
   public read(sessionId: string): { [key: string]: any } | null {
-    const cookieValue = this.ctx.request.encryptedCookie(sessionId)
+    const cookieValue = this.#ctx.request.encryptedCookie(sessionId)
     if (typeof cookieValue !== 'object') {
       return null
     }
@@ -37,15 +41,15 @@ export class CookieDriver implements SessionDriverContract {
       throw new Error('Session cookie driver expects an object of values')
     }
 
-    this.ctx.response.encryptedCookie(sessionId, values, this.config.cookie)
+    this.#ctx.response.encryptedCookie(sessionId, values, this.#config.cookie)
   }
 
   /**
    * Removes the session cookie
    */
   public destroy(sessionId: string): void {
-    if (this.ctx.request.cookiesList()[sessionId]) {
-      this.ctx.response.clearCookie(sessionId)
+    if (this.#ctx.request.cookiesList()[sessionId]) {
+      this.#ctx.response.clearCookie(sessionId)
     }
   }
 

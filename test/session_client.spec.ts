@@ -1,42 +1,40 @@
 /**
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-/// <reference path="../adonis-typings/session.ts" />
 
 import { test } from '@japa/runner'
 import supertest from 'supertest'
 import { createServer } from 'http'
 import setCookieParser from 'set-cookie-parser'
 
-import { MemoryDriver } from '../src/Drivers/Memory'
-import { SessionManager } from '../src/SessionManager'
-import { setup, fs, sessionConfig } from '../test-helpers'
+import { MemoryDriver } from '../src/drivers/memory.js'
+import { setup, sessionConfig, createHttpContext } from '../test_helpers/index.js'
+import { SessionManagerFactory } from '../factories/session_manager_factory.js'
+import { CookieClient } from '@adonisjs/core/http'
 
 test.group('Session Client', (group) => {
   group.each.teardown(async () => {
     MemoryDriver.sessions = new Map()
-    await fs.cleanup()
   })
 
-  test('set session using the session client', async ({ assert }) => {
+  test('set session using the session client', async ({ fs, assert }) => {
     assert.plan(1)
-    const app = await setup()
+    const { app } = await setup(fs)
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    const manager = new SessionManager(app, config)
+    const manager = new SessionManagerFactory().merge(config).create(app)
 
     const client = manager.client()
     client.set('username', 'virk')
     const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -47,19 +45,20 @@ test.group('Session Client', (group) => {
     await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
   })
 
-  test('set flash messages', async ({ assert }) => {
+  test('set flash messages', async ({ fs, assert }) => {
     assert.plan(1)
-    const app = await setup()
+    const { app } = await setup(fs)
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    const manager = new SessionManager(app, config)
+    const manager = new SessionManagerFactory().merge(config).create(app)
 
     const client = manager.client()
     client.flashMessages.merge({ foo: 'bar' })
     const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
+
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -70,19 +69,19 @@ test.group('Session Client', (group) => {
     await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
   })
 
-  test('clear session store', async ({ assert }) => {
+  test('clear session store', async ({ fs, assert }) => {
     assert.plan(1)
-    const app = await setup()
+    const { app } = await setup(fs)
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    const manager = new SessionManager(app, config)
+    const manager = new SessionManagerFactory().merge(config).create(app)
 
     const client = manager.client()
     client.set('username', 'virk')
     const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -94,19 +93,18 @@ test.group('Session Client', (group) => {
     await supertest(server).get('/').set('Cookie', `${cookieName}=${signedSessionId}`)
   })
 
-  test('get session data from the driver', async ({ assert }) => {
-    const app = await setup()
+  test('get session data from the driver', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    const manager = new SessionManager(app, config)
-    const cookieClient = app.container.resolveBinding('Adonis/Core/CookieClient')
+    const manager = new SessionManagerFactory().merge(config).create(app)
 
     const client = manager.client()
     client.set('username', 'virk')
     const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
       const session = manager.create(ctx)
       await session.initiate(false)
       session.put('age', 22)
@@ -120,13 +118,14 @@ test.group('Session Client', (group) => {
       .get('/')
       .set('Cookie', `${cookieName}=${signedSessionId}`)
 
+    const cookieClient = new CookieClient(await app.container.make('encryption'))
     const cookies = setCookieParser.parse(response.header['set-cookie'], { map: true })
     const parsedCookies = Object.keys(cookies).reduce((result, key) => {
       const value = cookies[key]
       value.value = cookieClient.parse(value.name, value.value)
       result[key] = value
       return result
-    }, {})
+    }, {} as Record<string, any>)
 
     const { session, flashMessages } = await client.load(parsedCookies)
 
@@ -134,18 +133,17 @@ test.group('Session Client', (group) => {
     assert.isNull(flashMessages)
   })
 
-  test('get flash messages from the driver', async ({ assert }) => {
-    const app = await setup()
+  test('get flash messages from the driver', async ({ fs, assert }) => {
+    const { app } = await setup(fs)
 
     const config = Object.assign({}, sessionConfig, { driver: 'memory', clearWithBrowser: true })
-    const manager = new SessionManager(app, config)
-    const cookieClient = app.container.resolveBinding('Adonis/Core/CookieClient')
+    const manager = new SessionManagerFactory().merge(config).create(app)
 
     const client = manager.client()
     const { signedSessionId, cookieName } = await client.commit()
 
     const server = createServer(async (req, res) => {
-      const ctx = app.container.use('Adonis/Core/HttpContext').create('/', {}, req, res)
+      const ctx = await createHttpContext(app, req, res)
       const session = manager.create(ctx)
       await session.initiate(false)
 
@@ -160,13 +158,14 @@ test.group('Session Client', (group) => {
       .get('/')
       .set('Cookie', `${cookieName}=${signedSessionId}`)
 
+    const cookieClient = new CookieClient(await app.container.make('encryption'))
     const cookies = setCookieParser.parse(response.header['set-cookie'], { map: true })
     const parsedCookies = Object.keys(cookies).reduce((result, key) => {
       const value = cookies[key]
       value.value = cookieClient.parse(value.name, value.value)
       result[key] = value
       return result
-    }, {})
+    }, {} as Record<string, any>)
 
     const { session, flashMessages } = await client.load(parsedCookies)
 

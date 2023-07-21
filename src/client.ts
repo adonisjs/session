@@ -1,38 +1,46 @@
 /*
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
-import { cuid } from '@poppinss/utils/build/helpers'
-import {
-  SessionConfig,
-  SessionDriverContract,
-  SessionClientContract,
-} from '@ioc:Adonis/Addons/Session'
-
-import { CookieClientContract } from '@ioc:Adonis/Core/CookieClient'
-import { Store } from '../Store'
+import { cuid } from '@adonisjs/core/helpers'
+import { Store } from './store.js'
+import type { SessionConfig, SessionDriverContract } from './types.js'
+import type { CookieClient } from '@adonisjs/core/http'
 
 /**
  * SessionClient exposes the API to set session data as a client
  */
-export class SessionClient extends Store implements SessionClientContract {
+export class SessionClient extends Store {
+  /**
+   * Session configuration
+   */
+  #config: SessionConfig
+
+  /**
+   * The session driver used to read and write session data
+   */
+  #driver: SessionDriverContract
+
+  /**
+   * Cookie client contract to sign and unsign cookies
+   */
+  #cookieClient: CookieClient
+
   /**
    * Each instance of client works on a single session id. Generate
    * multiple client instances for a different session id
    */
-  private sessionId = cuid()
+  sessionId = cuid()
 
   /**
    * Session key for setting flash messages
    */
-  private flashMessagesKey = '__flash__'
+  #flashMessagesKey = '__flash__'
 
   /**
    * Flash messages store. They are merged with the session data during
@@ -41,31 +49,35 @@ export class SessionClient extends Store implements SessionClientContract {
   public flashMessages = new Store({})
 
   constructor(
-    private config: SessionConfig,
-    private driver: SessionDriverContract,
-    private cookieClient: CookieClientContract,
+    config: SessionConfig,
+    driver: SessionDriverContract,
+    cookieClient: CookieClient,
     values: { [key: string]: any } | null
   ) {
     super(values)
+
+    this.#config = config
+    this.#driver = driver
+    this.#cookieClient = cookieClient
   }
 
   /**
    * Find if the sessions are enabled
    */
   public isEnabled() {
-    return this.config.enabled
+    return this.#config.enabled
   }
 
   /**
    * Load session from the driver
    */
   public async load(cookies: Record<string, any>) {
-    const sessionIdCookie = cookies[this.config.cookieName]
+    const sessionIdCookie = cookies[this.#config.cookieName]
     const sessionId = sessionIdCookie ? sessionIdCookie.value : this.sessionId
 
-    const contents = await this.driver.read(sessionId)
+    const contents = await this.#driver.read(sessionId)
     const store = new Store(contents)
-    const flashMessages = store.pull(this.flashMessagesKey, null)
+    const flashMessages = store.pull(this.#flashMessagesKey, null)
 
     return {
       session: store.all(),
@@ -79,8 +91,8 @@ export class SessionClient extends Store implements SessionClientContract {
    * by the server
    */
   public async commit() {
-    this.set(this.flashMessagesKey, this.flashMessages.all())
-    await this.driver.write(this.sessionId, this.toJSON())
+    this.set(this.#flashMessagesKey, this.flashMessages.all())
+    await this.#driver.write(this.sessionId, this.toJSON())
 
     /**
      * Clear from the session client memory
@@ -90,8 +102,8 @@ export class SessionClient extends Store implements SessionClientContract {
 
     return {
       sessionId: this.sessionId!,
-      signedSessionId: this.cookieClient.sign(this.config.cookieName, this.sessionId)!,
-      cookieName: this.config.cookieName,
+      signedSessionId: this.#cookieClient.sign(this.#config.cookieName, this.sessionId)!,
+      cookieName: this.#config.cookieName,
     }
   }
 
@@ -108,6 +120,6 @@ export class SessionClient extends Store implements SessionClientContract {
     /**
      * Clear with the driver
      */
-    await this.driver.destroy(this.sessionId)
+    await this.#driver.destroy(this.sessionId)
   }
 }

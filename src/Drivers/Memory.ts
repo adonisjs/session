@@ -1,15 +1,13 @@
 /**
  * @adonisjs/session
  *
- * (c) Harminder Virk <virk@adonisjs.com>
+ * (c) AdonisJS
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
-import { SessionDriverContract } from '@ioc:Adonis/Addons/Session'
+import { SessionDriverContract } from '../types.js'
 
 /**
  * Memory driver is meant to be used for writing tests.
