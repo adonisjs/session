@@ -11,6 +11,9 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.16.0, 20.x]
     services:
       redis:
         image: redis
@@ -21,11 +24,6 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-    strategy:
-      matrix:
-        node-version:
-          - 14.15.4
-          - 17.x
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
