@@ -31,9 +31,9 @@ test.group('Session Provider', (group) => {
   test('register test api request methods', async ({ assert, fs }) => {
     await setup(fs)
 
-    assert.isTrue(ApiRequest.hasMacro('session'))
-    assert.isTrue(ApiRequest.hasMacro('flashMessages'))
-    assert.isTrue(ApiRequest.hasGetter('sessionClient'))
+    assert.isTrue(ApiRequest.prototype.hasOwnProperty('session'))
+    assert.isTrue(ApiRequest.prototype.hasOwnProperty('flashMessages'))
+    assert.isTrue(ApiRequest.prototype.hasOwnProperty('sessionClient'))
   })
 
   test('set session before making the api request', async ({ fs, assert }) => {
