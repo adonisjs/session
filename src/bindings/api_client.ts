@@ -27,35 +27,41 @@ export function extendApiClient(sessionManager: SessionManager) {
   /**
    * Send session values in the request
    */
-  ApiRequest.macro('session', function (session: Record<string, AllowedSessionValues>) {
-    if (!this.sessionClient.isEnabled()) {
-      throw new Error('Cannot set session. Make sure to enable it inside "config/session" file')
+  ApiRequest.macro(
+    'session',
+    function (this: ApiRequest, session: Record<string, AllowedSessionValues>) {
+      if (!this.sessionClient.isEnabled()) {
+        throw new Error('Cannot set session. Make sure to enable it inside "config/session" file')
+      }
+
+      this.sessionClient.merge(session)
+
+      return this
     }
-
-    this.sessionClient.merge(session)
-
-    return this
-  })
+  )
 
   /**
    * Send flash messages in the request
    */
-  ApiRequest.macro('flashMessages', function (messages: Record<string, AllowedSessionValues>) {
-    if (!this.sessionClient.isEnabled()) {
-      throw new Error(
-        'Cannot set flash messages. Make sure to enable the session inside "config/session" file'
-      )
-    }
+  ApiRequest.macro(
+    'flashMessages',
+    function (this: ApiRequest, messages: Record<string, AllowedSessionValues>) {
+      if (!this.sessionClient.isEnabled()) {
+        throw new Error(
+          'Cannot set flash messages. Make sure to enable the session inside "config/session" file'
+        )
+      }
 
-    this.sessionClient.flashMessages.merge(messages)
-    return this
-  })
+      this.sessionClient.flashMessages.merge(messages)
+      return this
+    }
+  )
 
   /**
    * Returns reference to the session data from the session
    * jar
    */
-  ApiResponse.macro('session', function () {
+  ApiResponse.macro('session', function (this: ApiResponse) {
     return this.sessionJar.session
   })
 
@@ -63,7 +69,7 @@ export function extendApiClient(sessionManager: SessionManager) {
    * Returns reference to the flash messages from the session
    * jar
    */
-  ApiResponse.macro('flashMessages', function () {
+  ApiResponse.macro('flashMessages', function (this: ApiResponse) {
     return this.sessionJar.flashMessages || {}
   })
 
@@ -71,7 +77,7 @@ export function extendApiClient(sessionManager: SessionManager) {
    * Assert response to contain a given session and optionally
    * has the expected value
    */
-  ApiResponse.macro('assertSession', function (name: string, value?: any) {
+  ApiResponse.macro('assertSession', function (this: ApiResponse, name: string, value?: any) {
     this.ensureHasAssert()
     this.assert!.property(this.session(), name)
 
@@ -83,7 +89,7 @@ export function extendApiClient(sessionManager: SessionManager) {
   /**
    * Assert response to not contain a given session
    */
-  ApiResponse.macro('assertSessionMissing', function (name: string) {
+  ApiResponse.macro('assertSessionMissing', function (this: ApiResponse, name: string) {
     this.ensureHasAssert()
     this.assert!.notProperty(this.session(), name)
   })
@@ -92,7 +98,7 @@ export function extendApiClient(sessionManager: SessionManager) {
    * Assert response to contain a given flash message and optionally
    * has the expected value
    */
-  ApiResponse.macro('assertFlashMessage', function (name: string, value?: any) {
+  ApiResponse.macro('assertFlashMessage', function (this: ApiResponse, name: string, value?: any) {
     this.ensureHasAssert()
     this.assert!.property(this.flashMessages(), name)
 
@@ -104,7 +110,7 @@ export function extendApiClient(sessionManager: SessionManager) {
   /**
    * Assert response to not contain a given session
    */
-  ApiResponse.macro('assertFlashMissing', function (name: string) {
+  ApiResponse.macro('assertFlashMissing', function (this: ApiResponse, name: string) {
     this.ensureHasAssert()
     this.assert!.notProperty(this.flashMessages(), name)
   })
@@ -112,10 +118,12 @@ export function extendApiClient(sessionManager: SessionManager) {
   /**
    * Dump session to the console
    */
-  ApiResponse.macro('dumpSession', function (options?: InspectOptions) {
+  ApiResponse.macro('dumpSession', function (this: ApiResponse, options?: InspectOptions) {
     const inspectOptions = { depth: 2, showHidden: false, colors: true, ...options }
     console.log(`"session"        => ${inspect(this.session(), inspectOptions)}`)
     console.log(`"flashMessages"  => ${inspect(this.flashMessages(), inspectOptions)}`)
+
+    return this
   })
 
   /**
