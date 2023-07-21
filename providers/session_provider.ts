@@ -10,6 +10,7 @@
 import { ApplicationService } from '@adonisjs/core/types'
 import { extendHttpContext } from '../src/bindings/http_context.js'
 import { extendApiClient } from '../src/bindings/api_client.js'
+import SessionMiddleware from '../src/session_middleware.js'
 
 export default class SessionProvider {
   constructor(protected app: ApplicationService) {}
@@ -26,6 +27,11 @@ export default class SessionProvider {
       const config = this.app.config.get<any>('session', {})
 
       return new SessionManager(config, encryption, redis)
+    })
+
+    this.app.container.bind(SessionMiddleware, async () => {
+      const session = await this.app.container.make('session')
+      return new SessionMiddleware(session)
     })
   }
 

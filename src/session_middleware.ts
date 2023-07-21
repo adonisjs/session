@@ -3,9 +3,10 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { SessionManager } from './session_manager.js'
 
 export default class SessionMiddleware {
+  constructor(protected session: SessionManager) {}
+
   async handle(ctx: HttpContext, next: NextFn) {
-    const sessionManager = (await ctx.containerResolver.make('session')) as SessionManager
-    if (!sessionManager.isEnabled()) {
+    if (!this.session.isEnabled()) {
       return
     }
 
