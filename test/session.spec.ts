@@ -8,6 +8,7 @@
  */
 
 import { test } from '@japa/runner'
+import type { RedisService } from '@adonisjs/redis/types'
 import supertest from 'supertest'
 import { createServer } from 'node:http'
 
@@ -755,21 +756,96 @@ test.group('Session | Flash', (group) => {
     })
   })
 
-  test('should not store session if empty', async ({ assert, fs }) => {
-    const { app } = await setup(fs)
+  test('should not store session if empty - redis', async ({ assert, fs }) => {
+    const { app } = await setup(fs, {
+      redis: {
+        connection: 'session',
+        connections: {
+          session: {
+            host: process.env.REDIS_HOST || '0.0.0.0',
+            port: process.env.REDIS_PORT || 6379,
+          },
+        },
+      },
+
+      session: {
+        driver: 'redis',
+        cookieName: 'adonis-session',
+        age: '2h',
+        redisConnection: 'session',
+      },
+    })
 
     const server = createServer(async (req, res) => {
       const ctx = await createHttpContext(app, req, res)
 
-      const driver = new MemoryDriver()
-      const session = new Session(ctx, sessionConfig, driver)
-      await session.initiate(false)
+      await ctx.session.initiate(false)
+      await ctx.session.commit()
 
-      assert.isTrue(session.fresh)
-      assert.isTrue(session.initiated)
-      res.end()
+      ctx.response.finish()
     })
 
-    await supertest(server).get('/')
+    const { header } = await supertest(server).get('/')
+    const sessionId = await unsignCookie(app, header, 'adonis-session')
+    const redis = (await app.container.make('redis')) as RedisService
+
+    const sessionValue = await redis.get(sessionId)
+    assert.isNull(sessionValue)
+  })
+
+  test('should delete session storage if empty - redis', async ({ assert, fs }) => {
+    const { app } = await setup(fs, {
+      redis: {
+        connection: 'session',
+        connections: {
+          session: {
+            host: process.env.REDIS_HOST || '0.0.0.0',
+            port: process.env.REDIS_PORT || 6379,
+          },
+        },
+      },
+
+      session: {
+        driver: 'redis',
+        cookieName: 'adonis-session',
+        age: '2h',
+        redisConnection: 'session',
+      },
+    })
+
+    const server = createServer(async (req, res) => {
+      const ctx = await createHttpContext(app, req, res)
+
+      await ctx.session.initiate(false)
+
+      if (ctx.request.qs().set) {
+        ctx.session.put('user', { username: 'jul' })
+      }
+
+      if (ctx.request.qs().delete) {
+        ctx.session.forget('user')
+      }
+
+      await ctx.session.commit()
+
+      ctx.response.finish()
+    })
+
+    const { header } = await supertest(server).get('/?set=1')
+    const sessionId = await unsignCookie(app, header, 'adonis-session')
+    const redis = (await app.container.make('redis')) as RedisService
+
+    const sessionValue = await redis.get(sessionId)
+    assert.isNotNull(sessionValue)
+
+    const { header: header2 } = await supertest(server)
+      .get('/?delete=1')
+      .set('cookie', await signCookie(app, sessionId, 'adonis-session'))
+
+    const sessionId2 = await unsignCookie(app, header2, 'adonis-session')
+    assert.equal(sessionId, sessionId2)
+
+    const sessionValue2 = await redis.get(sessionId2)
+    assert.isNull(sessionValue2)
   })
 })

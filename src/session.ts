@@ -400,7 +400,6 @@ export class Session {
    */
   async commit(): Promise<void> {
     if (!this.initiated) {
-      console.log('session not initiated')
       this.#touchSessionCookie()
       await this.#touchDriver()
       return
@@ -418,6 +417,16 @@ export class Session {
      */
     this.#touchSessionCookie()
     this.#setFlashMessages()
-    await this.#commitValuesToStore()
+
+    /**
+     * Commit values to the store if not empty.
+     * Otherwise delete the session store to cleanup
+     * the storage space.
+     */
+    if (!this.#store.isEmpty) {
+      await this.#commitValuesToStore()
+    } else {
+      await this.#driver.destroy(this.sessionId)
+    }
   }
 }
