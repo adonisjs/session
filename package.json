@@ -68,6 +68,11 @@
     "@adonisjs/core": "6.1.5-8",
     "@adonisjs/redis": "8.0.0-1"
   },
+  "peerDependenciesMeta": {
+    "@adonisjs/redis": {
+      "optional": true
+    }
+  },
   "author": "virk,adonisjs",
   "license": "MIT",
   "homepage": "https://github.com/adonisjs/adonis-session#readme",
