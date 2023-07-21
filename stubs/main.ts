@@ -1,4 +1,4 @@
-/**
+/*
  * @adonisjs/session
  *
  * (c) AdonisJS
@@ -7,6 +7,6 @@
  * file that was distributed with this source code.
  */
 
-export { defineConfig } from './src/define_config.js'
-export { stubsRoot } from './stubs/main.js'
-export { configure } from './configure.js'
+import { getDirname } from '@poppinss/utils'
+
+export const stubsRoot = getDirname(import.meta.url)

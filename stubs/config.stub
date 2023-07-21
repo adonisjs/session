@@ -1,15 +1,12 @@
-/**
- * Config source: https://git.io/JeYHp
- *
- * Feel free to let us know via PR, if you find something broken in this config
- * file.
- */
+---
+to: {{ app.configPath('session.ts') }}
+---
 
-import Env from '@ioc:Adonis/Core/Env'
-import Application from '@ioc:Adonis/Core/Application'
-import { sessionConfig } from '@adonisjs/session/build/config'
+import env from '#start/env'
+import app from '@adonisjs/core/services/app'
+import { defineConfig } from '@adonisjs/session'
 
-export default sessionConfig({
+export default defineConfig({
   /*
   |--------------------------------------------------------------------------
   | Enable/Disable sessions
@@ -36,7 +33,7 @@ export default sessionConfig({
   | Note: Switching drivers will make existing sessions invalid.
   |
   */
-  driver: Env.get('SESSION_DRIVER'),
+  driver: env.get('SESSION_DRIVER'),
 
   /*
   |--------------------------------------------------------------------------
@@ -54,7 +51,7 @@ export default sessionConfig({
   |--------------------------------------------------------------------------
   |
   | Whether or not you want to destroy the session when browser closes. Setting
-  | this value to `true` will ignore the `age`.
+  | this value to "true" will ignore the "age".
   |
   */
   clearWithBrowser: false,
@@ -70,7 +67,7 @@ export default sessionConfig({
   | The value can be a number in milliseconds or a string that must be valid
   | as per https://npmjs.org/package/ms package.
   |
-  | Example: `2 days`, `2.5 hrs`, `1y`, `5s` and so on.
+  | Example: "2 days", "2.5 hrs", "1y", "5s" and so on.
   |
   */
   age: '2h',
@@ -100,7 +97,7 @@ export default sessionConfig({
   |
   */
   file: {
-    location: Application.tmpPath('sessions'),
+    location: app.tmpPath('sessions'),
   },
 
   /*
@@ -109,7 +106,7 @@ export default sessionConfig({
   |--------------------------------------------------------------------------
   |
   | The redis connection you want session driver to use. The same connection
-  | must be defined inside `config/redis.ts` file as well.
+  | must be defined inside "config/redis.ts" file as well.
   |
   */
   redisConnection: 'local',

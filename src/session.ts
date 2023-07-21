@@ -196,10 +196,12 @@ export class Session {
    * (only when view property exists)
    */
   #shareLocalsWithView() {
+    // @ts-ignore may need to expose ./types/extended from adonisjs/view
     if (!this.#ctx['view'] || typeof this.#ctx['view'].share !== 'function') {
       return
     }
 
+    // @ts-ignore may need to expose ./types/extended from adonisjs/view
     this.#ctx['view'].share({
       flashMessages: this.flashMessages,
       session: {
