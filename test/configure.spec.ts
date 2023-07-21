@@ -20,7 +20,7 @@ test.group('Configure', (group) => {
     context.fs.basePath = fileURLToPath(BASE_URL)
   })
 
-  test('create config file and register provider', async ({ assert }) => {
+  test('create config file and register provider', async ({ fs, assert }) => {
     const ignitor = new IgnitorFactory()
       .withCoreProviders()
       .withCoreConfig()
@@ -34,6 +34,8 @@ test.group('Configure', (group) => {
         },
       })
 
+    await fs.create('.env', '')
+
     const app = ignitor.createApp('web')
     await app.init()
     await app.boot()
@@ -46,5 +48,6 @@ test.group('Configure', (group) => {
     await assert.fileExists('.adonisrc.json')
     await assert.fileContains('.adonisrc.json', '@adonisjs/session/session_provider')
     await assert.fileContains('config/session.ts', 'defineConfig')
+    await assert.fileContains('.env', 'SESSION_DRIVER=cookie')
   })
 })
