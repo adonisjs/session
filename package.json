@@ -53,21 +53,20 @@
     "typescript": "^5.1.6"
   },
   "scripts": {
-    "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
     "test": "c8 npm run quick:test",
-    "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts",
-    "clean": "del build",
+    "clean": "del-cli build",
+    "typecheck": "tsc --noEmit",
+    "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
     "compile": "npm run lint && npm run clean && tsc",
-    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
-    "build": "npm run compile && npm run copyfiles",
-    "commit": "git-cz",
-    "release": "np --message=\"chore(release): %s\"",
-    "version": "npm run build",
+    "build": "npm run compile && npm run copy:templates",
     "prepublishOnly": "npm run build",
     "lint": "eslint . --ext=.ts",
     "format": "prettier --write .",
-    "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/session"
+    "release": "np",
+    "version": "npm run build",
+    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/ally",
+    "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts"
   },
   "repository": {
     "type": "git",
