@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 import { ApiClient, ApiRequest } from '@japa/api-client'
 import { createHttpContext, setup } from '../test_helpers/index.js'
 import { SessionManager } from '../src/session_manager.js'

@@ -53,7 +53,7 @@ export class RedisDriver implements SessionDriverContract {
    * Returns file contents. A new file will be created if it's
    * missing.
    */
-  public async read(sessionId: string): Promise<{ [key: string]: any } | null> {
+  async read(sessionId: string): Promise<{ [key: string]: any } | null> {
     const contents = await this.#getRedisConnection().get(sessionId)
     if (!contents) {
       return null
@@ -70,7 +70,7 @@ export class RedisDriver implements SessionDriverContract {
   /**
    * Write session values to a file
    */
-  public async write(sessionId: string, values: Object): Promise<void> {
+  async write(sessionId: string, values: Object): Promise<void> {
     if (typeof values !== 'object') {
       throw new Error('Session file driver expects an object of values')
     }
@@ -85,14 +85,14 @@ export class RedisDriver implements SessionDriverContract {
   /**
    * Cleanup session file by removing it
    */
-  public async destroy(sessionId: string): Promise<void> {
+  async destroy(sessionId: string): Promise<void> {
     await this.#getRedisConnection().del(sessionId)
   }
 
   /**
    * Updates the value expiry
    */
-  public async touch(sessionId: string): Promise<void> {
+  async touch(sessionId: string): Promise<void> {
     await this.#getRedisConnection().expire(sessionId, this.#ttl)
   }
 }

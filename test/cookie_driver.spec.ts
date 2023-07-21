@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 import supertest from 'supertest'
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 
 import { CookieDriver } from '../src/drivers/cookie.js'
 import {

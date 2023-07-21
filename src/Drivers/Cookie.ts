@@ -25,7 +25,7 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Read session value from the cookie
    */
-  public read(sessionId: string): { [key: string]: any } | null {
+  read(sessionId: string): { [key: string]: any } | null {
     const cookieValue = this.#ctx.request.encryptedCookie(sessionId)
     if (typeof cookieValue !== 'object') {
       return null
@@ -36,7 +36,7 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Write session values to the cookie
    */
-  public write(sessionId: string, values: { [key: string]: any }): void {
+  write(sessionId: string, values: { [key: string]: any }): void {
     if (typeof values !== 'object') {
       throw new Error('Session cookie driver expects an object of values')
     }
@@ -47,7 +47,7 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Removes the session cookie
    */
-  public destroy(sessionId: string): void {
+  destroy(sessionId: string): void {
     if (this.#ctx.request.cookiesList()[sessionId]) {
       this.#ctx.response.clearCookie(sessionId)
     }
@@ -56,7 +56,7 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Updates the cookie with existing cookie values
    */
-  public touch(sessionId: string): void {
+  touch(sessionId: string): void {
     const value = this.read(sessionId)
     if (!value) {
       return

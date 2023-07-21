@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 import supertest from 'supertest'
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 import { MessageBuilder } from '@poppinss/utils'
 import setCookieParser from 'set-cookie-parser'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
@@ -148,14 +148,14 @@ test.group('Session Manager', () => {
     })
 
     class MongoDriver implements SessionDriverContract {
-      public read() {
+      read() {
         return {}
       }
-      public write(_: string, data: any) {
+      write(_: string, data: any) {
         assert.deepEqual(data, { name: 'virk' })
       }
-      public touch() {}
-      public destroy() {}
+      touch() {}
+      destroy() {}
     }
 
     const sessionManager = await app.container.make('session')

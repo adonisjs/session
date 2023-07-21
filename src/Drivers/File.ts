@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'path'
+import { join } from 'node:path'
 import { Exception } from '@poppinss/utils'
 import { MessageBuilder } from '@poppinss/utils'
 import { ensureFile, outputFile, remove } from 'fs-extra/esm'
@@ -42,7 +42,7 @@ export class FileDriver implements SessionDriverContract {
    * Returns file contents. A new file will be created if it's
    * missing.
    */
-  public async read(sessionId: string): Promise<{ [key: string]: any } | null> {
+  async read(sessionId: string): Promise<{ [key: string]: any } | null> {
     const filePath = this.#getFilePath(sessionId)
     await ensureFile(filePath)
 
@@ -65,7 +65,7 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Write session values to a file
    */
-  public async write(sessionId: string, values: { [key: string]: any }): Promise<void> {
+  async write(sessionId: string, values: { [key: string]: any }): Promise<void> {
     if (typeof values !== 'object') {
       throw new Error('Session file driver expects an object of values')
     }
@@ -77,14 +77,14 @@ export class FileDriver implements SessionDriverContract {
   /**
    * Cleanup session file by removing it
    */
-  public async destroy(sessionId: string): Promise<void> {
+  async destroy(sessionId: string): Promise<void> {
     await remove(this.#getFilePath(sessionId))
   }
 
   /**
    * Writes the value by reading it from the store
    */
-  public async touch(sessionId: string): Promise<void> {
+  async touch(sessionId: string): Promise<void> {
     const value = await this.read(sessionId)
     if (!value) {
       return

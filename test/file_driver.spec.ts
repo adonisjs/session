@@ -8,10 +8,10 @@
  */
 
 import { test } from '@japa/runner'
-import { join } from 'path'
+import { join } from 'node:path'
 import { FileDriver } from '../src/drivers/file.js'
 import { sleep, sessionConfig, BASE_URL } from '../test_helpers/index.js'
-import { fileURLToPath } from 'url'
+import { fileURLToPath } from 'node:url'
 
 const config = Object.assign({}, sessionConfig, {
   driver: 'file',

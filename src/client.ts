@@ -46,7 +46,7 @@ export class SessionClient extends Store {
    * Flash messages store. They are merged with the session data during
    * commit
    */
-  public flashMessages = new Store({})
+  flashMessages = new Store({})
 
   constructor(
     config: SessionConfig,
@@ -64,14 +64,14 @@ export class SessionClient extends Store {
   /**
    * Find if the sessions are enabled
    */
-  public isEnabled() {
+  isEnabled() {
     return this.#config.enabled
   }
 
   /**
    * Load session from the driver
    */
-  public async load(cookies: Record<string, any>) {
+  async load(cookies: Record<string, any>) {
     const sessionIdCookie = cookies[this.#config.cookieName]
     const sessionId = sessionIdCookie ? sessionIdCookie.value : this.sessionId
 
@@ -90,7 +90,7 @@ export class SessionClient extends Store {
    * the session id and cookie name for it to be accessible
    * by the server
    */
-  public async commit() {
+  async commit() {
     this.set(this.#flashMessagesKey, this.flashMessages.all())
     await this.#driver.write(this.sessionId, this.toJSON())
 
@@ -110,7 +110,7 @@ export class SessionClient extends Store {
   /**
    * Clear the session store
    */
-  public async forget() {
+  async forget() {
     /**
      * Clear from the session client memory
      */

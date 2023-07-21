@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 import supertest from 'supertest'
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 import setCookieParser from 'set-cookie-parser'
 
 import { MemoryDriver } from '../src/drivers/memory.js'
@@ -120,12 +120,15 @@ test.group('Session Client', (group) => {
 
     const cookieClient = new CookieClient(await app.container.make('encryption'))
     const cookies = setCookieParser.parse(response.header['set-cookie'], { map: true })
-    const parsedCookies = Object.keys(cookies).reduce((result, key) => {
-      const value = cookies[key]
-      value.value = cookieClient.parse(value.name, value.value)
-      result[key] = value
-      return result
-    }, {} as Record<string, any>)
+    const parsedCookies = Object.keys(cookies).reduce(
+      (result, key) => {
+        const value = cookies[key]
+        value.value = cookieClient.parse(value.name, value.value)
+        result[key] = value
+        return result
+      },
+      {} as Record<string, any>
+    )
 
     const { session, flashMessages } = await client.load(parsedCookies)
 
@@ -160,12 +163,15 @@ test.group('Session Client', (group) => {
 
     const cookieClient = new CookieClient(await app.container.make('encryption'))
     const cookies = setCookieParser.parse(response.header['set-cookie'], { map: true })
-    const parsedCookies = Object.keys(cookies).reduce((result, key) => {
-      const value = cookies[key]
-      value.value = cookieClient.parse(value.name, value.value)
-      result[key] = value
-      return result
-    }, {} as Record<string, any>)
+    const parsedCookies = Object.keys(cookies).reduce(
+      (result, key) => {
+        const value = cookies[key]
+        value.value = cookieClient.parse(value.name, value.value)
+        result[key] = value
+        return result
+      },
+      {} as Record<string, any>
+    )
 
     const { session, flashMessages } = await client.load(parsedCookies)
 

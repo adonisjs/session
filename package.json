@@ -1,7 +1,7 @@
 {
   "name": "@adonisjs/session",
-  "version": "6.4.0",
   "description": "Session provider for AdonisJS",
+  "version": "6.4.0",
   "main": "build/index.js",
   "type": "module",
   "files": [
@@ -13,13 +13,21 @@
     "build/configure.d.ts",
     "build/configure.js"
   ],
-  "dependencies": {
-    "@poppinss/utils": "6.5.0-3",
-    "fs-extra": "^11.1.1"
-  },
-  "peerDependencies": {
-    "@adonisjs/core": "6.1.5-8",
-    "@adonisjs/redis": "8.0.0-1"
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "c8 npm run quick:test",
+    "clean": "del-cli build",
+    "typecheck": "tsc --noEmit",
+    "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
+    "compile": "npm run lint && npm run clean && tsc",
+    "build": "npm run compile && npm run copy:templates",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint . --ext=.ts",
+    "format": "prettier --write .",
+    "release": "np",
+    "version": "npm run build",
+    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/ally",
+    "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts"
   },
   "devDependencies": {
     "@adonisjs/application": "7.1.2-8",
@@ -52,36 +60,37 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
-  "scripts": {
-    "pretest": "npm run lint",
-    "test": "c8 npm run quick:test",
-    "clean": "del-cli build",
-    "typecheck": "tsc --noEmit",
-    "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
-    "compile": "npm run lint && npm run clean && tsc",
-    "build": "npm run compile && npm run copy:templates",
-    "prepublishOnly": "npm run build",
-    "lint": "eslint . --ext=.ts",
-    "format": "prettier --write .",
-    "release": "np",
-    "version": "npm run build",
-    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/ally",
-    "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts"
+  "dependencies": {
+    "@poppinss/utils": "6.5.0-3",
+    "fs-extra": "^11.1.1"
   },
+  "peerDependencies": {
+    "@adonisjs/core": "6.1.5-8",
+    "@adonisjs/redis": "8.0.0-1"
+  },
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "homepage": "https://github.com/adonisjs/adonis-session#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adonisjs/adonis-session.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/adonis-session/issues"
   },
   "keywords": [
     "session",
     "adonisjs"
   ],
-  "author": "virk,adonisjs",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/adonisjs/adonis-session/issues"
+  "eslintConfig": {
+    "extends": "@adonisjs/eslint-config/package"
   },
-  "homepage": "https://github.com/adonisjs/adonis-session#readme",
+  "prettier": "@adonisjs/prettier-config",
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
   "publishConfig": {
     "access": "public",
     "tag": "next"
@@ -91,15 +100,6 @@
     "tag": "next",
     "branch": "main",
     "anyBranch": false
-  },
-  "prettier": "@adonisjs/prettier-config",
-  "eslintConfig": {
-    "extends": "@adonisjs/eslint-config/package"
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
   },
   "c8": {
     "reporter": [

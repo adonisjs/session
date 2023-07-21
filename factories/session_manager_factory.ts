@@ -36,7 +36,7 @@ export class SessionManagerFactory {
    */
   #redisManagerOptions = {
     connection: 'local',
-    connections: { local: { host: '127.0.0.1', port: 6379, } }
+    connections: { local: { host: '127.0.0.1', port: 6379 } },
   } as const
 
   /**
@@ -51,10 +51,9 @@ export class SessionManagerFactory {
    * Merge redis manager parameters
    */
   mergeRedisManagerOptions<Connections extends Record<string, RedisConnectionConfig>>(options: {
-    connection: keyof Connections,
-    connections: Connections,
-  }
-  ) {
+    connection: keyof Connections
+    connections: Connections
+  }) {
     this.#redisManagerOptions = Object.assign(this.#redisManagerOptions, options)
     return this
   }
@@ -63,9 +62,10 @@ export class SessionManagerFactory {
    * Create Session manager instance
    */
   create(app: Application<any>) {
-    return new SessionManager(this.#options,
+    return new SessionManager(
+      this.#options,
       new EncryptionFactory().create(),
-      new RedisManagerFactory(this.#redisManagerOptions).create(app),
+      new RedisManagerFactory(this.#redisManagerOptions).create(app)
     )
   }
 }

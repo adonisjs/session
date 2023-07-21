@@ -158,14 +158,14 @@ export class SessionManager {
   /**
    * Find if the sessions are enabled
    */
-  public isEnabled() {
+  isEnabled() {
     return this.#config.enabled
   }
 
   /**
    * Creates an instance of the session client
    */
-  public client() {
+  client() {
     const cookieClient = new CookieClient(this.#encryption)
 
     return new SessionClient(this.#config, this.#createMemoryDriver(), cookieClient, {})
@@ -174,14 +174,14 @@ export class SessionManager {
   /**
    * Creates a new session instance for a given HTTP request
    */
-  public create(ctx: HttpContext) {
+  create(ctx: HttpContext) {
     return new Session(ctx, this.#config, this.#createDriver(ctx))
   }
 
   /**
    * Extend the drivers list by adding a new one.
    */
-  public extend(driver: string, callback: ExtendCallback): void {
+  extend(driver: string, callback: ExtendCallback): void {
     this.#extendedDrivers.set(driver, callback)
   }
 }

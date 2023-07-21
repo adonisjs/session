@@ -8,7 +8,7 @@
  */
 
 import { ApiRequest, ApiResponse, ApiClient } from '@japa/api-client'
-import { InspectOptions, inspect } from 'util'
+import { InspectOptions, inspect } from 'node:util'
 import { SessionManager } from '../session_manager.js'
 import { AllowedSessionValues } from '../types.js'
 

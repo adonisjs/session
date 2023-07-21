@@ -28,35 +28,35 @@ export class Store {
   /**
    * Find if store is empty or not
    */
-  public get isEmpty() {
+  get isEmpty() {
     return !this.#values || Object.keys(this.#values).length === 0
   }
 
   /**
    * Set key/value pair
    */
-  public set(key: string, value: AllowedSessionValues): void {
+  set(key: string, value: AllowedSessionValues): void {
     lodash.set(this.#values, key, value)
   }
 
   /**
    * Get value for a given key
    */
-  public get(key: string, defaultValue?: any): any {
+  get(key: string, defaultValue?: any): any {
     return lodash.get(this.#values, key, defaultValue)
   }
 
   /**
    * Remove key
    */
-  public unset(key: string): void {
+  unset(key: string): void {
     lodash.unset(this.#values, key)
   }
 
   /**
    * Reset store by clearing it's values.
    */
-  public clear(): void {
+  clear(): void {
     this.update({})
   }
 
@@ -64,7 +64,7 @@ export class Store {
    * Pull value from the store. It is same as calling
    * store.get and then store.unset
    */
-  public pull(key: string, defaultValue?: any): any {
+  pull(key: string, defaultValue?: any): any {
     return ((value): any => {
       this.unset(key)
       return value
@@ -75,7 +75,7 @@ export class Store {
    * Increment number. The method raises an error when
    * nderlying value is not a number
    */
-  public increment(key: string, steps: number = 1): void {
+  increment(key: string, steps: number = 1): void {
     const value = this.get(key, 0)
     if (typeof value !== 'number') {
       throw new Exception(`Cannot increment "${key}", since original value is not a number`)
@@ -88,7 +88,7 @@ export class Store {
    * Increment number. The method raises an error when
    * nderlying value is not a number
    */
-  public decrement(key: string, steps: number = 1): void {
+  decrement(key: string, steps: number = 1): void {
     const value = this.get(key, 0)
     if (typeof value !== 'number') {
       throw new Exception(`Cannot increment "${key}", since original value is not a number`)
@@ -100,14 +100,14 @@ export class Store {
   /**
    * Overwrite the underlying values object
    */
-  public update(values: { [key: string]: any }): void {
+  update(values: { [key: string]: any }): void {
     this.#values = values
   }
 
   /**
    * Update to merge values
    */
-  public merge(values: { [key: string]: any }): any {
+  merge(values: { [key: string]: any }): any {
     lodash.merge(this.#values, values)
   }
 
@@ -115,7 +115,7 @@ export class Store {
    * A boolean to know if value exists. Extra guards to check
    * arrays for it's length as well.
    */
-  public has(key: string, checkForArraysLength: boolean = true): boolean {
+  has(key: string, checkForArraysLength: boolean = true): boolean {
     const value = this.get(key)
     if (!Array.isArray(value)) {
       return !!value
@@ -127,28 +127,28 @@ export class Store {
   /**
    * Get all values
    */
-  public all(): any {
+  all(): any {
     return this.#values
   }
 
   /**
    * Returns object representation of values
    */
-  public toObject() {
+  toObject() {
     return this.all()
   }
 
   /**
    * Returns the store values
    */
-  public toJSON(): any {
+  toJSON(): any {
     return this.all()
   }
 
   /**
    * Returns string representation of the store
    */
-  public toString() {
+  toString() {
     return JSON.stringify(this.all())
   }
 }

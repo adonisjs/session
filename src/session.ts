@@ -61,31 +61,31 @@ export class Session {
   /**
    * Set to true inside the `initiate` method
    */
-  public initiated = false
+  initiated = false
 
   /**
    * A boolean to know if it's a fresh session or not. Fresh
    * sessions are those, whose session id is not present
    * in cookie
    */
-  public fresh = false
+  fresh = false
 
   /**
    * A boolean to know if store is initiated in readonly mode
    * or not. This is done during Websocket requests
    */
-  public readonly = false
+  readonly = false
 
   /**
    * Session id for the given request. A new session id is only
    * generated when the cookie for the session id is missing
    */
-  public sessionId: string
+  sessionId: string
 
   /**
    * A copy of previously set flash messages
    */
-  public flashMessages = new Store({})
+  flashMessages = new Store({})
 
   /**
    * A copy of flash messages. The `input` messages
@@ -94,7 +94,7 @@ export class Session {
    *
    * The `others` object is expanded with each call.
    */
-  public responseFlashMessages = new Store({})
+  responseFlashMessages = new Store({})
 
   constructor(ctx: HttpContext, config: SessionConfig, driver: SessionDriverContract) {
     this.#ctx = ctx
@@ -216,7 +216,7 @@ export class Session {
    *
    * Multiple calls to `initiate` results in a noop.
    */
-  public async initiate(readonly: boolean): Promise<void> {
+  async initiate(readonly: boolean): Promise<void> {
     if (this.initiated) {
       return
     }
@@ -235,7 +235,7 @@ export class Session {
    * Re-generates the session id. This can is used to avoid
    * session fixation attacks.
    */
-  public regenerate(): void {
+  regenerate(): void {
     this.#ctx.logger.trace('explicitly re-generating session id')
     this.sessionId = cuid()
     this.#regeneratedSessionId = true
@@ -244,7 +244,7 @@ export class Session {
   /**
    * Set/update session value
    */
-  public put(key: string, value: AllowedSessionValues): void {
+  put(key: string, value: AllowedSessionValues): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.#store.set(key, value)
@@ -253,7 +253,7 @@ export class Session {
   /**
    * Find if the value exists in the session
    */
-  public has(key: string): boolean {
+  has(key: string): boolean {
     this.#ensureIsReady()
     return this.#store.has(key)
   }
@@ -262,7 +262,7 @@ export class Session {
    * Get value from the session. The default value is returned
    * when actual value is `undefined`
    */
-  public get(key: string, defaultValue?: any): any {
+  get(key: string, defaultValue?: any): any {
     this.#ensureIsReady()
     return this.#store.get(key, defaultValue)
   }
@@ -270,7 +270,7 @@ export class Session {
   /**
    * Returns everything from the session
    */
-  public all(): any {
+  all(): any {
     this.#ensureIsReady()
     return this.#store.all()
   }
@@ -278,7 +278,7 @@ export class Session {
   /**
    * Remove value for a given key from the session
    */
-  public forget(key: string): void {
+  forget(key: string): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.#store.unset(key)
@@ -288,7 +288,7 @@ export class Session {
    * The method is equivalent to calling `session.get` followed
    * by `session.forget`
    */
-  public pull(key: string, defaultValue?: any): any {
+  pull(key: string, defaultValue?: any): any {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     return this.#store.pull(key, defaultValue)
@@ -299,7 +299,7 @@ export class Session {
    * method raises an error when underlying value is not
    * a number
    */
-  public increment(key: string, steps: number = 1): void {
+  increment(key: string, steps: number = 1): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.#store.increment(key, steps)
@@ -310,7 +310,7 @@ export class Session {
    * method raises an error when underlying value is not
    * a number
    */
-  public decrement(key: string, steps: number = 1): void {
+  decrement(key: string, steps: number = 1): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.#store.decrement(key, steps)
@@ -319,7 +319,7 @@ export class Session {
   /**
    * Remove everything from the session
    */
-  public clear(): void {
+  clear(): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.#store.clear()
@@ -328,10 +328,7 @@ export class Session {
   /**
    * Add a new flash message
    */
-  public flash(
-    key: string | { [key: string]: AllowedSessionValues },
-    value?: AllowedSessionValues
-  ): void {
+  flash(key: string | { [key: string]: AllowedSessionValues }, value?: AllowedSessionValues): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
 
@@ -350,7 +347,7 @@ export class Session {
   /**
    * Flash all form values
    */
-  public flashAll(): void {
+  flashAll(): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.responseFlashMessages.set('input', this.#ctx.request.original())
@@ -359,7 +356,7 @@ export class Session {
   /**
    * Flash all form values except mentioned keys
    */
-  public flashExcept(keys: string[]): void {
+  flashExcept(keys: string[]): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.responseFlashMessages.set('input', lodash.omit(this.#ctx.request.original(), keys))
@@ -368,7 +365,7 @@ export class Session {
   /**
    * Flash only defined keys from the form values
    */
-  public flashOnly(keys: string[]): void {
+  flashOnly(keys: string[]): void {
     this.#ensureIsReady()
     this.#ensureIsMutable()
     this.responseFlashMessages.set('input', lodash.pick(this.#ctx.request.original(), keys))
@@ -377,14 +374,14 @@ export class Session {
   /**
    * Reflash existing flash messages
    */
-  public reflash() {
+  reflash() {
     this.flash(this.flashMessages.all())
   }
 
   /**
    * Reflash selected keys from the existing flash messages
    */
-  public reflashOnly(keys: string[]) {
+  reflashOnly(keys: string[]) {
     this.flash(lodash.pick(this.flashMessages.all(), keys))
   }
 
@@ -392,14 +389,14 @@ export class Session {
    * Omit selected keys from the existing flash messages
    * and flash the rest of values
    */
-  public reflashExcept(keys: string[]) {
+  reflashExcept(keys: string[]) {
     this.flash(lodash.omit(this.flashMessages.all(), keys))
   }
 
   /**
    * Writes value to the underlying session driver.
    */
-  public async commit(): Promise<void> {
+  async commit(): Promise<void> {
     if (!this.initiated) {
       console.log('session not initiated')
       this.#touchSessionCookie()

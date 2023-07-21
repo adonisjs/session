@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 import supertest from 'supertest'
-import { createServer } from 'http'
+import { createServer } from 'node:http'
 
 import { Store } from '../src/store.js'
 import { Session } from '../src/session.js'
