@@ -16,6 +16,7 @@
   "exports": {
     ".": "./build/index.js",
     "./session_provider": "./build/providers/session_provider.js",
+    "./session_middleware": "./build/src/session_middleware.js",
     "./types": "./build/src/types.js"
   },
   "scripts": {
