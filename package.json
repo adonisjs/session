@@ -13,6 +13,11 @@
     "build/configure.d.ts",
     "build/configure.js"
   ],
+  "exports": {
+    ".": "./build/index.js",
+    "./session_provider": "./build/providers/session_provider.js",
+    "./types": "./build/src/types.js"
+  },
   "scripts": {
     "pretest": "npm run lint",
     "test": "c8 npm run quick:test",
