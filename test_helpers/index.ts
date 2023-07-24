@@ -35,7 +35,7 @@ export const sessionConfig: SessionConfig = {
 
 export const BASE_URL = new URL('./tmp/', import.meta.url)
 
-export async function setup(fs: FileSystem, config?: any) {
+export async function setup(fs: FileSystem, config?: any, environment: 'web' | 'test' = 'web') {
   const IMPORTER = (filePath: string) => {
     if (filePath.startsWith('./') || filePath.startsWith('../')) {
       return import(new URL(filePath, BASE_URL).href)
@@ -54,7 +54,7 @@ export async function setup(fs: FileSystem, config?: any) {
     })
     .create(fs.baseUrl, { importer: IMPORTER })
 
-  const app = ignitor.createApp('web')
+  const app = ignitor.createApp(environment)
 
   await app.init()
   await app.boot()

@@ -28,7 +28,8 @@ test.group('Session', () => {
     })
 
     const server = createServer(async (req, res) => {
-      const middleware = new SessionMiddleware()
+      const session = await app.container.make('session')
+      const middleware = new SessionMiddleware(session)
       const ctx = await createHttpContext(app, req, res)
       await middleware.handle(ctx, () => {
         assert.isTrue(ctx.session.initiated)

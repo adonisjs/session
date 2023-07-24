@@ -29,7 +29,7 @@ test.group('Session Provider', (group) => {
   })
 
   test('register test api request methods', async ({ assert, fs }) => {
-    await setup(fs)
+    await setup(fs, {}, 'test')
 
     assert.isTrue(ApiRequest.prototype.hasOwnProperty('session'))
     assert.isTrue(ApiRequest.prototype.hasOwnProperty('flashMessages'))
@@ -37,9 +37,11 @@ test.group('Session Provider', (group) => {
   })
 
   test('set session before making the api request', async ({ fs, assert }) => {
-    const { app } = await setup(fs, {
-      session: { driver: 'memory', cookieName: 'adonis-session' },
-    })
+    const { app } = await setup(
+      fs,
+      { session: { driver: 'memory', cookieName: 'adonis-session' } },
+      'test'
+    )
 
     const server = createServer(async (req, res) => {
       const ctx = await createHttpContext(app, req, res)
@@ -65,9 +67,11 @@ test.group('Session Provider', (group) => {
   })
 
   test('get session data from the response', async ({ fs, assert }) => {
-    const { app } = await setup(fs, {
-      session: { driver: 'memory', cookieName: 'adonis-session' },
-    })
+    const { app } = await setup(
+      fs,
+      { session: { driver: 'memory', cookieName: 'adonis-session' } },
+      'test'
+    )
 
     const server = createServer(async (req, res) => {
       const ctx = await createHttpContext(app, req, res)
@@ -92,9 +96,11 @@ test.group('Session Provider', (group) => {
   })
 
   test('get flash messages from the response', async ({ fs, assert }) => {
-    const { app } = await setup(fs, {
-      session: { driver: 'memory', cookieName: 'adonis-session' },
-    })
+    const { app } = await setup(
+      fs,
+      { session: { driver: 'memory', cookieName: 'adonis-session' } },
+      'test'
+    )
 
     const server = createServer(async (req, res) => {
       const ctx = await createHttpContext(app, req, res)
@@ -119,9 +125,11 @@ test.group('Session Provider', (group) => {
   })
 
   test('destroy session when request fails', async ({ fs, assert }) => {
-    const { app } = await setup(fs, {
-      session: { driver: 'memory', cookieName: 'adonis-session' },
-    })
+    const { app } = await setup(
+      fs,
+      { session: { driver: 'memory', cookieName: 'adonis-session' } },
+      'test'
+    )
 
     const server = createServer(async (req, res) => {
       const ctx = await createHttpContext(app, req, res)

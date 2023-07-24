@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { ApplicationService } from '@adonisjs/core/types'
+import type { SessionManager } from '../src/session_manager.js'
+import type { ApplicationService } from '@adonisjs/core/types'
 import { extendHttpContext } from '../src/bindings/http_context.js'
-import { extendApiClient } from '../src/bindings/api_client.js'
 import SessionMiddleware from '../src/session_middleware.js'
 
 export default class SessionProvider {
@@ -36,20 +36,29 @@ export default class SessionProvider {
   }
 
   /**
+   * Register Japa API Client bindings
+   */
+  async #registerApiClientBindings(session: SessionManager) {
+    if (this.app.getEnvironment() === 'test') {
+      const { extendApiClient } = await import('../src/bindings/api_client.js')
+      extendApiClient(session)
+    }
+  }
+
+  /**
    * Register bindings
    */
   async boot() {
-    const sessionManager = await this.app.container.make('session')
+    const session = await this.app.container.make('session')
 
     /**
      * Add `session` getter to the HttpContext class
      */
-    extendHttpContext(sessionManager)
+    extendHttpContext(session)
 
     /**
-     * Add some macros and getter to japa/api-client classes for
-     * easier testing
+     * Extend Japa API Client
      */
-    extendApiClient(sessionManager)
+    await this.#registerApiClientBindings(session)
   }
 }
