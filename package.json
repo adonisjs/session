@@ -79,6 +79,9 @@
   "peerDependenciesMeta": {
     "@adonisjs/redis": {
       "optional": true
+    },
+    "@japa/api-client": {
+      "optional": true
     }
   },
   "author": "virk,adonisjs",
