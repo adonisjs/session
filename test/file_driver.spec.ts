@@ -28,6 +28,40 @@ test.group('File driver', () => {
     )
   })
 
+  test('read() should create file when missing', async ({ assert }) => {
+    const sessionId = '1234'
+    const session = new FileDriver(config)
+    const value = await session.read(sessionId)
+
+    assert.isNull(value)
+    await assert.fileExists('1234.txt')
+  })
+
+  test('should create intermediate directories when missing', async ({ assert }) => {
+    const sessionId = '1234'
+    const session = new FileDriver({
+      driver: 'file',
+      file: { location: join(fileURLToPath(BASE_URL), 'foo/bar') },
+      age: 1000,
+      clearWithBrowser: false,
+      cookieName: 'adonis-session',
+      enabled: true,
+      cookie: {},
+    })
+
+    const value = await session.read(sessionId)
+    assert.isNull(value)
+    await assert.fileExists('foo/bar/1234.txt')
+
+    await session.write(sessionId, { message: 'hello-world' })
+    await assert.fileExists('foo/bar/1234.txt')
+
+    await assert.fileEquals(
+      'foo/bar/1234.txt',
+      JSON.stringify({ message: { message: 'hello-world' }, purpose: '1234' })
+    )
+  })
+
   test('return null when file is missing', async ({ assert }) => {
     const sessionId = '1234'
     const session = new FileDriver(config)
@@ -60,6 +94,15 @@ test.group('File driver', () => {
     await session.write(sessionId, { message: 'hello-world' })
     await session.destroy(sessionId)
 
+    await assert.fileNotExists('1234.txt')
+  })
+
+  test('shouldnt file when trying to remove non-existing file', async ({ assert }) => {
+    const sessionId = '1234'
+    const session = new FileDriver(config)
+
+    await assert.fileNotExists('1234.txt')
+    await session.destroy(sessionId)
     await assert.fileNotExists('1234.txt')
   })
 

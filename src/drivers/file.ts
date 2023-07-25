@@ -7,11 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { Exception } from '@poppinss/utils'
 import { MessageBuilder } from '@poppinss/utils'
-import { ensureFile, outputFile, remove } from 'fs-extra/esm'
-import { readFile } from 'node:fs/promises'
 import { SessionConfig, SessionDriverContract } from '../types.js'
 
 /**
@@ -39,12 +38,51 @@ export class FileDriver implements SessionDriverContract {
   }
 
   /**
+   * Check if the given path exists or not
+   */
+  async #pathExists(path: string) {
+    try {
+      await access(path)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Output file with contents to the given path
+   */
+  async #outputFile(path: string, content: string) {
+    const pathDirname = dirname(path)
+    const dirExists = await this.#pathExists(pathDirname)
+
+    if (!dirExists) {
+      await mkdir(pathDirname, { recursive: true })
+    }
+
+    await writeFile(path, content, 'utf-8')
+  }
+
+  /**
+   * Ensure the file exists. Create it if missing
+   */
+  async #ensureFile(path: string) {
+    const pathDirname = dirname(path)
+    const dirExists = await this.#pathExists(pathDirname)
+
+    if (!dirExists) {
+      await mkdir(pathDirname, { recursive: true })
+      await writeFile(path, '', 'utf-8')
+    }
+  }
+
+  /**
    * Returns file contents. A new file will be created if it's
    * missing.
    */
   async read(sessionId: string): Promise<{ [key: string]: any } | null> {
     const filePath = this.#getFilePath(sessionId)
-    await ensureFile(filePath)
+    await this.#ensureFile(filePath)
 
     const contents = await readFile(filePath, 'utf-8')
     if (!contents.trim()) {
@@ -71,14 +109,14 @@ export class FileDriver implements SessionDriverContract {
     }
 
     const message = new MessageBuilder().build(values, undefined, sessionId)
-    await outputFile(this.#getFilePath(sessionId), message)
+    await this.#outputFile(this.#getFilePath(sessionId), message)
   }
 
   /**
    * Cleanup session file by removing it
    */
   async destroy(sessionId: string): Promise<void> {
-    await remove(this.#getFilePath(sessionId))
+    await rm(this.#getFilePath(sessionId), { force: true })
   }
 
   /**
