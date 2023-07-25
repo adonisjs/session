@@ -9,7 +9,6 @@
 
 import { ApplicationService } from '@adonisjs/core/types'
 import { extendHttpContext } from '../src/bindings/http_context.js'
-import { extendApiClient } from '../src/bindings/api_client.js'
 import SessionMiddleware from '../src/session_middleware.js'
 
 export default class SessionProvider {
@@ -46,10 +45,15 @@ export default class SessionProvider {
      */
     extendHttpContext(sessionManager)
 
-    /**
-     * Add some macros and getter to japa/api-client classes for
-     * easier testing
-     */
-    extendApiClient(sessionManager)
+    if (this.app.getEnvironment() === 'test') {
+      // Lazy-load to avoid pulling `@japa/api-client` and its dependencies unless necessary.
+      const { extendApiClient } = await import('../src/bindings/api_client.js')
+
+      /**
+       * Add some macros and getter to japa/api-client classes for
+       * easier testing
+       */
+      extendApiClient(sessionManager)
+    }
   }
 }
