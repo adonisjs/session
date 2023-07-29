@@ -17,7 +17,7 @@ import { processCLIArgs, configure, run } from '@japa/runner'
 */
 processCLIArgs(process.argv.slice(2))
 configure({
-  files: ['test/**/*.spec.ts'],
+  files: ['tests/file_driver.spec.ts'],
   plugins: [assert(), fileSystem()],
   forceExit: true,
 })
