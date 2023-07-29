@@ -8,37 +8,35 @@
  */
 
 import { dirname, join } from 'node:path'
-import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { Exception } from '@poppinss/utils'
+import string from '@poppinss/utils/string'
 import { MessageBuilder } from '@poppinss/utils'
-import { SessionConfig, SessionDriverContract } from '../types.js'
+import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
+
+import type { SessionData, SessionDriverContract } from '../types.js'
+import { Stats } from 'node:fs'
 
 /**
- * File driver to read/write session to filesystem
+ * File driver writes the session data on the file system as. Each session
+ * id gets its own file.
  */
 export class FileDriver implements SessionDriverContract {
-  #config: SessionConfig
+  #config: { location: string }
+  #age: string | number
 
-  constructor(config: SessionConfig) {
+  constructor(config: { location: string }, age: string | number) {
     this.#config = config
-
-    if (!this.#config.file || !this.#config.file.location) {
-      throw new Exception(
-        'Missing "file.location" for session file driver inside "config/session" file',
-        { code: 'E_INVALID_SESSION_DRIVER_CONFIG', status: 500 }
-      )
-    }
+    this.#age = age
   }
 
   /**
-   * Returns complete path to the session file
+   * Returns an absolute path to the session id file
    */
   #getFilePath(sessionId: string): string {
-    return join(this.#config.file!.location, `${sessionId}.txt`)
+    return join(this.#config.location, `${sessionId}.txt`)
   }
 
   /**
-   * Check if the given path exists or not
+   * Check if a file exists at a given path or not
    */
   async #pathExists(path: string) {
     try {
@@ -50,84 +48,102 @@ export class FileDriver implements SessionDriverContract {
   }
 
   /**
+   * Returns stats for a file and ignoring missing
+   * files.
+   */
+  async #stats(path: string): Promise<Stats | null> {
+    try {
+      const stats = await stat(path)
+      return stats
+    } catch {
+      return null
+    }
+  }
+
+  /**
    * Output file with contents to the given path
    */
-  async #outputFile(path: string, content: string) {
+  async #outputFile(path: string, contents: string) {
     const pathDirname = dirname(path)
-    const dirExists = await this.#pathExists(pathDirname)
 
+    const dirExists = await this.#pathExists(pathDirname)
     if (!dirExists) {
       await mkdir(pathDirname, { recursive: true })
     }
 
-    await writeFile(path, content, 'utf-8')
+    await writeFile(path, contents, 'utf-8')
   }
 
   /**
-   * Ensure the file exists. Create it if missing
+   * Reads the session data from the disk.
    */
-  async #ensureFile(path: string) {
-    const pathDirname = dirname(path)
-    const dirExists = await this.#pathExists(pathDirname)
-
-    if (!dirExists) {
-      await mkdir(pathDirname, { recursive: true })
-      await writeFile(path, '', 'utf-8')
-    }
-  }
-
-  /**
-   * Returns file contents. A new file will be created if it's
-   * missing.
-   */
-  async read(sessionId: string): Promise<{ [key: string]: any } | null> {
+  async read(sessionId: string): Promise<SessionData | null> {
     const filePath = this.#getFilePath(sessionId)
-    await this.#ensureFile(filePath)
 
-    const contents = await readFile(filePath, 'utf-8')
-    if (!contents.trim()) {
+    /**
+     * Return null when no session id file exists in first
+     * place
+     */
+    const stats = await this.#stats(filePath)
+    if (!stats) {
       return null
     }
 
     /**
-     * Verify contents with the session id and return them as an object.
+     * Check if the file has been expired and return null (if expired)
      */
-    const verifiedContents = new MessageBuilder().verify(contents.trim(), sessionId)
-    if (typeof verifiedContents !== 'object') {
+    const sessionWillExpireAt = stats.mtimeMs + string.milliseconds.parse(this.#age)
+    if (Date.now() > sessionWillExpireAt) {
       return null
     }
 
-    return verifiedContents
-  }
-
-  /**
-   * Write session values to a file
-   */
-  async write(sessionId: string, values: { [key: string]: any }): Promise<void> {
-    if (typeof values !== 'object') {
-      throw new Error('Session file driver expects an object of values')
+    /**
+     * Reading the file contents if the file exists
+     */
+    let contents = await readFile(filePath, 'utf-8')
+    contents = contents.trim()
+    if (!contents) {
+      return null
     }
 
-    const message = new MessageBuilder().build(values, undefined, sessionId)
-    await this.#outputFile(this.#getFilePath(sessionId), message)
+    /**
+     * Verify contents with the session id and return them as an object. The verify
+     * method can fail when the contents is not JSON>
+     */
+    try {
+      const verifiedContents = new MessageBuilder().verify<SessionData>(contents, sessionId)
+      if (typeof verifiedContents !== 'object') {
+        return null
+      }
+
+      return verifiedContents
+    } catch {
+      return null
+    }
   }
 
   /**
-   * Cleanup session file by removing it
+   * Writes the session data to the disk as a string
+   */
+  async write(sessionId: string, values: SessionData): Promise<void> {
+    const filePath = this.#getFilePath(sessionId)
+    const message = new MessageBuilder().build(values, undefined, sessionId)
+
+    await this.#outputFile(filePath, message)
+  }
+
+  /**
+   * Removes the session file from the disk
    */
   async destroy(sessionId: string): Promise<void> {
     await rm(this.#getFilePath(sessionId), { force: true })
   }
 
   /**
-   * Writes the value by reading it from the store
+   * Updates the session expiry by rewriting it to the
+   * persistence store
    */
   async touch(sessionId: string): Promise<void> {
-    const value = await this.read(sessionId)
-    if (!value) {
-      return
-    }
-
-    await this.write(sessionId, value)
+    await utimes(this.#getFilePath(sessionId), Date.now(), Date.now())
   }
 }
