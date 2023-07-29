@@ -7,21 +7,28 @@
  * file that was distributed with this source code.
  */
 
-import { Exception } from '@poppinss/utils'
 import lodash from '@poppinss/utils/lodash'
+import { RuntimeException } from '@poppinss/utils'
 
-import type { AllowedSessionValues } from './types.js'
+import type { AllowedSessionValues, SessionData } from './types.js'
 
 /**
- * Session store to mutate and access values from the session object
+ * Session store encapsulates the session data and offers a
+ * declarative API to mutate it.
  */
 export class Store {
   /**
    * Underlying store values
    */
-  #values: { [key: string]: any }
+  #values: SessionData
 
-  constructor(values: { [key: string]: any } | null) {
+  /**
+   * A boolean to know if store has been
+   * modified
+   */
+  #modified: boolean = false
+
+  constructor(values: SessionData | null) {
     this.#values = values || {}
   }
 
@@ -33,31 +40,26 @@ export class Store {
   }
 
   /**
-   * Set key/value pair
+   * Find if the store has been modified.
    */
-  set(key: string, value: AllowedSessionValues): void {
-    lodash.set(this.#values, key, value)
+  get hasBeenModified(): boolean {
+    return this.#modified
   }
 
   /**
-   * Get value for a given key
+   * Set key/value pair
    */
-  get(key: string, defaultValue?: any): any {
-    return lodash.get(this.#values, key, defaultValue)
+  set(key: string, value: AllowedSessionValues): void {
+    this.#modified = true
+    lodash.set(this.#values, key, value)
   }
 
   /**
    * Remove key
    */
   unset(key: string): void {
+    this.#modified = true
     lodash.unset(this.#values, key)
-  }
-
-  /**
-   * Reset store by clearing it's values.
-   */
-  clear(): void {
-    this.update({})
   }
 
   /**
@@ -78,7 +80,7 @@ export class Store {
   increment(key: string, steps: number = 1): void {
     const value = this.get(key, 0)
     if (typeof value !== 'number') {
-      throw new Exception(`Cannot increment "${key}", since original value is not a number`)
+      throw new RuntimeException(`Cannot increment "${key}". Existing value is not a number`)
     }
 
     this.set(key, value + steps)
@@ -91,16 +93,17 @@ export class Store {
   decrement(key: string, steps: number = 1): void {
     const value = this.get(key, 0)
     if (typeof value !== 'number') {
-      throw new Exception(`Cannot increment "${key}", since original value is not a number`)
+      throw new RuntimeException(`Cannot decrement "${key}". Existing value is not a number`)
     }
 
     this.set(key, value - steps)
   }
 
   /**
-   * Overwrite the underlying values object
+   * Overwrite existing store data with new values.
    */
   update(values: { [key: string]: any }): void {
+    this.#modified = true
     this.#values = values
   }
 
@@ -108,7 +111,22 @@ export class Store {
    * Update to merge values
    */
   merge(values: { [key: string]: any }): any {
+    this.#modified = true
     lodash.merge(this.#values, values)
+  }
+
+  /**
+   * Reset store by clearing it's values.
+   */
+  clear(): void {
+    this.update({})
+  }
+
+  /**
+   * Get value for a given key
+   */
+  get(key: string, defaultValue?: any): any {
+    return lodash.get(this.#values, key, defaultValue)
   }
 
   /**
