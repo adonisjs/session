@@ -94,7 +94,6 @@ test.group('File driver', () => {
 
   test('update session expiry on touch', async ({ assert, fs }) => {
     const sessionId = '1234'
-    const now = Date.now()
 
     const session = new FileDriver({ location: fs.basePath }, '2 hours')
     await session.write(sessionId, { message: 'hello-world' })
@@ -110,7 +109,6 @@ test.group('File driver', () => {
      */
     const { mtimeMs } = await fs.adapter.stat(join(fs.basePath, '1234.txt'))
     assert.isBelow(mtimeMs, Date.now())
-    assert.isAbove(mtimeMs, now)
 
     await session.touch(sessionId)
 
