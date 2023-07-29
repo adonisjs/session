@@ -1,6 +1,16 @@
-import type { CookieOptions } from '@adonisjs/core/types/http'
-import type { SessionManager } from './session_manager.js'
+/*
+ * @adonisjs/session
+ *
+ * (c) AdonisJS
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 import type { HttpContext } from '@adonisjs/core/http'
+import type { CookieOptions } from '@adonisjs/core/types/http'
+
+import type { SessionManager } from './session_manager.js'
 
 /**
  * The callback to be passed to the `extend` method. It is invoked
@@ -74,3 +84,4 @@ export interface SessionConfig {
  * The values allowed by the `session.put` method
  */
 export type AllowedSessionValues = string | boolean | number | object | Date | Array<any>
+export type SessionData = Record<string, AllowedSessionValues>

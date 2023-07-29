@@ -1,7 +1,6 @@
 import { assert } from '@japa/assert'
-import { processCLIArgs, configure, run } from '@japa/runner'
 import { fileSystem } from '@japa/file-system'
-import { BASE_URL } from '../test_helpers/index.js'
+import { processCLIArgs, configure, run } from '@japa/runner'
 
 /*
 |--------------------------------------------------------------------------
@@ -19,13 +18,7 @@ import { BASE_URL } from '../test_helpers/index.js'
 processCLIArgs(process.argv.slice(2))
 configure({
   files: ['test/**/*.spec.ts'],
-  plugins: [
-    assert(),
-    fileSystem({
-      autoClean: true,
-      basePath: BASE_URL,
-    }),
-  ],
+  plugins: [assert(), fileSystem()],
   forceExit: true,
 })
 

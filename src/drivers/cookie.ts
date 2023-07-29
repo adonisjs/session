@@ -8,16 +8,18 @@
  */
 
 import type { HttpContext } from '@adonisjs/core/http'
-import type { SessionConfig, SessionDriverContract } from '../types.js'
+import { CookieOptions } from '@adonisjs/core/types/http'
+import type { SessionData, SessionDriverContract } from '../types.js'
 
 /**
- * Cookie driver utilizes the encrypted HTTP cookies to write session value.
+ * Cookie driver stores the session data inside an encrypted
+ * cookie.
  */
 export class CookieDriver implements SessionDriverContract {
-  #config: SessionConfig
   #ctx: HttpContext
+  #config: Partial<CookieOptions>
 
-  constructor(config: SessionConfig, ctx: HttpContext) {
+  constructor(config: Partial<CookieOptions>, ctx: HttpContext) {
     this.#config = config
     this.#ctx = ctx
   }
@@ -25,23 +27,20 @@ export class CookieDriver implements SessionDriverContract {
   /**
    * Read session value from the cookie
    */
-  read(sessionId: string): { [key: string]: any } | null {
+  read(sessionId: string): SessionData | null {
     const cookieValue = this.#ctx.request.encryptedCookie(sessionId)
     if (typeof cookieValue !== 'object') {
       return null
     }
+
     return cookieValue
   }
 
   /**
    * Write session values to the cookie
    */
-  write(sessionId: string, values: { [key: string]: any }): void {
-    if (typeof values !== 'object') {
-      throw new Error('Session cookie driver expects an object of values')
-    }
-
-    this.#ctx.response.encryptedCookie(sessionId, values, this.#config.cookie)
+  write(sessionId: string, values: SessionData): void {
+    this.#ctx.response.encryptedCookie(sessionId, values, this.#config)
   }
 
   /**
