@@ -8,21 +8,22 @@
  */
 
 import { cuid } from '@adonisjs/core/helpers'
-import { Store } from './store.js'
-import type { SessionConfig, SessionDriverContract } from './types.js'
 import type { CookieClient } from '@adonisjs/core/http'
 
+import { Store } from './store.js'
+import type { SessionConfig, SessionData, SessionDriverContract } from './types/main.js'
+
 /**
- * SessionClient exposes the API to set session data as a client
+ * Session client exposes the API to set session data as a client
  */
-export class SessionClient extends Store {
+export class SessionClient {
   /**
    * Session configuration
    */
   #config: SessionConfig
 
   /**
-   * The session driver used to read and write session data
+   * The session driver to use for reading and writing session data
    */
   #driver: SessionDriverContract
 
@@ -32,54 +33,38 @@ export class SessionClient extends Store {
   #cookieClient: CookieClient
 
   /**
-   * Each instance of client works on a single session id. Generate
-   * multiple client instances for a different session id
+   * Session to use when no explicit session id is
+   * defined
    */
-  sessionId = cuid()
+  #sessionId = cuid()
 
   /**
    * Session key for setting flash messages
    */
-  #flashMessagesKey = '__flash__'
+  flashKey = '__flash__'
 
-  /**
-   * Flash messages store. They are merged with the session data during
-   * commit
-   */
-  flashMessages = new Store({})
-
-  constructor(
-    config: SessionConfig,
-    driver: SessionDriverContract,
-    cookieClient: CookieClient,
-    values: { [key: string]: any } | null
-  ) {
-    super(values)
-
+  constructor(config: SessionConfig, driver: SessionDriverContract, cookieClient: CookieClient) {
     this.#config = config
     this.#driver = driver
     this.#cookieClient = cookieClient
   }
 
   /**
-   * Find if the sessions are enabled
+   * Load session data from the driver
    */
-  isEnabled() {
-    return this.#config.enabled
-  }
-
-  /**
-   * Load session from the driver
-   */
-  async load(cookies: Record<string, any>) {
+  async load(
+    cookies: Record<string, any>,
+    sessionId?: string
+  ): Promise<{ sessionId: string; session: SessionData; flashMessages: SessionData }> {
     const sessionIdCookie = cookies[this.#config.cookieName]
-    const sessionId = sessionIdCookie ? sessionIdCookie.value : this.sessionId
+    const sessId = sessionId || sessionIdCookie ? sessionIdCookie.value : this.#sessionId
 
-    const contents = await this.#driver.read(sessionId)
+    const contents = await this.#driver.read(sessId)
     const store = new Store(contents)
-    const flashMessages = store.pull(this.#flashMessagesKey, null)
+    const flashMessages = store.pull(this.flashKey, null)
 
     return {
+      sessionId: sessId,
       session: store.all(),
       flashMessages,
     }
@@ -90,19 +75,19 @@ export class SessionClient extends Store {
    * the session id and cookie name for it to be accessible
    * by the server
    */
-  async commit() {
-    this.set(this.#flashMessagesKey, this.flashMessages.all())
-    await this.#driver.write(this.sessionId, this.toJSON())
+  async commit(values: SessionData | null, flashMessages: SessionData | null, sessionId?: string) {
+    const sessId = sessionId || this.#sessionId
 
     /**
-     * Clear from the session client memory
+     * Persist session data to the store, alongside flash messages
      */
-    this.clear()
-    this.flashMessages.clear()
+    if (values || flashMessages) {
+      await this.#driver.write(sessId, Object.assign({ [this.flashKey]: flashMessages }, values))
+    }
 
     return {
-      sessionId: this.sessionId!,
-      signedSessionId: this.#cookieClient.sign(this.#config.cookieName, this.sessionId)!,
+      sessionId: sessId,
+      signedSessionId: this.#cookieClient.sign(this.#config.cookieName, sessId)!,
       cookieName: this.#config.cookieName,
     }
   }
@@ -110,16 +95,7 @@ export class SessionClient extends Store {
   /**
    * Clear the session store
    */
-  async forget() {
-    /**
-     * Clear from the session client memory
-     */
-    this.clear()
-    this.flashMessages.clear()
-
-    /**
-     * Clear with the driver
-     */
-    await this.#driver.destroy(this.sessionId)
+  async forget(sessionId?: string) {
+    await this.#driver.destroy(sessionId || this.#sessionId)
   }
 }

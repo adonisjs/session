@@ -11,7 +11,7 @@ import string from '@poppinss/utils/string'
 import { InvalidArgumentsException } from '@poppinss/utils'
 import type { CookieOptions } from '@adonisjs/core/types/http'
 
-import type { SessionConfig } from './types.js'
+import type { SessionConfig } from './types/main.js'
 
 /**
  * Helper to normalize session config

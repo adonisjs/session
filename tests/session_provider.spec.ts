@@ -1,5 +1,5 @@
 /*
- * @adonisjs/session
+ * @adonisjs/redis
  *
  * (c) AdonisJS
  *
@@ -8,145 +8,189 @@
  */
 
 import { test } from '@japa/runner'
-import { createServer } from 'node:http'
-import { ApiClient, ApiRequest } from '@japa/api-client'
-import { createHttpContext, setup } from '../test_helpers/index.js'
-import { SessionManager } from '../src/session_manager.js'
-import { MemoryDriver } from '../src/drivers/memory.js'
+import { IgnitorFactory } from '@adonisjs/core/factories'
+
+import { defineConfig } from '../index.js'
+import SessionMiddleware from '../src/session_middleware.js'
+import sessionDriversList from '../src/drivers_collection.js'
+
+const BASE_URL = new URL('./tmp/', import.meta.url)
+const IMPORTER = (filePath: string) => {
+  if (filePath.startsWith('./') || filePath.startsWith('../')) {
+    return import(new URL(filePath, BASE_URL).href)
+  }
+  return import(filePath)
+}
 
 test.group('Session Provider', (group) => {
-  group.each.teardown(async () => {
-    ApiClient.clearSetupHooks()
-    ApiClient.clearTeardownHooks()
-    ApiClient.clearRequestHandlers()
+  group.each.setup(() => {
+    return () => {
+      sessionDriversList.list = {}
+    }
   })
 
-  test('register session provider', async ({ fs, assert }) => {
-    const { app } = await setup(fs)
+  test('register session provider', async ({ assert }) => {
+    const ignitor = new IgnitorFactory()
+      .merge({
+        rcFileContents: {
+          providers: ['../../providers/session_provider.js'],
+        },
+      })
+      .withCoreConfig()
+      .withCoreProviders()
+      .merge({
+        config: {
+          session: defineConfig({
+            driver: 'cookie',
+          }),
+        },
+      })
+      .create(BASE_URL, {
+        importer: IMPORTER,
+      })
 
-    assert.instanceOf(await app.container.make('session'), SessionManager)
-    assert.deepEqual(await app.container.make('session'), await app.container.make('session'))
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
+
+    assert.instanceOf(await app.container.make(SessionMiddleware), SessionMiddleware)
   })
 
-  test('register test api request methods', async ({ assert, fs }) => {
-    await setup(fs, {}, 'test')
+  test('register cookie driver with the driversCollection', async ({ assert }) => {
+    const ignitor = new IgnitorFactory()
+      .merge({
+        rcFileContents: {
+          providers: ['../../providers/session_provider.js'],
+        },
+      })
+      .withCoreConfig()
+      .withCoreProviders()
+      .merge({
+        config: {
+          session: defineConfig({
+            driver: 'cookie',
+          }),
+        },
+      })
+      .create(BASE_URL, {
+        importer: IMPORTER,
+      })
 
-    assert.isTrue(ApiRequest.prototype.hasOwnProperty('session'))
-    assert.isTrue(ApiRequest.prototype.hasOwnProperty('flashMessages'))
-    assert.isTrue(ApiRequest.prototype.hasOwnProperty('sessionClient'))
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
+
+    assert.deepEqual(sessionDriversList.list, {})
+    assert.instanceOf(await app.container.make(SessionMiddleware), SessionMiddleware)
+
+    assert.property(sessionDriversList.list, 'cookie')
+    assert.notProperty(sessionDriversList.list, 'file')
+    assert.notProperty(sessionDriversList.list, 'memory')
+    assert.notProperty(sessionDriversList.list, 'redis')
   })
 
-  test('set session before making the api request', async ({ fs, assert }) => {
-    const { app } = await setup(
-      fs,
-      { session: { driver: 'memory', cookieName: 'adonis-session' } },
-      'test'
-    )
+  test('register file driver with the driversCollection', async ({ fs, assert }) => {
+    const ignitor = new IgnitorFactory()
+      .merge({
+        rcFileContents: {
+          providers: ['../../providers/session_provider.js'],
+        },
+      })
+      .withCoreConfig()
+      .withCoreProviders()
+      .merge({
+        config: {
+          session: defineConfig({
+            driver: 'file',
+            file: {
+              location: fs.basePath,
+            },
+          }),
+        },
+      })
+      .create(BASE_URL, {
+        importer: IMPORTER,
+      })
 
-    const server = createServer(async (req, res) => {
-      const ctx = await createHttpContext(app, req, res)
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
 
-      await ctx.session.initiate(false)
+    assert.deepEqual(sessionDriversList.list, {})
+    assert.instanceOf(await app.container.make(SessionMiddleware), SessionMiddleware)
 
-      try {
-        ctx.response.send(ctx.session.all())
-      } catch (error) {
-        ctx.response.status(500).send(error.stack)
-      }
-
-      ctx.response.finish()
-    })
-    server.listen(3333)
-
-    const client = new ApiClient('http://localhost:3333')
-    const response = await client.get('/').session({ username: 'virk' })
-    server.close()
-
-    assert.deepEqual(response.status(), 200)
-    assert.deepEqual(response.body(), { username: 'virk' })
+    assert.property(sessionDriversList.list, 'file')
+    assert.notProperty(sessionDriversList.list, 'cookie')
+    assert.notProperty(sessionDriversList.list, 'memory')
+    assert.notProperty(sessionDriversList.list, 'redis')
   })
 
-  test('get session data from the response', async ({ fs, assert }) => {
-    const { app } = await setup(
-      fs,
-      { session: { driver: 'memory', cookieName: 'adonis-session' } },
-      'test'
-    )
+  test('register redis driver with the driversCollection', async ({ assert }) => {
+    const ignitor = new IgnitorFactory()
+      .merge({
+        rcFileContents: {
+          providers: ['../../providers/session_provider.js', '@adonisjs/redis/redis_provider'],
+        },
+      })
+      .withCoreConfig()
+      .withCoreProviders()
+      .merge({
+        config: {
+          session: defineConfig({
+            driver: 'redis',
+            redis: {
+              connection: 'main',
+            },
+          }),
+        },
+      })
+      .create(BASE_URL, {
+        importer: IMPORTER,
+      })
 
-    const server = createServer(async (req, res) => {
-      const ctx = await createHttpContext(app, req, res)
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
 
-      await ctx.session.initiate(false)
-      ctx.session.put('username', 'virk')
-      await ctx.session.commit()
+    assert.deepEqual(sessionDriversList.list, {})
+    assert.instanceOf(await app.container.make(SessionMiddleware), SessionMiddleware)
 
-      ctx.response.finish()
-    })
-    server.listen(3333)
-
-    const client = new ApiClient('http://localhost:3333', assert)
-    const response = await client.get('/')
-    server.close()
-
-    assert.equal(MemoryDriver.sessions.size, 0)
-    assert.deepEqual(response.status(), 200)
-
-    response.assertSession('username', 'virk')
-    response.assertSessionMissing('age')
+    assert.property(sessionDriversList.list, 'redis')
+    assert.notProperty(sessionDriversList.list, 'cookie')
+    assert.notProperty(sessionDriversList.list, 'memory')
+    assert.notProperty(sessionDriversList.list, 'file')
   })
 
-  test('get flash messages from the response', async ({ fs, assert }) => {
-    const { app } = await setup(
-      fs,
-      { session: { driver: 'memory', cookieName: 'adonis-session' } },
-      'test'
-    )
+  test('register memory driver with the driversCollection', async ({ assert }) => {
+    const ignitor = new IgnitorFactory()
+      .merge({
+        rcFileContents: {
+          providers: ['../../providers/session_provider.js'],
+        },
+      })
+      .withCoreConfig()
+      .withCoreProviders()
+      .merge({
+        config: {
+          session: defineConfig({
+            driver: 'memory',
+          }),
+        },
+      })
+      .create(BASE_URL, {
+        importer: IMPORTER,
+      })
 
-    const server = createServer(async (req, res) => {
-      const ctx = await createHttpContext(app, req, res)
+    const app = ignitor.createApp('web')
+    await app.init()
+    await app.boot()
 
-      await ctx.session.initiate(false)
-      ctx.session.flash({ username: 'virk' })
-      await ctx.session.commit()
+    assert.deepEqual(sessionDriversList.list, {})
+    assert.instanceOf(await app.container.make(SessionMiddleware), SessionMiddleware)
 
-      ctx.response.finish()
-    })
-    server.listen(3333)
-
-    const client = new ApiClient('http://localhost:3333', assert)
-    const response = await client.get('/')
-    server.close()
-
-    assert.equal(MemoryDriver.sessions.size, 0)
-    assert.deepEqual(response.status(), 200)
-
-    response.assertFlashMessage('username', 'virk')
-    response.assertFlashMissing('age')
-  })
-
-  test('destroy session when request fails', async ({ fs, assert }) => {
-    const { app } = await setup(
-      fs,
-      { session: { driver: 'memory', cookieName: 'adonis-session' } },
-      'test'
-    )
-
-    const server = createServer(async (req, res) => {
-      const ctx = await createHttpContext(app, req, res)
-
-      await ctx.session.initiate(false)
-      ctx.session.put('username', 'virk')
-      await ctx.session.commit()
-
-      ctx.response.status(500).send('Server error')
-      ctx.response.finish()
-    })
-    server.listen(3333)
-
-    const client = new ApiClient('http://localhost:3333', assert)
-    await assert.rejects(() => client.get('/'))
-    server.close()
-
-    assert.equal(MemoryDriver.sessions.size, 0)
+    assert.property(sessionDriversList.list, 'memory')
+    assert.notProperty(sessionDriversList.list, 'cookie')
+    assert.notProperty(sessionDriversList.list, 'redis')
+    assert.notProperty(sessionDriversList.list, 'file')
   })
 })

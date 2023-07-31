@@ -3,8 +3,5 @@
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "./build",
-    "types": [
-      "@adonisjs/view"
-    ]
   },
 }

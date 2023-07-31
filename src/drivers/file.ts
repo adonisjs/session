@@ -13,7 +13,7 @@ import string from '@poppinss/utils/string'
 import { MessageBuilder } from '@poppinss/utils'
 import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 
-import type { FileDriverConfig, SessionData, SessionDriverContract } from '../types.js'
+import type { FileDriverConfig, SessionData, SessionDriverContract } from '../types/main.js'
 
 /**
  * File driver writes the session data on the file system as. Each session

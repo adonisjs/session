@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { SessionData, SessionDriverContract } from '../types.js'
+import type { SessionData, SessionDriverContract } from '../types/main.js'
 
 /**
  * Memory driver is meant to be used for writing tests.

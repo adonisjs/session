@@ -8,18 +8,13 @@
  */
 
 import type { HttpContext } from '@adonisjs/core/http'
+import { RedisConnections } from '@adonisjs/redis/types'
 import type { CookieOptions } from '@adonisjs/core/types/http'
-import type { SessionManager } from './session_manager.js'
 
-/**
- * The callback to be passed to the `extend` method. It is invoked
- * for each request (if extended driver is in use).
- */
-export type ExtendCallback = (
-  manager: SessionManager,
-  config: SessionConfig,
-  ctx: HttpContext
-) => SessionDriverContract
+import type { FileDriver } from '../drivers/file.js'
+import type { RedisDriver } from '../drivers/redis.js'
+import type { MemoryDriver } from '../drivers/memory.js'
+import type { CookieDriver } from '../drivers/cookie.js'
 
 /**
  * The values allowed by the `session.put` method
@@ -68,7 +63,7 @@ export interface SessionConfig {
   /**
    * The drivers to use
    */
-  driver: string
+  driver: keyof SessionDriversList
 
   /**
    * The name of the cookie for storing the session id.
@@ -90,6 +85,8 @@ export interface SessionConfig {
    *
    * The session id cookie will also live for the same duration, unless
    * "clearWithBrowser" is enabled
+   *
+   * The value should be a time expression or a number in seconds
    */
   age: string | number
 
@@ -98,17 +95,37 @@ export interface SessionConfig {
    * session id cookie.
    */
   cookie: Omit<Partial<CookieOptions>, 'maxAge' | 'expires'>
+}
 
-  /**
-   * Configuration used by the file driver.
-   */
-  file?: {
-    location: string
-  }
+/**
+ * Configuration used by the file driver.
+ */
+export type FileDriverConfig = {
+  location: string
+}
 
-  /**
-   * Reference to the redis connection name to use for
-   * storing the session data.
-   */
-  redisConnection?: string
+/**
+ * Configuration used by the redis driver.
+ */
+export type RedisDriverConfig = {
+  connection: keyof RedisConnections
+}
+
+/**
+ * Extending session config with the drivers config
+ */
+export interface SessionConfig {
+  file?: FileDriverConfig
+  redis?: RedisDriverConfig
+}
+
+/**
+ * List of the session drivers. The list can be extended using
+ * declaration merging
+ */
+export interface SessionDriversList {
+  file: (config: SessionConfig, ctx: HttpContext) => FileDriver
+  cookie: (config: SessionConfig, ctx: HttpContext) => CookieDriver
+  redis: (config: SessionConfig, ctx: HttpContext) => RedisDriver
+  memory: (config: SessionConfig, ctx: HttpContext) => MemoryDriver
 }

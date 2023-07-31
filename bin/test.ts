@@ -1,4 +1,5 @@
 import { assert } from '@japa/assert'
+import { snapshot } from '@japa/snapshot'
 import { fileSystem } from '@japa/file-system'
 import { processCLIArgs, configure, run } from '@japa/runner'
 
@@ -17,8 +18,8 @@ import { processCLIArgs, configure, run } from '@japa/runner'
 */
 processCLIArgs(process.argv.slice(2))
 configure({
-  files: ['tests/file_driver.spec.ts'],
-  plugins: [assert(), fileSystem()],
+  files: ['tests/**/*.spec.ts'],
+  plugins: [assert(), fileSystem(), snapshot()],
   forceExit: true,
 })
 

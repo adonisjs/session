@@ -9,7 +9,7 @@
 
 import type { HttpContext } from '@adonisjs/core/http'
 import { CookieOptions } from '@adonisjs/core/types/http'
-import type { SessionData, SessionDriverContract } from '../types.js'
+import type { SessionData, SessionDriverContract } from '../types/main.js'
 
 /**
  * Cookie driver stores the session data inside an encrypted

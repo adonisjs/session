@@ -11,7 +11,7 @@ import string from '@poppinss/utils/string'
 import { MessageBuilder } from '@poppinss/utils'
 import type { RedisService } from '@adonisjs/redis/types'
 
-import type { SessionDriverContract, RedisDriverConfig, SessionData } from '../types.js'
+import type { SessionDriverContract, RedisDriverConfig, SessionData } from '../types/main.js'
 
 /**
  * File driver to read/write session to filesystem

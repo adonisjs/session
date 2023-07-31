@@ -10,7 +10,7 @@
 import lodash from '@poppinss/utils/lodash'
 import { RuntimeException } from '@poppinss/utils'
 
-import type { AllowedSessionValues, SessionData } from './types.js'
+import type { AllowedSessionValues, SessionData } from './types/main.js'
 
 /**
  * Session store encapsulates the session data and offers a

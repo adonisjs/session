@@ -7,58 +7,30 @@
  * file that was distributed with this source code.
  */
 
-import type { SessionManager } from '../src/session_manager.js'
 import type { ApplicationService } from '@adonisjs/core/types'
-import { extendHttpContext } from '../src/bindings/http_context.js'
+
+import { registerSessionDriver } from '../src/helpers.js'
 import SessionMiddleware from '../src/session_middleware.js'
 
+/**
+ * Session provider configures the session management inside an
+ * AdonisJS application
+ */
 export default class SessionProvider {
   constructor(protected app: ApplicationService) {}
 
-  /**
-   * Register Session Manager in the container
-   */
-  async register() {
-    this.app.container.singleton('session', async () => {
-      const { SessionManager } = await import('../src/session_manager.js')
-
-      const encryption = await this.app.container.make('encryption')
-      const redis = await this.app.container.make('redis').catch(() => undefined)
+  register() {
+    this.app.container.bind(SessionMiddleware, async (resolver) => {
       const config = this.app.config.get<any>('session', {})
-
-      return new SessionManager(config, encryption, redis)
-    })
-
-    this.app.container.bind(SessionMiddleware, async () => {
-      const session = await this.app.container.make('session')
-      return new SessionMiddleware(session)
+      const emitter = await resolver.make('emitter')
+      return new SessionMiddleware(config, emitter)
     })
   }
 
-  /**
-   * Register Japa API Client bindings
-   */
-  async #registerApiClientBindings(session: SessionManager) {
-    if (this.app.getEnvironment() === 'test') {
-      const { extendApiClient } = await import('../src/bindings/api_client.js')
-      extendApiClient(session)
-    }
-  }
-
-  /**
-   * Register bindings
-   */
   async boot() {
-    const session = await this.app.container.make('session')
-
-    /**
-     * Add `session` getter to the HttpContext class
-     */
-    extendHttpContext(session)
-
-    /**
-     * Extend Japa API Client
-     */
-    await this.#registerApiClientBindings(session)
+    this.app.container.resolving(SessionMiddleware, async () => {
+      const config = this.app.config.get<any>('session')
+      await registerSessionDriver(this.app, config.driver)
+    })
   }
 }

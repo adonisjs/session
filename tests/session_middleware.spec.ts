@@ -1,5 +1,5 @@
-/*
- * @adonisjs/cors
+/**
+ * @adonisjs/session
  *
  * (c) AdonisJS
  *
@@ -9,40 +9,85 @@
 
 import supertest from 'supertest'
 import { test } from '@japa/runner'
-import { createServer } from 'node:http'
+import setCookieParser from 'set-cookie-parser'
+import { CookieClient } from '@adonisjs/core/http'
+import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
+import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import SessionMiddleware from '../src/session_middleware.js'
-import { createHttpContext, setup, unsignCookie } from '../test_helpers/index.js'
+import { httpServer } from '../test_helpers/index.js'
+import { CookieDriver } from '../src/drivers/cookie.js'
+import type { SessionConfig } from '../src/types/main.js'
+import sessionDriversList from '../src/drivers_collection.js'
+import { SessionMiddlewareFactory } from '../factories/session_middleware_factory.js'
 
-test.group('Session', () => {
-  test('should initiate and commit the session', async ({ assert, fs }) => {
-    assert.plan(3)
+const encryption = new EncryptionFactory().create()
+const cookieClient = new CookieClient(encryption)
+const sessionConfig: SessionConfig = {
+  enabled: true,
+  age: '2 hours',
+  clearWithBrowser: false,
+  cookieName: 'adonis_session',
+  driver: 'cookie',
+  cookie: {},
+}
 
-    const { app } = await setup(fs, {
-      session: {
-        enabled: true,
-        cookieName: 'adonis-session',
-        driver: 'file',
-        file: { location: fs.basePath },
-      },
-    })
+test.group('Session middleware', () => {
+  test('initiate and commit session around request', async ({ assert }) => {
+    let sessionId: string | undefined
 
-    const server = createServer(async (req, res) => {
-      const session = await app.container.make('session')
-      const middleware = new SessionMiddleware(session)
-      const ctx = await createHttpContext(app, req, res)
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const middleware = await new SessionMiddlewareFactory()
+        .merge({
+          config: sessionConfig,
+        })
+        .create()
+
       await middleware.handle(ctx, () => {
-        assert.isTrue(ctx.session.initiated)
-        ctx.session.put('username', 'jul')
+        sessionId = ctx.session.sessionId
+        ctx.session.put('username', 'virk')
+        ctx.session.flash({ status: 'Completed' })
       })
+
       ctx.response.finish()
     })
 
-    const { header } = await supertest(server).get('/')
-    const sessionId = await unsignCookie(app, header, 'adonis-session')
+    const { headers } = await supertest(server).get('/')
 
-    await assert.fileExists(`${sessionId}.txt`)
-    const content = await fs.contentsJson(`${sessionId}.txt`)
-    assert.deepInclude(content, { message: { username: 'jul' } })
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      username: 'virk',
+      __flash__: {
+        status: 'Completed',
+      },
+    })
+  })
+
+  test('do not initiate session when not enabled', async ({ assert }) => {
+    sessionDriversList.extend('cookie', (config, ctx) => new CookieDriver(config.cookie, ctx))
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const middleware = await new SessionMiddlewareFactory()
+        .merge({
+          config: { ...sessionConfig, enabled: false },
+        })
+        .create()
+
+      await middleware.handle(ctx, () => {})
+      assert.isUndefined(ctx.session)
+      ctx.response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+    assert.deepEqual(cookies, {})
   })
 })
