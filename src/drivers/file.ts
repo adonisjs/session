@@ -13,17 +13,17 @@ import string from '@poppinss/utils/string'
 import { MessageBuilder } from '@poppinss/utils'
 import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 
-import type { SessionData, SessionDriverContract } from '../types.js'
+import type { FileDriverConfig, SessionData, SessionDriverContract } from '../types.js'
 
 /**
  * File driver writes the session data on the file system as. Each session
  * id gets its own file.
  */
 export class FileDriver implements SessionDriverContract {
-  #config: { location: string }
+  #config: FileDriverConfig
   #age: string | number
 
-  constructor(config: { location: string }, age: string | number) {
+  constructor(config: FileDriverConfig, age: string | number) {
     this.#config = config
     this.#age = age
   }
@@ -111,12 +111,7 @@ export class FileDriver implements SessionDriverContract {
      * method can fail when the contents is not JSON>
      */
     try {
-      const verifiedContents = new MessageBuilder().verify<SessionData>(contents, sessionId)
-      if (typeof verifiedContents !== 'object') {
-        return null
-      }
-
-      return verifiedContents
+      return new MessageBuilder().verify<SessionData>(contents, sessionId)
     } catch {
       return null
     }
