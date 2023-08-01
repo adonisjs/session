@@ -21,8 +21,8 @@ In order to ensure that the AdonisJS community is welcoming to all, please revie
 ## License
 AdonisJS session is open-sourced software licensed under the [MIT license](LICENSE.md).
 
-[gh-workflow-image]: https://img.shields.io/github/actions/workflow/status/adonisjs/session/test.yml?style=for-the-badge
-[gh-workflow-url]: https://github.com/adonisjs/session/actions/workflows/test.yml "Github action"
+[gh-workflow-image]: https://img.shields.io/github/actions/workflow/status/adonisjs/session/checks.yml?style=for-the-badge
+[gh-workflow-url]: https://github.com/adonisjs/session/actions/workflows/checks.yml "Github action"
 
 [npm-image]: https://img.shields.io/npm/v/@adonisjs/session/latest.svg?style=for-the-badge&logo=npm
 [npm-url]: https://www.npmjs.com/package/@adonisjs/session/v/latest "npm"
