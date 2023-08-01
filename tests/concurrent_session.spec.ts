@@ -302,7 +302,11 @@ test.group('Concurrency | file driver', () => {
   }).timeout(6000)
 })
 
-test.group('Concurrency | redis driver', () => {
+test.group('Concurrency | redis driver', (group) => {
+  group.tap((t) => {
+    t.skip(!!process.env.NO_REDIS, 'Redis not available in windows env')
+  })
+
   test('concurrently read and read slowly', async ({ assert, cleanup }) => {
     let sessionId = cuid()
     cleanup(async () => {

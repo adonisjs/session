@@ -31,6 +31,10 @@ declare module '@adonisjs/redis/types' {
 }
 
 test.group('Redis driver', (group) => {
+  group.tap((t) => {
+    t.skip(!!process.env.NO_REDIS, 'Redis not available in windows env')
+  })
+
   group.each.setup(() => {
     return async () => {
       await redis.del(sessionId)
