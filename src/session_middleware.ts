@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { HttpContext } from '@adonisjs/core/http'
 import { EmitterService } from '@adonisjs/core/types'
 import type { NextFn } from '@adonisjs/core/types/http'
+import { ExceptionHandler, HttpContext } from '@adonisjs/core/http'
 
 import { Session } from './session.js'
 import type { SessionConfig } from './types/main.js'
@@ -23,6 +23,19 @@ declare module '@adonisjs/core/http' {
     session: Session
   }
 }
+
+/**
+ * Overwriting validation exception renderer
+ */
+const originalErrorHandler = ExceptionHandler.prototype.renderValidationErrorAsHTML
+ExceptionHandler.macro('renderValidationErrorAsHTML', async function (error, ctx) {
+  if (ctx.session) {
+    ctx.session.flashValidationErrors(error)
+    ctx.response.redirect('back', true)
+  } else {
+    return originalErrorHandler(error, ctx)
+  }
+})
 
 /**
  * Session middleware is used to initiate the session store

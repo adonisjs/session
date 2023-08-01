@@ -13,7 +13,9 @@ import { cuid } from '@adonisjs/core/helpers'
 import setCookieParser from 'set-cookie-parser'
 import { Emitter } from '@adonisjs/core/events'
 import { EventsList } from '@adonisjs/core/types'
+import { SimpleErrorReporter } from '@vinejs/vine'
 import { CookieClient } from '@adonisjs/core/http'
+import { fieldContext } from '@vinejs/vine/factories'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
@@ -890,4 +892,46 @@ test.group('Session | Flash', () => {
     await session.initiate(true)
     session.flash('username', 'foo')
   }).throws('Session store is in readonly mode and cannot be mutated')
+
+  test('flash validation error messages', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+
+      const errorReporter = new SimpleErrorReporter()
+      errorReporter.report('Invalid username', 'alpha', fieldContext.create('username', ''), {})
+      errorReporter.report(
+        'Username is required',
+        'required',
+        fieldContext.create('username', ''),
+        {}
+      )
+      errorReporter.report('Invalid email', 'email', fieldContext.create('email', ''), {})
+
+      session.flashValidationErrors(errorReporter.createError())
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
+        errors: {
+          email: ['Invalid email'],
+          username: ['Invalid username', 'Username is required'],
+        },
+      },
+    })
+  })
 })

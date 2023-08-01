@@ -40,7 +40,7 @@
     "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts"
   },
   "devDependencies": {
-    "@adonisjs/core": "^6.1.5-12",
+    "@adonisjs/core": "^6.1.5-14",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",
     "@adonisjs/redis": "^8.0.0-8",
@@ -55,6 +55,7 @@
     "@types/node": "^20.4.2",
     "@types/set-cookie-parser": "^2.4.3",
     "@types/supertest": "^2.0.12",
+    "@vinejs/vine": "^1.6.0",
     "c8": "^8.0.0",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",

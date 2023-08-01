@@ -21,6 +21,7 @@ import type {
   SessionDriverContract,
 } from './types/main.js'
 import debug from './debug.js'
+import { HttpError } from '@adonisjs/core/types/http'
 
 /**
  * The session class exposes the API to read and write values to
@@ -271,6 +272,24 @@ export class Session {
    */
   clear() {
     return this.#getStore('write').clear()
+  }
+
+  /**
+   * Flash validation error messages. Make sure the error
+   * is an instance of VineJS ValidationException
+   */
+  flashValidationErrors(error: HttpError) {
+    const errorsBag = error.messages.reduce((result: Record<string, string[]>, message: any) => {
+      if (result[message.field]) {
+        result[message.field].push(message.message)
+      } else {
+        result[message.field] = [message.message]
+      }
+      return result
+    }, {})
+
+    this.flashExcept(['_csrf', '_method'])
+    this.flash('errors', errorsBag)
   }
 
   /**
