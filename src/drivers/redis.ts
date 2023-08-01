@@ -12,6 +12,7 @@ import { MessageBuilder } from '@poppinss/utils'
 import type { RedisService } from '@adonisjs/redis/types'
 
 import type { SessionDriverContract, RedisDriverConfig, SessionData } from '../types/main.js'
+import debug from '../debug.js'
 
 /**
  * File driver to read/write session to filesystem
@@ -25,6 +26,7 @@ export class RedisDriver implements SessionDriverContract {
     this.#config = config
     this.#redis = redis
     this.#ttlSeconds = string.seconds.parse(age)
+    debug('initiating redis driver %O', this.#config)
   }
 
   /**
@@ -32,6 +34,8 @@ export class RedisDriver implements SessionDriverContract {
    * missing.
    */
   async read(sessionId: string): Promise<SessionData | null> {
+    debug('redis driver: reading session data %s', sessionId)
+
     const contents = await this.#redis.connection(this.#config.connection).get(sessionId)
     if (!contents) {
       return null
@@ -52,6 +56,8 @@ export class RedisDriver implements SessionDriverContract {
    * Write session values to a file
    */
   async write(sessionId: string, values: Object): Promise<void> {
+    debug('redis driver: writing session data %s, %O', sessionId, values)
+
     const message = new MessageBuilder().build(values, undefined, sessionId)
     await this.#redis
       .connection(this.#config.connection)
@@ -62,6 +68,7 @@ export class RedisDriver implements SessionDriverContract {
    * Cleanup session file by removing it
    */
   async destroy(sessionId: string): Promise<void> {
+    debug('redis driver: destroying session data %s', sessionId)
     await this.#redis.connection(this.#config.connection).del(sessionId)
   }
 
@@ -69,6 +76,7 @@ export class RedisDriver implements SessionDriverContract {
    * Updates the value expiry
    */
   async touch(sessionId: string): Promise<void> {
+    debug('redis driver: touching session data %s', sessionId)
     await this.#redis.connection(this.#config.connection).expire(sessionId, this.#ttlSeconds)
   }
 }

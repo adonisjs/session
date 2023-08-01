@@ -20,6 +20,7 @@ import type {
   AllowedSessionValues,
   SessionDriverContract,
 } from './types/main.js'
+import debug from './debug.js'
 
 /**
  * The session class exposes the API to read and write values to
@@ -176,6 +177,8 @@ export class Session {
       return
     }
 
+    debug('initiating session (readonly: %s)', readonly)
+
     this.#readonly = readonly
     const contents = await this.#driver.read(this.#sessionId)
     this.#store = new Store(contents)
@@ -185,6 +188,7 @@ export class Session {
      * copy of it.
      */
     if (this.has(this.flashKey)) {
+      debug('reading flash data')
       if (this.#readonly) {
         this.flashMessages.update(this.get(this.flashKey, null))
       } else {
@@ -352,6 +356,8 @@ export class Session {
       const { input, reflashed, ...others } = this.responseFlashMessages.all()
       this.put(this.flashKey, { ...reflashed, ...input, ...others })
     }
+
+    debug('committing session data')
 
     /**
      * Touch the session id cookie to stay alive

@@ -12,6 +12,7 @@ import { InvalidArgumentsException } from '@poppinss/utils'
 import type { CookieOptions } from '@adonisjs/core/types/http'
 
 import type { SessionConfig } from './types/main.js'
+import debug from './debug.js'
 
 /**
  * Helper to normalize session config
@@ -35,6 +36,7 @@ export function defineConfig(
    * not a session cookie.
    */
   if (!clearWithBrowser) {
+    debug('computing maxAge for session id cookie')
     cookieOptions.maxAge = string.seconds.parse(config.age || age)
   }
 

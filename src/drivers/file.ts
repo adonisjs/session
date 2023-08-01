@@ -14,6 +14,7 @@ import { MessageBuilder } from '@poppinss/utils'
 import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 
 import type { FileDriverConfig, SessionData, SessionDriverContract } from '../types/main.js'
+import debug from '../debug.js'
 
 /**
  * File driver writes the session data on the file system as. Each session
@@ -26,6 +27,7 @@ export class FileDriver implements SessionDriverContract {
   constructor(config: FileDriverConfig, age: string | number) {
     this.#config = config
     this.#age = age
+    debug('initiating file driver %O', this.#config)
   }
 
   /**
@@ -79,6 +81,7 @@ export class FileDriver implements SessionDriverContract {
    */
   async read(sessionId: string): Promise<SessionData | null> {
     const filePath = this.#getFilePath(sessionId)
+    debug('file driver: reading session data %', sessionId)
 
     /**
      * Return null when no session id file exists in first
@@ -94,6 +97,7 @@ export class FileDriver implements SessionDriverContract {
      */
     const sessionWillExpireAt = stats.mtimeMs + string.milliseconds.parse(this.#age)
     if (Date.now() > sessionWillExpireAt) {
+      debug('file driver: expired session data %s', sessionId)
       return null
     }
 
@@ -121,6 +125,8 @@ export class FileDriver implements SessionDriverContract {
    * Writes the session data to the disk as a string
    */
   async write(sessionId: string, values: SessionData): Promise<void> {
+    debug('file driver: writing session data %s: %O', sessionId, values)
+
     const filePath = this.#getFilePath(sessionId)
     const message = new MessageBuilder().build(values, undefined, sessionId)
 
@@ -131,6 +137,7 @@ export class FileDriver implements SessionDriverContract {
    * Removes the session file from the disk
    */
   async destroy(sessionId: string): Promise<void> {
+    debug('file driver: destroying session data %s', sessionId)
     await rm(this.#getFilePath(sessionId), { force: true })
   }
 
@@ -139,6 +146,7 @@ export class FileDriver implements SessionDriverContract {
    * persistence store
    */
   async touch(sessionId: string): Promise<void> {
+    debug('file driver: touching session data %s', sessionId)
     await utimes(this.#getFilePath(sessionId), new Date(), new Date())
   }
 }
