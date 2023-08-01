@@ -20,7 +20,7 @@ export default class SessionProvider {
   constructor(protected app: ApplicationService) {}
 
   register() {
-    this.app.container.bind(SessionMiddleware, async (resolver) => {
+    this.app.container.singleton(SessionMiddleware, async (resolver) => {
       const config = this.app.config.get<any>('session', {})
       const emitter = await resolver.make('emitter')
       return new SessionMiddleware(config, emitter)
