@@ -9,6 +9,7 @@
 
 import type { ApplicationService } from '@adonisjs/core/types'
 
+import debug from './debug.js'
 import sessionDriversList from './drivers_collection.js'
 import type { SessionDriversList } from './types/main.js'
 
@@ -19,6 +20,8 @@ export async function registerSessionDriver(
   app: ApplicationService,
   driverInUse: keyof SessionDriversList
 ) {
+  debug('registering %s driver', driverInUse)
+
   if (driverInUse === 'cookie') {
     const { CookieDriver } = await import('../src/drivers/cookie.js')
     sessionDriversList.extend('cookie', (config, ctx) => new CookieDriver(config.cookie, ctx))
