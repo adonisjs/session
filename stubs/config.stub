@@ -7,107 +7,45 @@ import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/session'
 
 export default defineConfig({
-  /*
-  |--------------------------------------------------------------------------
-  | Enable/Disable sessions
-  |--------------------------------------------------------------------------
-  |
-  | Setting the following property to "false" will disable the session for the
-  | entire application
-  |
-  */
   enabled: true,
-
-  /*
-  |--------------------------------------------------------------------------
-  | Driver
-  |--------------------------------------------------------------------------
-  |
-  | The session driver to use. You can choose between one of the following
-  | drivers.
-  |
-  | - cookie (Uses signed cookies to store session values)
-  | - file (Uses filesystem to store session values)
-  | - redis (Uses redis. Make sure to install "@adonisjs/redis" as well)
-  |
-  | Note: Switching drivers will make existing sessions invalid.
-  |
-  */
-  driver: env.get('SESSION_DRIVER'),
-
-  /*
-  |--------------------------------------------------------------------------
-  | Cookie name
-  |--------------------------------------------------------------------------
-  |
-  | The name of the cookie that will hold the session id.
-  |
-  */
   cookieName: 'adonis-session',
 
-  /*
-  |--------------------------------------------------------------------------
-  | Clear session when browser closes
-  |--------------------------------------------------------------------------
-  |
-  | Whether or not you want to destroy the session when browser closes. Setting
-  | this value to "true" will ignore the "age".
-  |
-  */
+  /**
+   * When set to true, the session id cookie will be deleted
+   * once the user closes the browser.
+   */
   clearWithBrowser: false,
 
-  /*
-  |--------------------------------------------------------------------------
-  | Session age
-  |--------------------------------------------------------------------------
-  |
-  | The duration for which session stays active after no activity. A new HTTP
-  | request to the server is considered as activity.
-  |
-  | The value can be a number in milliseconds or a string that must be valid
-  | as per https://npmjs.org/package/ms package.
-  |
-  | Example: "2 days", "2.5 hrs", "1y", "5s" and so on.
-  |
-  */
+  /**
+   * Define how long to keep the session data alive without
+   * any activity.
+   */
   age: '2h',
 
-  /*
-  |--------------------------------------------------------------------------
-  | Cookie values
-  |--------------------------------------------------------------------------
-  |
-  | The cookie settings are used to setup the session id cookie and also the
-  | driver will use the same values.
-  |
-  */
+  /**
+   * The driver to use. Make sure to validate the environment
+   * variable in order to infer the driver name without any
+   * errors.
+   */
+  driver: env.get('SESSION_DRIVER'),
+
   cookie: {
     path: '/',
     httpOnly: true,
     sameSite: false,
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | Configuration for the file driver
-  |--------------------------------------------------------------------------
-  |
-  | The file driver needs absolute path to the directory in which sessions
-  | must be stored.
-  |
-  */
-  file: {
-    location: app.tmpPath('sessions'),
-  },
+  /**
+   * Settings for the file driver
+   */
+  // file: {
+  //   location: app.tmpPath('sessions'),
+  // },
 
-  /*
-  |--------------------------------------------------------------------------
-  | Redis driver
-  |--------------------------------------------------------------------------
-  |
-  | The redis connection you want session driver to use. The same connection
-  | must be defined inside "config/redis.ts" file as well.
-  |
-  */
-  redisConnection: 'local',
+  /**
+   * Settings for the redis driver
+   */
+  // redis: {
+  //   connection: 'main'
+  // },
 })
