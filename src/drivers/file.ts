@@ -10,7 +10,7 @@
 import type { Stats } from 'node:fs'
 import { dirname, join } from 'node:path'
 import string from '@poppinss/utils/string'
-import { MessageBuilder } from '@poppinss/utils'
+import { MessageBuilder } from '@adonisjs/core/helpers'
 import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 
 import type { FileDriverConfig, SessionData, SessionDriverContract } from '../types/main.js'

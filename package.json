@@ -40,7 +40,7 @@
     "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts"
   },
   "devDependencies": {
-    "@adonisjs/core": "^6.1.5-14",
+    "@adonisjs/core": "^6.1.5-15",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",
     "@adonisjs/redis": "^8.0.0-8",
@@ -74,8 +74,8 @@
     "@poppinss/utils": "^6.5.0-5"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^6.1.5-12",
-    "@adonisjs/redis": "^8.0.0-7"
+    "@adonisjs/core": "^6.1.5-15",
+    "@adonisjs/redis": "^8.0.0-8"
   },
   "peerDependenciesMeta": {
     "@adonisjs/redis": {

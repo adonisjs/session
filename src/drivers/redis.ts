@@ -8,7 +8,7 @@
  */
 
 import string from '@poppinss/utils/string'
-import { MessageBuilder } from '@poppinss/utils'
+import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { RedisService } from '@adonisjs/redis/types'
 
 import type { SessionDriverContract, RedisDriverConfig, SessionData } from '../types/main.js'
