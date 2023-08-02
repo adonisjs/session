@@ -1,5 +1,5 @@
 /*
- * @adonisjs/redis
+ * @adonisjs/session
  *
  * (c) AdonisJS
  *
@@ -44,7 +44,7 @@ class SessionDriversCollection {
     const driverFactory = this.list[name]
     if (!driverFactory) {
       throw new RuntimeException(
-        `Unknown redis driver "${String(name)}". Make sure the driver is registered`
+        `Unknown session driver "${String(name)}". Make sure the driver is registered`
       )
     }
 

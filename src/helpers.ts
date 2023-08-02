@@ -20,6 +20,13 @@ export async function registerSessionDriver(
   app: ApplicationService,
   driverInUse: keyof SessionDriversList
 ) {
+  /**
+   * Noop when the driver is already registered
+   */
+  if (sessionDriversList.list[driverInUse]) {
+    return
+  }
+
   debug('registering %s driver', driverInUse)
 
   if (driverInUse === 'cookie') {
