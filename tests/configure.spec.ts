@@ -35,6 +35,9 @@ test.group('Configure', (group) => {
       })
 
     await fs.create('.env', '')
+    await fs.createJson('tsconfig.json', {})
+    await fs.create('start/env.ts', `export default Env.create(new URL('./'), {})`)
+    await fs.create('adonisrc.ts', `export default defineConfig({}) {}`)
 
     const app = ignitor.createApp('web')
     await app.init()
@@ -45,9 +48,13 @@ test.group('Configure', (group) => {
     await command.exec()
 
     await assert.fileExists('config/session.ts')
-    await assert.fileExists('.adonisrc.json')
-    await assert.fileContains('.adonisrc.json', '@adonisjs/session/session_provider')
+    await assert.fileExists('adonisrc.ts')
+    await assert.fileContains('adonisrc.ts', '@adonisjs/session/session_provider')
     await assert.fileContains('config/session.ts', 'defineConfig')
     await assert.fileContains('.env', 'SESSION_DRIVER=cookie')
+    await assert.fileContains(
+      'start/env.ts',
+      `SESSION_DRIVER: Env.schema.enum(['cookie', 'redis', 'file', 'memory' as const])`
+    )
   })
 })
