@@ -36,6 +36,15 @@ export async function configure(command: Configure) {
   })
 
   /**
+   * Register middleware
+   */
+  await codemods.registerMiddleware('router', [
+    {
+      path: '@adonisjs/session/session_middleware',
+    },
+  ])
+
+  /**
    * Register provider
    */
   await codemods.updateRcFile((rcFile) => {
