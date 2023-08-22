@@ -18,15 +18,17 @@ export async function configure(command: Configure) {
    */
   await command.publishStub('config.stub')
 
+  const codemods = await command.createCodemods()
+
   /**
    * Define environment variables
    */
-  await command.defineEnvVariables({ SESSION_DRIVER: 'cookie' })
+  await codemods.defineEnvVariables({ SESSION_DRIVER: 'cookie' })
 
   /**
    * Define environment variables validations
    */
-  await command.defineEnvValidations({
+  await codemods.defineEnvValidations({
     variables: {
       SESSION_DRIVER: `Env.schema.enum(['cookie', 'redis', 'file', 'memory' as const])`,
     },
@@ -36,7 +38,7 @@ export async function configure(command: Configure) {
   /**
    * Register provider
    */
-  await command.updateRcFile((rcFile) => {
+  await codemods.updateRcFile((rcFile) => {
     rcFile.addProvider('@adonisjs/session/session_provider')
   })
 }
