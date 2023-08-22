@@ -205,6 +205,9 @@ export class Session {
       this.#ctx.view.share({
         session: new ReadOnlyStore(this.#store.all()),
         flashMessages: new ReadOnlyStore(this.flashMessages.all()),
+        old: function (key: string, defaultValue?: any) {
+          return this.flashMessages.get(key, defaultValue)
+        },
       })
     }
 

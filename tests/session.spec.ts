@@ -31,6 +31,7 @@ import { Session } from '../src/session.js'
 import { httpServer } from '../test_helpers/index.js'
 import { CookieDriver } from '../src/drivers/cookie.js'
 import type { SessionConfig } from '../src/types/main.js'
+import SessionProvider from '../providers/session_provider.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 const emitter = new Emitter<EventsList>(app)
@@ -45,7 +46,17 @@ const sessionConfig: SessionConfig = {
   cookie: {},
 }
 
-test.group('Session', () => {
+test.group('Session', (group) => {
+  group.setup(async () => {
+    const router = new RouterFactory().create()
+    await app.init()
+
+    app.container.singleton('router', () => router)
+
+    await new EdgeServiceProvider(app).boot()
+    await new SessionProvider(app).boot()
+  })
+
   test('do not define session id cookie when not initiated', async ({ assert }) => {
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -386,12 +397,6 @@ test.group('Session', () => {
 
   test('share session data with templates', async ({ assert }) => {
     let sessionId = cuid()
-
-    const router = new RouterFactory().create()
-    await app.init()
-
-    app.container.singleton('router', () => router)
-    await new EdgeServiceProvider(app).boot()
 
     edge.registerTemplate('welcome', {
       template: `The user age is {{ session.get('age') }}`,
@@ -813,54 +818,6 @@ test.group('Session | Flash', () => {
     assert.equal(newCookies[sessionId!].maxAge, -1)
   })
 
-  test('access flash messages inside templates', async ({ assert }) => {
-    let sessionId: string | undefined
-
-    const router = new RouterFactory().create()
-    await app.init()
-
-    app.container.singleton('router', () => router)
-    await new EdgeServiceProvider(app).boot()
-
-    edge.registerTemplate('flash_messages', {
-      template: `{{ flashMessages.get('status') }}`,
-    })
-
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res, encryption }).create()
-      const response = new ResponseFactory().merge({ req, res, encryption }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
-      await session.initiate(false)
-      sessionId = session.sessionId
-
-      if (request.url() === '/prg') {
-        response.send(await ctx.view.render('flash_messages'))
-        await session.commit()
-        response.finish()
-      } else {
-        session.flash({ status: 'Task created successfully' })
-        await session.commit()
-      }
-
-      response.finish()
-    })
-
-    const { headers } = await supertest(server).get('/')
-    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
-
-    const { text } = await supertest(server)
-      .get('/prg')
-      .set(
-        'Cookie',
-        `adonis_session=${cookies.adonis_session.value}; ${sessionId}=${cookies[sessionId!].value}`
-      )
-
-    assert.equal(text, 'Task created successfully')
-  })
-
   test('reflash flash messages', async ({ assert }) => {
     let sessionId: string | undefined
 
@@ -1030,5 +987,162 @@ test.group('Session | Flash', () => {
         },
       },
     })
+  })
+
+  test('access flash messages inside templates', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    edge.registerTemplate('flash_messages', {
+      template: `{{ old('status') }}`,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+      sessionId = session.sessionId
+
+      if (request.url() === '/prg') {
+        response.send(await ctx.view.render('flash_messages'))
+        await session.commit()
+        response.finish()
+      } else {
+        session.flash({ status: 'Task created successfully' })
+        await session.commit()
+      }
+
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    const { text } = await supertest(server)
+      .get('/prg')
+      .set(
+        'Cookie',
+        `adonis_session=${cookies.adonis_session.value}; ${sessionId}=${cookies[sessionId!].value}`
+      )
+
+    assert.equal(text, 'Task created successfully')
+  })
+
+  test('access flash messages using the @flashMessage tag', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    edge.registerTemplate('flash_messages_via_tag', {
+      template: `@flashMessage('status')
+        <p> {{ message }} </p>
+      @end
+      @flashMessage('success')
+        <p> {{ message }} </p>
+      @else
+        <p> No success message </p>
+      @end
+      `,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+      sessionId = session.sessionId
+
+      if (request.url() === '/prg') {
+        response.send(await ctx.view.render('flash_messages_via_tag'))
+        await session.commit()
+        response.finish()
+      } else {
+        session.flash({ status: 'Task created successfully' })
+        await session.commit()
+      }
+
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    const { text } = await supertest(server)
+      .get('/prg')
+      .set(
+        'Cookie',
+        `adonis_session=${cookies.adonis_session.value}; ${sessionId}=${cookies[sessionId!].value}`
+      )
+
+    assert.deepEqual(
+      text.split('\n').map((line) => line.trim()),
+      ['<p> Task created successfully </p>', '<p> No success message </p>', '']
+    )
+  })
+
+  test('access flash error messages using the @error tag', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    edge.registerTemplate('flash_errors_messages', {
+      template: `
+      @error('username')
+        @each(message in messages)
+          <p> {{ message }} </p>
+        @end
+      @else
+        <p> No error message </p>
+      @end
+      `,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+      sessionId = session.sessionId
+
+      if (request.url() === '/prg') {
+        response.send(await ctx.view.render('flash_errors_messages'))
+        await session.commit()
+        response.finish()
+      } else {
+        const errorReporter = new SimpleErrorReporter()
+        errorReporter.report('Invalid username', 'alpha', fieldContext.create('username', ''), {})
+        errorReporter.report(
+          'Username is required',
+          'required',
+          fieldContext.create('username', ''),
+          {}
+        )
+
+        session.flashValidationErrors(errorReporter.createError())
+        await session.commit()
+      }
+
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    const { text } = await supertest(server)
+      .get('/prg')
+      .set(
+        'Cookie',
+        `adonis_session=${cookies.adonis_session.value}; ${sessionId}=${cookies[sessionId!].value}`
+      )
+
+    assert.deepEqual(
+      text.split('\n').map((line) => line.trim()),
+      ['', '<p> Invalid username </p>', '<p> Username is required </p>', '']
+    )
   })
 })
