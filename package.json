@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@adonisjs/assembler": "^6.1.3-18",
-    "@adonisjs/core": "^6.1.5-21",
+    "@adonisjs/core": "^6.1.5-22",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",
     "@adonisjs/redis": "^8.0.0-10",
@@ -75,7 +75,7 @@
     "@poppinss/utils": "^6.5.0-5"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^6.1.5-21",
+    "@adonisjs/core": "^6.1.5-22",
     "@adonisjs/redis": "^8.0.0-10",
     "edge.js": "^6.0.0-8"
   },
