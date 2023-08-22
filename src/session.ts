@@ -12,7 +12,7 @@ import { cuid } from '@adonisjs/core/helpers'
 import { EmitterService } from '@adonisjs/core/types'
 import type { HttpContext } from '@adonisjs/core/http'
 
-import { Store } from './store.js'
+import { ReadOnlyStore, Store } from './store.js'
 import * as errors from './errors.js'
 import type {
   SessionData,
@@ -195,6 +195,17 @@ export class Session {
       } else {
         this.flashMessages.update(this.pull(this.flashKey, null))
       }
+    }
+
+    /**
+     * Share session with the templates. We assume the view property
+     * is a reference to edge templates
+     */
+    if ('view' in this.#ctx) {
+      this.#ctx.view.share({
+        session: new ReadOnlyStore(this.#store.all()),
+        flashMessages: new ReadOnlyStore(this.flashMessages.all()),
+      })
     }
 
     this.#emitter.emit('session:initiated', { session: this })

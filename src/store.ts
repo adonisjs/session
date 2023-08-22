@@ -13,15 +13,79 @@ import { RuntimeException } from '@poppinss/utils'
 import type { AllowedSessionValues, SessionData } from './types/main.js'
 
 /**
- * Session store encapsulates the session data and offers a
- * declarative API to mutate it.
+ * Readonly session store
  */
-export class Store {
+export class ReadOnlyStore {
   /**
    * Underlying store values
    */
-  #values: SessionData
+  protected values: SessionData
 
+  /**
+   * Find if store is empty or not
+   */
+  get isEmpty() {
+    return !this.values || Object.keys(this.values).length === 0
+  }
+
+  constructor(values: SessionData | null) {
+    this.values = values || {}
+  }
+
+  /**
+   * Get value for a given key
+   */
+  get(key: string, defaultValue?: any): any {
+    return lodash.get(this.values, key, defaultValue)
+  }
+
+  /**
+   * A boolean to know if value exists. Extra guards to check
+   * arrays for it's length as well.
+   */
+  has(key: string, checkForArraysLength: boolean = true): boolean {
+    const value = this.get(key)
+    if (!Array.isArray(value)) {
+      return !!value
+    }
+
+    return checkForArraysLength ? value.length > 0 : !!value
+  }
+
+  /**
+   * Get all values
+   */
+  all(): any {
+    return this.values
+  }
+
+  /**
+   * Returns object representation of values
+   */
+  toObject() {
+    return this.all()
+  }
+
+  /**
+   * Returns the store values
+   */
+  toJSON(): any {
+    return this.all()
+  }
+
+  /**
+   * Returns string representation of the store
+   */
+  toString() {
+    return JSON.stringify(this.all())
+  }
+}
+
+/**
+ * Session store encapsulates the session data and offers a
+ * declarative API to mutate it.
+ */
+export class Store extends ReadOnlyStore {
   /**
    * A boolean to know if store has been
    * modified
@@ -29,14 +93,7 @@ export class Store {
   #modified: boolean = false
 
   constructor(values: SessionData | null) {
-    this.#values = values || {}
-  }
-
-  /**
-   * Find if store is empty or not
-   */
-  get isEmpty() {
-    return !this.#values || Object.keys(this.#values).length === 0
+    super(values)
   }
 
   /**
@@ -51,7 +108,7 @@ export class Store {
    */
   set(key: string, value: AllowedSessionValues): void {
     this.#modified = true
-    lodash.set(this.#values, key, value)
+    lodash.set(this.values, key, value)
   }
 
   /**
@@ -59,7 +116,7 @@ export class Store {
    */
   unset(key: string): void {
     this.#modified = true
-    lodash.unset(this.#values, key)
+    lodash.unset(this.values, key)
   }
 
   /**
@@ -104,7 +161,7 @@ export class Store {
    */
   update(values: { [key: string]: any }): void {
     this.#modified = true
-    this.#values = values
+    this.values = values
   }
 
   /**
@@ -112,7 +169,7 @@ export class Store {
    */
   merge(values: { [key: string]: any }): any {
     this.#modified = true
-    lodash.merge(this.#values, values)
+    lodash.merge(this.values, values)
   }
 
   /**
@@ -120,53 +177,5 @@ export class Store {
    */
   clear(): void {
     this.update({})
-  }
-
-  /**
-   * Get value for a given key
-   */
-  get(key: string, defaultValue?: any): any {
-    return lodash.get(this.#values, key, defaultValue)
-  }
-
-  /**
-   * A boolean to know if value exists. Extra guards to check
-   * arrays for it's length as well.
-   */
-  has(key: string, checkForArraysLength: boolean = true): boolean {
-    const value = this.get(key)
-    if (!Array.isArray(value)) {
-      return !!value
-    }
-
-    return checkForArraysLength ? value.length > 0 : !!value
-  }
-
-  /**
-   * Get all values
-   */
-  all(): any {
-    return this.#values
-  }
-
-  /**
-   * Returns object representation of values
-   */
-  toObject() {
-    return this.all()
-  }
-
-  /**
-   * Returns the store values
-   */
-  toJSON(): any {
-    return this.all()
-  }
-
-  /**
-   * Returns string representation of the store
-   */
-  toString() {
-    return JSON.stringify(this.all())
   }
 }

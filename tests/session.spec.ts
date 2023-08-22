@@ -7,25 +7,32 @@
  * file that was distributed with this source code.
  */
 
+import edge from 'edge.js'
 import supertest from 'supertest'
 import { test } from '@japa/runner'
 import { cuid } from '@adonisjs/core/helpers'
 import setCookieParser from 'set-cookie-parser'
 import { Emitter } from '@adonisjs/core/events'
-import { EventsList } from '@adonisjs/core/types'
+import { ApplicationService, EventsList } from '@adonisjs/core/types'
 import { SimpleErrorReporter } from '@vinejs/vine'
 import { CookieClient } from '@adonisjs/core/http'
 import { fieldContext } from '@vinejs/vine/factories'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
-import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
+import EdgeServiceProvider from '@adonisjs/core/providers/edge_provider'
+import {
+  RouterFactory,
+  RequestFactory,
+  ResponseFactory,
+  HttpContextFactory,
+} from '@adonisjs/core/factories/http'
 
 import { Session } from '../src/session.js'
-import type { SessionConfig } from '../src/types/main.js'
 import { httpServer } from '../test_helpers/index.js'
 import { CookieDriver } from '../src/drivers/cookie.js'
+import type { SessionConfig } from '../src/types/main.js'
 
-const app = new AppFactory().create(new URL('./', import.meta.url), () => {})
+const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 const emitter = new Emitter<EventsList>(app)
 const encryption = new EncryptionFactory().create()
 const cookieClient = new CookieClient(encryption)
@@ -376,6 +383,48 @@ test.group('Session', () => {
 
     session.put('username', 'foo')
   }).throws('Session store is in readonly mode and cannot be mutated')
+
+  test('share session data with templates', async ({ assert }) => {
+    let sessionId = cuid()
+
+    const router = new RouterFactory().create()
+    await app.init()
+
+    app.container.singleton('router', () => router)
+    await new EdgeServiceProvider(app).boot()
+
+    edge.registerTemplate('welcome', {
+      template: `The user age is {{ session.get('age') }}`,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+
+      try {
+        response.send(await ctx.view.render('welcome'))
+      } catch (error) {
+        console.log(error)
+      }
+
+      await session.commit()
+      response.finish()
+    })
+
+    const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
+    const sessionStoreCookie = `${sessionId}=${cookieClient.encrypt(sessionId, { age: 22 })}`
+
+    const { text } = await supertest(server)
+      .get('/')
+      .set('cookie', `${sessionIdCookie}; ${sessionStoreCookie}`)
+
+    assert.equal(text, 'The user age is 22')
+  })
 })
 
 test.group('Session | Regenerate', () => {
@@ -762,6 +811,54 @@ test.group('Session | Flash', () => {
 
     assert.deepEqual(body, { status: 'Task created successfully' })
     assert.equal(newCookies[sessionId!].maxAge, -1)
+  })
+
+  test('access flash messages inside templates', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const router = new RouterFactory().create()
+    await app.init()
+
+    app.container.singleton('router', () => router)
+    await new EdgeServiceProvider(app).boot()
+
+    edge.registerTemplate('flash_messages', {
+      template: `{{ flashMessages.get('status') }}`,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+      sessionId = session.sessionId
+
+      if (request.url() === '/prg') {
+        response.send(await ctx.view.render('flash_messages'))
+        await session.commit()
+        response.finish()
+      } else {
+        session.flash({ status: 'Task created successfully' })
+        await session.commit()
+      }
+
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    const { text } = await supertest(server)
+      .get('/prg')
+      .set(
+        'Cookie',
+        `adonis_session=${cookies.adonis_session.value}; ${sessionId}=${cookies[sessionId!].value}`
+      )
+
+    assert.equal(text, 'Task created successfully')
   })
 
   test('reflash flash messages', async ({ assert }) => {
