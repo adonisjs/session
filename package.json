@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@adonisjs/assembler": "^6.1.3-18",
-    "@adonisjs/core": "^6.1.5-22",
+    "@adonisjs/core": "^6.1.5-24",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",
     "@adonisjs/redis": "^8.0.0-10",
