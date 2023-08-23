@@ -92,7 +92,7 @@ export const edgePluginAdonisJSSession: PluginFn<undefined> = (edge) => {
        * Write an if statement
        */
       buffer.writeStatement(
-        `if (!!state.flashMessages.get('errors')[${key}]) {`,
+        `if (!!state.flashMessages.get('errors', {})[${key}]) {`,
         token.filename,
         token.loc.start.line
       )
@@ -101,7 +101,7 @@ export const edgePluginAdonisJSSession: PluginFn<undefined> = (edge) => {
        * Define a local variable
        */
       buffer.writeExpression(
-        `let messages = state.flashMessages.get('errors')[${key}]`,
+        `let messages = state.flashMessages.get('errors', {})[${key}]`,
         token.filename,
         token.loc.start.line
       )

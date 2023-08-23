@@ -642,7 +642,17 @@ test.group('Session | Regenerate', () => {
   })
 })
 
-test.group('Session | Flash', () => {
+test.group('Session | Flash', (group) => {
+  group.setup(async () => {
+    const router = new RouterFactory().create()
+    await app.init()
+
+    app.container.singleton('router', () => router)
+
+    await new EdgeServiceProvider(app).boot()
+    await new SessionProvider(app).boot()
+  })
+
   test('flash data using the session store', async ({ assert }) => {
     let sessionId: string | undefined
 
@@ -1081,6 +1091,41 @@ test.group('Session | Flash', () => {
     assert.deepEqual(
       text.split('\n').map((line) => line.trim()),
       ['<p> Task created successfully </p>', '<p> No success message </p>', '']
+    )
+  })
+
+  test('use error tag when there are no error message', async ({ assert }) => {
+    edge.registerTemplate('flash_no_errors_messages', {
+      template: `
+      @error('username')
+        @each(message in messages)
+          <p> {{ message }} </p>
+        @end
+      @else
+        <p> No error message </p>
+      @end
+      `,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const driver = new CookieDriver(sessionConfig.cookie, ctx)
+      const session = new Session(sessionConfig, driver, emitter, ctx)
+      await session.initiate(false)
+
+      response.send(await ctx.view.render('flash_no_errors_messages'))
+      await session.commit()
+      response.finish()
+    })
+
+    const { text } = await supertest(server).get('/prg')
+
+    assert.deepEqual(
+      text.split('\n').map((line) => line.trim()),
+      ['<p> No error message </p>', '']
     )
   })
 
