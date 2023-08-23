@@ -18,6 +18,11 @@ test.group('Store', () => {
     assert.isFalse(store.hasBeenModified)
   })
 
+  test('return default value when original value is null', ({ assert }) => {
+    const store = new Store({ title: null } as any)
+    assert.equal(store.get('title', ''), '')
+  })
+
   test('mutate values inside store', ({ assert }) => {
     const store = new Store({})
     store.set('username', 'virk')

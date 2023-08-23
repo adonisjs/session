@@ -36,7 +36,12 @@ export class ReadOnlyStore {
    * Get value for a given key
    */
   get(key: string, defaultValue?: any): any {
-    return lodash.get(this.values, key, defaultValue)
+    const value = lodash.get(this.values, key)
+    if (defaultValue !== undefined && (value === null || value === undefined)) {
+      return defaultValue
+    }
+
+    return value
   }
 
   /**
