@@ -38,8 +38,7 @@ class SessionDriversCollection {
    */
   create<Name extends keyof SessionDriversList>(
     name: Name,
-    config: Parameters<SessionDriversList[Name]>[0],
-    ctx: HttpContext
+    ...args: Parameters<SessionDriversList[Name]>
   ): ReturnType<SessionDriversList[Name]> {
     const driverFactory = this.list[name]
     if (!driverFactory) {
@@ -48,7 +47,7 @@ class SessionDriversCollection {
       )
     }
 
-    return driverFactory(config as any, ctx) as ReturnType<SessionDriversList[Name]>
+    return driverFactory(args[0], args[1]!) as ReturnType<SessionDriversList[Name]>
   }
 }
 

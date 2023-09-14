@@ -127,5 +127,5 @@ export interface SessionDriversList {
   file: (config: SessionConfig, ctx: HttpContext) => FileDriver
   cookie: (config: SessionConfig, ctx: HttpContext) => CookieDriver
   redis: (config: SessionConfig, ctx: HttpContext) => RedisDriver
-  memory: (config: SessionConfig, ctx: HttpContext) => MemoryDriver
+  memory: (config: SessionConfig, ctx?: HttpContext) => MemoryDriver
 }

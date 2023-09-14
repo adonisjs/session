@@ -8,23 +8,8 @@
  */
 
 import { test } from '@japa/runner'
-import { CookieClient } from '@adonisjs/core/http'
-import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
-
 import { SessionClient } from '../src/client.js'
-import type { SessionConfig } from '../src/types/main.js'
 import { MemoryDriver } from '../src/drivers/memory.js'
-
-const encryption = new EncryptionFactory().create()
-const cookieClient = new CookieClient(encryption)
-const sessionConfig: SessionConfig = {
-  enabled: true,
-  age: '2 hours',
-  clearWithBrowser: false,
-  cookieName: 'adonis_session',
-  driver: 'cookie',
-  cookie: {},
-}
 
 test.group('Session Client', (group) => {
   group.each.teardown(async () => {
@@ -33,15 +18,13 @@ test.group('Session Client', (group) => {
 
   test('define session data using session id', async ({ assert }) => {
     const driver = new MemoryDriver()
-    const client = new SessionClient(sessionConfig, driver, cookieClient)
-    const { sessionId, signedSessionId, cookieName } = await client.commit(
-      { foo: 'bar' },
-      { success: true }
-    )
+    const client = new SessionClient(driver)
 
-    assert.equal(cookieName, 'adonis_session')
-    assert.equal(cookieClient.unsign(cookieName, signedSessionId), sessionId)
-    assert.deepEqual(driver.read(sessionId), {
+    client.merge({ foo: 'bar' })
+    client.flash({ success: true })
+    await client.commit()
+
+    assert.deepEqual(driver.read(client.sessionId), {
       foo: 'bar',
       __flash__: {
         success: true,
@@ -49,14 +32,16 @@ test.group('Session Client', (group) => {
     })
   })
 
-  test('read existing session data', async ({ assert }) => {
+  test('load data from the store', async ({ assert }) => {
     const driver = new MemoryDriver()
-    const client = new SessionClient(sessionConfig, driver, cookieClient)
-    const { sessionId } = await client.commit({ foo: 'bar' }, { success: true })
+    const client = new SessionClient(driver)
 
-    assert.deepEqual(await client.load({}), {
-      sessionId,
-      session: {
+    client.merge({ foo: 'bar' })
+    client.flash({ success: true })
+    await client.commit()
+
+    assert.deepEqual(await client.load(), {
+      values: {
         foo: 'bar',
       },
       flashMessages: {
@@ -65,17 +50,28 @@ test.group('Session Client', (group) => {
     })
   })
 
-  test('clear session data', async ({ assert }) => {
+  test('destroy session', async ({ assert }) => {
     const driver = new MemoryDriver()
-    const client = new SessionClient(sessionConfig, driver, cookieClient)
-    const { sessionId } = await client.commit({ foo: 'bar' }, { success: true })
+    const client = new SessionClient(driver)
 
-    await client.forget()
+    client.merge({ foo: 'bar' })
+    client.flash({ success: true })
+    await client.commit()
 
-    assert.deepEqual(await client.load({}), {
-      sessionId,
-      session: {},
-      flashMessages: null,
+    assert.deepEqual(await client.load(), {
+      values: {
+        foo: 'bar',
+      },
+      flashMessages: {
+        success: true,
+      },
+    })
+
+    await client.destroy()
+
+    assert.deepEqual(await client.load(), {
+      values: {},
+      flashMessages: {},
     })
   })
 })

@@ -8,19 +8,24 @@
  */
 
 import { cuid } from '@adonisjs/core/helpers'
-import type { CookieClient } from '@adonisjs/core/http'
 
+import debug from './debug.js'
 import { Store } from './store.js'
-import type { SessionConfig, SessionData, SessionDriverContract } from './types/main.js'
+import type { SessionData, SessionDriverContract } from './types/main.js'
 
 /**
  * Session client exposes the API to set session data as a client
  */
 export class SessionClient {
   /**
-   * Session configuration
+   * Data store
    */
-  #config: SessionConfig
+  #store = new Store({})
+
+  /**
+   * Flash messages store
+   */
+  #flashMessagesStore = new Store({})
 
   /**
    * The session driver to use for reading and writing session data
@@ -28,74 +33,69 @@ export class SessionClient {
   #driver: SessionDriverContract
 
   /**
-   * Cookie client contract to sign and unsign cookies
+   * Session key for setting flash messages
    */
-  #cookieClient: CookieClient
+  flashKey = '__flash__'
 
   /**
    * Session to use when no explicit session id is
    * defined
    */
-  #sessionId = cuid()
+  sessionId = cuid()
 
-  /**
-   * Session key for setting flash messages
-   */
-  flashKey = '__flash__'
-
-  constructor(config: SessionConfig, driver: SessionDriverContract, cookieClient: CookieClient) {
-    this.#config = config
+  constructor(driver: SessionDriverContract) {
     this.#driver = driver
-    this.#cookieClient = cookieClient
   }
 
   /**
-   * Load session data from the driver
+   * Merge session data
    */
-  async load(
-    cookies: Record<string, any>,
-    sessionId?: string
-  ): Promise<{ sessionId: string; session: SessionData; flashMessages: SessionData }> {
-    const sessionIdCookie = cookies[this.#config.cookieName]
-    const sessId = sessionId || sessionIdCookie ? sessionIdCookie.value : this.#sessionId
+  merge(values: SessionData) {
+    this.#store.merge(values)
+    return this
+  }
 
-    const contents = await this.#driver.read(sessId)
+  /**
+   * Merge flash messages
+   */
+  flash(values: SessionData) {
+    this.#flashMessagesStore.merge(values)
+    return this
+  }
+
+  /**
+   * Commits data to the session store.
+   */
+  async commit() {
+    if (!this.#flashMessagesStore.isEmpty) {
+      this.#store.set(this.flashKey, this.#flashMessagesStore.toJSON())
+    }
+
+    debug('committing session data during api request')
+    if (!this.#store.isEmpty) {
+      this.#driver.write(this.sessionId, this.#store.toJSON())
+    }
+  }
+
+  /**
+   * Destroys the session data with the store
+   */
+  async destroy(sessionId?: string) {
+    debug('destroying session data during api request')
+    this.#driver.destroy(sessionId || this.sessionId)
+  }
+
+  /**
+   * Loads session data from the session store
+   */
+  async load(sessionId?: string) {
+    const contents = await this.#driver.read(sessionId || this.sessionId)
     const store = new Store(contents)
-    const flashMessages = store.pull(this.flashKey, null)
+    const flashMessages = store.pull(this.flashKey, {})
 
     return {
-      sessionId: sessId,
-      session: store.all(),
+      values: store.all(),
       flashMessages,
     }
-  }
-
-  /**
-   * Commits the session data to the session store and returns
-   * the session id and cookie name for it to be accessible
-   * by the server
-   */
-  async commit(values: SessionData | null, flashMessages: SessionData | null, sessionId?: string) {
-    const sessId = sessionId || this.#sessionId
-
-    /**
-     * Persist session data to the store, alongside flash messages
-     */
-    if (values || flashMessages) {
-      await this.#driver.write(sessId, Object.assign({ [this.flashKey]: flashMessages }, values))
-    }
-
-    return {
-      sessionId: sessId,
-      signedSessionId: this.#cookieClient.sign(this.#config.cookieName, sessId)!,
-      cookieName: this.#config.cookieName,
-    }
-  }
-
-  /**
-   * Clear the session store
-   */
-  async forget(sessionId?: string) {
-    await this.#driver.destroy(sessionId || this.#sessionId)
   }
 }
