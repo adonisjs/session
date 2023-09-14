@@ -32,6 +32,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install
         run: npm install
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
       - name: Run tests
         run: npm test
         env:
@@ -51,6 +53,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install
         run: npm install
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
       - name: Run tests
         run: npm test
         env:
