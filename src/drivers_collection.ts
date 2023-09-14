@@ -8,7 +8,6 @@
  */
 
 import { RuntimeException } from '@poppinss/utils'
-import type { HttpContext } from '@adonisjs/core/http'
 
 import type { SessionDriversList } from './types/main.js'
 
