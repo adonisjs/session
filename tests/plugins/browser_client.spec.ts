@@ -36,7 +36,7 @@ const sessionConfig: SessionConfig = {
   cookie: {},
 }
 
-test.group('Api client', (group) => {
+test.group('Browser client', (group) => {
   group.setup(async () => {
     app.useConfig({
       session: defineConfig({
@@ -72,8 +72,13 @@ test.group('Api client', (group) => {
     const url = `http://localhost:${port}`
     server.listen(port)
 
-    await runJapaTest(app, async ({ client }) => {
-      await client.get(url).withSession({ username: 'virk' })
+    await runJapaTest(app, async ({ visit, browserContext }) => {
+      await browserContext.initiateSession({ domain: new URL(url).host, path: '/' })
+      await browserContext.setSession({ username: 'virk' })
+      await visit(url)
+
+      assert.lengthOf(MemoryDriver.sessions, 1)
+      await browserContext.close()
       assert.lengthOf(MemoryDriver.sessions, 0)
     })
   })
@@ -102,8 +107,18 @@ test.group('Api client', (group) => {
     const url = `http://localhost:${port}`
     server.listen(port)
 
-    await runJapaTest(app, async ({ client }) => {
-      await client.get(url).withFlashMessages({ username: 'virk' })
+    await runJapaTest(app, async ({ browserContext, visit }) => {
+      await browserContext.initiateSession({ domain: new URL(url).host, path: '/' })
+      await browserContext.setFlashMessages({ username: 'virk' })
+      await visit(url)
+
+      /**
+       * Since the server clears the session after
+       * reading the flash messages, the store
+       * should be empty post visit
+       */
+      assert.lengthOf(MemoryDriver.sessions, 0)
+      await browserContext.close()
       assert.lengthOf(MemoryDriver.sessions, 0)
     })
   })
@@ -132,9 +147,15 @@ test.group('Api client', (group) => {
     const url = `http://localhost:${port}`
     server.listen(port)
 
-    await runJapaTest(app, async ({ client }) => {
-      const response = await client.get(url)
-      assert.deepEqual(response.session(), { name: 'virk' })
+    await runJapaTest(app, async ({ browserContext, visit }) => {
+      await browserContext.initiateSession({ domain: new URL(url).host, path: '/' })
+      await browserContext.setFlashMessages({ username: 'virk' })
+      await visit(url)
+
+      assert.deepEqual(await browserContext.getSession(), { name: 'virk' })
+
+      assert.lengthOf(MemoryDriver.sessions, 1)
+      await browserContext.close()
       assert.lengthOf(MemoryDriver.sessions, 0)
     })
   })
@@ -163,69 +184,16 @@ test.group('Api client', (group) => {
     const url = `http://localhost:${port}`
     server.listen(port)
 
-    await runJapaTest(app, async ({ client }) => {
-      const response = await client.get(url)
-      assert.deepEqual(response.flashMessages(), { name: 'virk' })
+    await runJapaTest(app, async ({ browserContext, visit }) => {
+      await browserContext.initiateSession({ domain: new URL(url).host, path: '/' })
+      await browserContext.setFlashMessages({ username: 'virk' })
+      await visit(url)
+
+      assert.deepEqual(await browserContext.getFlashMessages(), { name: 'virk' })
+
+      assert.lengthOf(MemoryDriver.sessions, 1)
+      await browserContext.close()
       assert.lengthOf(MemoryDriver.sessions, 0)
-    })
-  })
-
-  test('assert session and flash messages', async ({ assert }) => {
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res, encryption }).create()
-      const response = new ResponseFactory().merge({ req, res, encryption }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
-
-      await session.initiate(false)
-      session.put('name', 'virk')
-      session.flash({
-        succeed: false,
-        hasErrors: true,
-        errors: { username: ['field is required', 'field must be alpha numeric'] },
-      })
-
-      await session.commit()
-      response.finish()
-    })
-
-    const port = await getPort({ port: 3333 })
-    const url = `http://localhost:${port}`
-    server.listen(port)
-
-    await runJapaTest(app, async ({ client }) => {
-      const response = await client.get(url)
-      assert.lengthOf(MemoryDriver.sessions, 0)
-
-      response.assertSession('name')
-      response.assertSession('name', 'virk')
-      response.assertSessionMissing('age')
-
-      response.assertFlashMessage('succeed')
-      response.assertFlashMessage('hasErrors')
-      response.assertFlashMessage('hasErrors', true)
-      response.assertFlashMessage('succeed', false)
-      response.assertFlashMissing('notifications')
-
-      response.assertValidationError('username', 'field is required')
-      response.assertValidationErrors('username', [
-        'field is required',
-        'field must be alpha numeric',
-      ])
-      response.assertDoesNotHaveValidationError('email')
-
-      assert.throws(() => response.assertSession('name', 'foo'))
-      assert.throws(() => response.assertSessionMissing('name'))
-      assert.throws(() => response.assertFlashMissing('succeed'))
-      assert.throws(() => response.assertFlashMessage('succeed', true))
-      assert.throws(() => response.assertDoesNotHaveValidationError('username'))
-      assert.throws(() => response.assertValidationError('username', 'field is missing'))
     })
   })
 })

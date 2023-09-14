@@ -12,7 +12,7 @@ import { MemoryDriver } from '../../src/drivers/memory.js'
 
 test.group('Memory driver', (group) => {
   group.each.setup(() => {
-    MemoryDriver.sessions.clear()
+    return () => MemoryDriver.sessions.clear()
   })
 
   test('return null when session does not exists', async ({ assert }) => {

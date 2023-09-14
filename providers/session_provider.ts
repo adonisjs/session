@@ -58,8 +58,8 @@ export default class SessionProvider {
 
     const edge = await this.getEdge()
     if (edge) {
-      const { edgePluginAdonisJSSession } = await import('../src/edge_plugin_adonisjs_session.js')
-      edge.use(edgePluginAdonisJSSession)
+      const { edgePluginSession } = await import('../src/plugins/edge.js')
+      edge.use(edgePluginSession)
     }
   }
 }

@@ -8,13 +8,13 @@
  */
 
 import type { PluginFn } from 'edge.js/types'
-import debug from './debug.js'
+import debug from '../debug.js'
 
 /**
  * The edge plugin for AdonisJS Session adds tags to read
  * flash messages
  */
-export const edgePluginAdonisJSSession: PluginFn<undefined> = (edge) => {
+export const edgePluginSession: PluginFn<undefined> = (edge) => {
   debug('registering session tags with edge')
 
   edge.registerTag({

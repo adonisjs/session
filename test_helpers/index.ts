@@ -8,14 +8,16 @@
  */
 
 import { getActiveTest } from '@japa/runner'
-import { ApiClient } from '@japa/api-client'
 import { runner } from '@japa/runner/factories'
+import { browserClient } from '@japa/browser-client'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
+import { ApiClient, apiClient } from '@japa/api-client'
 import type { ApplicationService } from '@adonisjs/core/types'
 import { IncomingMessage, ServerResponse, createServer } from 'node:http'
 import { Suite, Emitter as JapaEmitter, Refiner, Test, TestContext } from '@japa/runner/core'
 
 import { sessionApiClient } from '../src/plugins/japa/api_client.js'
+import { sessionBrowserClient } from '../src/plugins/japa/browser_client.js'
 
 export const httpServer = {
   create(callback: (req: IncomingMessage, res: ServerResponse) => any) {
@@ -43,8 +45,7 @@ export async function runJapaTest(app: ApplicationService, callback: Parameters<
   const t = new Test('make api request', (self) => new TestContext(self), japaEmitter, refiner)
   t.run(callback)
 
-  const suite = new Suite('unit', japaEmitter, refiner)
-  suite.add(t)
+  const unit = new Suite('unit', japaEmitter, refiner)
 
   await runner()
     .configure({
@@ -64,11 +65,22 @@ export async function runJapaTest(app: ApplicationService, callback: Parameters<
           },
         ],
       },
-      plugins: [pluginAdonisJS(app), sessionApiClient(app)],
+      plugins: [
+        apiClient(),
+        browserClient({ runInSuites: ['unit'] }),
+        pluginAdonisJS(app),
+        sessionApiClient(app),
+        sessionBrowserClient(app),
+        ({ runner: r }) => {
+          r.onSuite((suite) => {
+            suite.add(t)
+          })
+        },
+      ],
       files: [],
       refiner: refiner,
     })
     .useEmitter(japaEmitter)
-    .withSuites([suite])
+    .withSuites([unit])
     .run()
 }
