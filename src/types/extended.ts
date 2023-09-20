@@ -19,3 +19,9 @@ declare module '@adonisjs/core/types' {
     'session:migrated': { fromSessionId: string; toSessionId: string; session: Session }
   }
 }
+
+declare module '@adonisjs/core/http' {
+  interface HttpContext {
+    session: Session
+  }
+}
