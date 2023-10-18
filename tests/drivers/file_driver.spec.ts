@@ -9,6 +9,7 @@
 
 import { join } from 'node:path'
 import { test } from '@japa/runner'
+import { stat } from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
 
 import { FileDriver } from '../../src/drivers/file.js'
@@ -134,7 +135,7 @@ test.group('File driver', () => {
      * Making sure the original mTime of the file was smaller
      * than the current time after wait
      */
-    const { mtimeMs } = await fs.adapter.stat(join(fs.basePath, '1234.txt'))
+    const { mtimeMs } = await stat(join(fs.basePath, '1234.txt'))
     assert.isBelow(mtimeMs, Date.now())
 
     await session.touch(sessionId)
@@ -142,7 +143,7 @@ test.group('File driver', () => {
     /**
      * Ensuring the new mTime is greater than the old mTime
      */
-    let { mtimeMs: newMtimeMs } = await fs.adapter.stat(join(fs.basePath, '1234.txt'))
+    let { mtimeMs: newMtimeMs } = await stat(join(fs.basePath, '1234.txt'))
     assert.isAbove(newMtimeMs, mtimeMs)
 
     await assert.fileEquals(

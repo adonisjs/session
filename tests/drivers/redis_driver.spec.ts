@@ -10,8 +10,8 @@
 import { test } from '@japa/runner'
 import { defineConfig } from '@adonisjs/redis'
 import { setTimeout } from 'node:timers/promises'
-import { RedisService } from '@adonisjs/redis/types'
 import { RedisManagerFactory } from '@adonisjs/redis/factories'
+import type { RedisService, InferConnections } from '@adonisjs/redis/types'
 
 import { RedisDriver } from '../../src/drivers/redis.js'
 
@@ -27,7 +27,7 @@ const redisConfig = defineConfig({
 })
 const redis = new RedisManagerFactory(redisConfig).create() as RedisService
 declare module '@adonisjs/redis/types' {
-  interface RedisConnections extends InferConnections<typeof redisConfig> {}
+  export interface RedisConnections extends InferConnections<typeof redisConfig> {}
 }
 
 test.group('Redis driver', (group) => {

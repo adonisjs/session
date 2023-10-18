@@ -18,8 +18,8 @@ import sessionDriversList from './drivers_collection.js'
 /**
  * HttpContext augmentations
  */
-declare module '@adonisjs/http-server' {
-  interface HttpContext {
+declare module '@adonisjs/core/http' {
+  export interface HttpContext {
     session: Session
   }
 }
