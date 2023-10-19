@@ -30,7 +30,7 @@ export async function configure(command: Configure) {
    */
   await codemods.defineEnvValidations({
     variables: {
-      SESSION_DRIVER: `Env.schema.enum(['cookie', 'redis', 'file', 'memory'] as const)`,
+      SESSION_DRIVER: `Env.schema.enum(['cookie', 'memory'] as const)`,
     },
     leadingComment: 'Variables for configuring session package',
   })
