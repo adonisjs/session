@@ -2,6 +2,7 @@
   exports({ to: app.configPath('session.ts') })
 }}}
 import env from '#start/env'
+import app from '@adonisjs/core/services/app';
 import { defineConfig } from '@adonisjs/session'
 
 export default defineConfig({
@@ -30,7 +31,8 @@ export default defineConfig({
   cookie: {
     path: '/',
     httpOnly: true,
-    sameSite: false,
+    secure: app.inProduction,
+    sameSite: 'lax',
   },
 
   /**
