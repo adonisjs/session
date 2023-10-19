@@ -1,7 +1,7 @@
 {
   "name": "@adonisjs/session",
   "description": "Session provider for AdonisJS",
-  "version": "7.0.0-12",
+  "version": "7.0.0-13",
   "engines": {
     "node": ">=18.16.0"
   },
