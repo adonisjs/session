@@ -8,29 +8,30 @@
  */
 
 import type { HttpContext } from '@adonisjs/core/http'
-import { CookieOptions } from '@adonisjs/core/types/http'
-import type { SessionData, SessionDriverContract } from '../types/main.js'
+import type { CookieOptions } from '@adonisjs/core/types/http'
+
 import debug from '../debug.js'
+import type { SessionData, SessionStoreContract } from '../types.js'
 
 /**
- * Cookie driver stores the session data inside an encrypted
+ * Cookie store stores the session data inside an encrypted
  * cookie.
  */
-export class CookieDriver implements SessionDriverContract {
+export class CookieStore implements SessionStoreContract {
   #ctx: HttpContext
   #config: Partial<CookieOptions>
 
   constructor(config: Partial<CookieOptions>, ctx: HttpContext) {
     this.#config = config
     this.#ctx = ctx
-    debug('initiating cookie driver %O', this.#config)
+    debug('initiating cookie store %O', this.#config)
   }
 
   /**
    * Read session value from the cookie
    */
   read(sessionId: string): SessionData | null {
-    debug('cookie driver: reading session data %s', sessionId)
+    debug('cookie store: reading session data %s', sessionId)
 
     const cookieValue = this.#ctx.request.encryptedCookie(sessionId)
     if (typeof cookieValue !== 'object') {
@@ -44,7 +45,7 @@ export class CookieDriver implements SessionDriverContract {
    * Write session values to the cookie
    */
   write(sessionId: string, values: SessionData): void {
-    debug('cookie driver: writing session data %s: %O', sessionId, values)
+    debug('cookie store: writing session data %s: %O', sessionId, values)
     this.#ctx.response.encryptedCookie(sessionId, values, this.#config)
   }
 
@@ -52,7 +53,7 @@ export class CookieDriver implements SessionDriverContract {
    * Removes the session cookie
    */
   destroy(sessionId: string): void {
-    debug('cookie driver: destroying session data %s', sessionId)
+    debug('cookie store: destroying session data %s', sessionId)
     if (this.#ctx.request.cookiesList()[sessionId]) {
       this.#ctx.response.clearCookie(sessionId)
     }
@@ -63,7 +64,7 @@ export class CookieDriver implements SessionDriverContract {
    */
   touch(sessionId: string): void {
     const value = this.read(sessionId)
-    debug('cookie driver: touching session data %s', sessionId)
+    debug('cookie store: touching session data %s', sessionId)
     if (!value) {
       return
     }

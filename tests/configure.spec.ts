@@ -57,5 +57,5 @@ test.group('Configure', (group) => {
       'start/env.ts',
       `SESSION_DRIVER: Env.schema.enum(['cookie', 'redis', 'file', 'memory'] as const)`
     )
-  }).timeout(10000)
+  }).timeout(60 * 1000)
 })

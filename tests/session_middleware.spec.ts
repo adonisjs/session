@@ -15,9 +15,8 @@ import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { httpServer } from '../test_helpers/index.js'
-import { CookieDriver } from '../src/drivers/cookie.js'
-import type { SessionConfig } from '../src/types/main.js'
-import sessionDriversList from '../src/drivers_collection.js'
+import { CookieStore } from '../src/stores/cookie.js'
+import type { SessionConfig } from '../src/types.js'
 import { SessionMiddlewareFactory } from '../factories/session_middleware_factory.js'
 
 const encryption = new EncryptionFactory().create()
@@ -27,7 +26,6 @@ const sessionConfig: SessionConfig = {
   age: '2 hours',
   clearWithBrowser: false,
   cookieName: 'adonis_session',
-  driver: 'cookie',
   cookie: {},
 }
 
@@ -42,7 +40,15 @@ test.group('Session middleware', () => {
 
       const middleware = await new SessionMiddlewareFactory()
         .merge({
-          config: sessionConfig,
+          config: Object.assign(
+            {
+              store: 'cookie',
+              stores: {
+                cookie: () => new CookieStore(sessionConfig.cookie, ctx),
+              },
+            },
+            sessionConfig
+          ),
         })
         .create()
 
@@ -67,8 +73,6 @@ test.group('Session middleware', () => {
   })
 
   test('do not initiate session when not enabled', async ({ assert }) => {
-    sessionDriversList.extend('cookie', (config, ctx) => new CookieDriver(config.cookie, ctx))
-
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
@@ -76,7 +80,18 @@ test.group('Session middleware', () => {
 
       const middleware = await new SessionMiddlewareFactory()
         .merge({
-          config: { ...sessionConfig, enabled: false },
+          config: Object.assign(
+            {
+              store: 'cookie',
+              stores: {
+                cookie: () => new CookieStore(sessionConfig.cookie, ctx),
+              },
+            },
+            sessionConfig,
+            {
+              enabled: false,
+            }
+          ),
         })
         .create()
 

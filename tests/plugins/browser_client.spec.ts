@@ -16,10 +16,9 @@ import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { Session } from '../../src/session.js'
-import { SessionConfig } from '../../src/types/main.js'
+import { SessionConfig } from '../../src/types.js'
+import { MemoryStore } from '../../src/stores/memory.js'
 import { defineConfig } from '../../src/define_config.js'
-import { MemoryDriver } from '../../src/drivers/memory.js'
-import sessionDriversList from '../../src/drivers_collection.js'
 import { httpServer, runJapaTest } from '../../test_helpers/index.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
@@ -32,7 +31,6 @@ const sessionConfig: SessionConfig = {
   age: '2 hours',
   clearWithBrowser: false,
   cookieName: 'adonis_session',
-  driver: 'cookie',
   cookie: {},
 }
 
@@ -40,7 +38,8 @@ test.group('Browser client', (group) => {
   group.setup(async () => {
     app.useConfig({
       session: defineConfig({
-        driver: 'memory',
+        store: 'memory',
+        stores: {},
       }),
     })
     await app.init()
@@ -54,12 +53,7 @@ test.group('Browser client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       assert.deepEqual(session.all(), { username: 'virk' })
@@ -77,9 +71,9 @@ test.group('Browser client', (group) => {
       await browserContext.setSession({ username: 'virk' })
       await visit(url)
 
-      assert.lengthOf(MemoryDriver.sessions, 1)
+      assert.lengthOf(MemoryStore.sessions, 1)
       await browserContext.close()
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -89,12 +83,7 @@ test.group('Browser client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       assert.deepEqual(session.flashMessages.all(), { username: 'virk' })
@@ -117,9 +106,9 @@ test.group('Browser client', (group) => {
        * reading the flash messages, the store
        * should be empty post visit
        */
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
       await browserContext.close()
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -129,12 +118,7 @@ test.group('Browser client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       session.put('name', 'virk')
@@ -154,9 +138,9 @@ test.group('Browser client', (group) => {
 
       assert.deepEqual(await browserContext.getSession(), { name: 'virk' })
 
-      assert.lengthOf(MemoryDriver.sessions, 1)
+      assert.lengthOf(MemoryStore.sessions, 1)
       await browserContext.close()
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -166,12 +150,7 @@ test.group('Browser client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       session.flash('name', 'virk')
@@ -191,9 +170,9 @@ test.group('Browser client', (group) => {
 
       assert.deepEqual(await browserContext.getFlashMessages(), { name: 'virk' })
 
-      assert.lengthOf(MemoryDriver.sessions, 1)
+      assert.lengthOf(MemoryStore.sessions, 1)
       await browserContext.close()
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 })

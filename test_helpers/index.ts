@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import type { Test } from '@japa/runner/core'
 import { getActiveTest } from '@japa/runner'
+import type { Test } from '@japa/runner/core'
 import { browserClient } from '@japa/browser-client'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'

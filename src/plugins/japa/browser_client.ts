@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { configProvider } from '@adonisjs/core'
 import { RuntimeException } from '@poppinss/utils'
 import type { PluginFn } from '@japa/runner/types'
 import { decoratorsCollection } from '@japa/browser-client'
@@ -14,9 +15,7 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import type { CookieOptions as AdonisCookieOptions } from '@adonisjs/core/types/http'
 
 import { SessionClient } from '../../client.js'
-import { registerSessionDriver } from '../../helpers.js'
-import sessionDriversList from '../../drivers_collection.js'
-import type { SessionConfig, SessionData } from '../../types/main.js'
+import type { SessionConfig, SessionData } from '../../types.js'
 
 declare module 'playwright' {
   export interface BrowserContext {
@@ -88,33 +87,29 @@ function getSessionCookieOptions(
 }
 
 /**
- * Hooks AdonisJS Session with the Japa API Client
+ * Hooks AdonisJS Session with the Japa browser client
  * plugin
  */
 export const sessionBrowserClient = (app: ApplicationService) => {
   const pluginFn: PluginFn = async function () {
-    const config = app.config.get<SessionConfig>('session')
+    const sessionConfigProvider = app.config.get('session', {})
 
     /**
-     * Disallow usage of driver other than memory during testing
+     * Resolve config from the provider
      */
-    if (config.driver !== 'memory') {
+    const config = await configProvider.resolve<any>(app, sessionConfigProvider)
+    if (!config) {
       throw new RuntimeException(
-        `Cannot use session driver "${config.driver}" during testing. Switch to memory driver`
+        'Invalid "config/session.ts" file. Make sure you are using the "defineConfig" method'
       )
     }
-
-    /**
-     * Register the memory driver if not already registered
-     */
-    await registerSessionDriver(app, 'memory')
 
     decoratorsCollection.register({
       context(context) {
         /**
          * Reference to session client per browser context
          */
-        context.sessionClient = new SessionClient(sessionDriversList.create('memory', config))
+        context.sessionClient = new SessionClient(config.stores.memory())
 
         /**
          * Initiating session store

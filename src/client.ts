@@ -10,8 +10,8 @@
 import { cuid } from '@adonisjs/core/helpers'
 
 import debug from './debug.js'
-import { Store } from './store.js'
-import type { SessionData, SessionDriverContract } from './types/main.js'
+import { ValuesStore } from './values_store.js'
+import type { SessionData, SessionStoreContract } from './types.js'
 
 /**
  * Session client exposes the API to set session data as a client
@@ -20,17 +20,17 @@ export class SessionClient {
   /**
    * Data store
    */
-  #store = new Store({})
+  #valuesStore = new ValuesStore({})
 
   /**
    * Flash messages store
    */
-  #flashMessagesStore = new Store({})
+  #flashMessagesStore = new ValuesStore({})
 
   /**
-   * The session driver to use for reading and writing session data
+   * The session store to use for reading and writing session data
    */
-  #driver: SessionDriverContract
+  #store: SessionStoreContract
 
   /**
    * Session key for setting flash messages
@@ -43,15 +43,15 @@ export class SessionClient {
    */
   sessionId = cuid()
 
-  constructor(driver: SessionDriverContract) {
-    this.#driver = driver
+  constructor(store: SessionStoreContract) {
+    this.#store = store
   }
 
   /**
    * Merge session data
    */
   merge(values: SessionData) {
-    this.#store.merge(values)
+    this.#valuesStore.merge(values)
     return this
   }
 
@@ -68,12 +68,12 @@ export class SessionClient {
    */
   async commit() {
     if (!this.#flashMessagesStore.isEmpty) {
-      this.#store.set(this.flashKey, this.#flashMessagesStore.toJSON())
+      this.#valuesStore.set(this.flashKey, this.#flashMessagesStore.toJSON())
     }
 
     debug('committing session data during api request')
-    if (!this.#store.isEmpty) {
-      this.#driver.write(this.sessionId, this.#store.toJSON())
+    if (!this.#valuesStore.isEmpty) {
+      this.#store.write(this.sessionId, this.#valuesStore.toJSON())
     }
   }
 
@@ -82,15 +82,15 @@ export class SessionClient {
    */
   async destroy(sessionId?: string) {
     debug('destroying session data during api request')
-    this.#driver.destroy(sessionId || this.sessionId)
+    this.#store.destroy(sessionId || this.sessionId)
   }
 
   /**
    * Loads session data from the session store
    */
   async load(sessionId?: string) {
-    const contents = await this.#driver.read(sessionId || this.sessionId)
-    const store = new Store(contents)
+    const contents = await this.#store.read(sessionId || this.sessionId)
+    const store = new ValuesStore(contents)
     const flashMessages = store.pull(this.flashKey, {})
 
     return {

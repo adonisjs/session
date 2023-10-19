@@ -20,15 +20,14 @@ import { IncomingMessage, ServerResponse } from 'node:http'
 import { RedisManagerFactory } from '@adonisjs/redis/factories'
 import { CookieClient, HttpContext } from '@adonisjs/core/http'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
-import { RedisService, InferConnections } from '@adonisjs/redis/types'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { Session } from '../src/session.js'
-import { FileDriver } from '../src/drivers/file.js'
+import { FileStore } from '../src/stores/file.js'
+import { RedisStore } from '../src/stores/redis.js'
 import { httpServer } from '../test_helpers/index.js'
-import { CookieDriver } from '../src/drivers/cookie.js'
-import type { SessionConfig, SessionDriverContract } from '../src/types/main.js'
-import { RedisDriver } from '../src/drivers/redis.js'
+import { CookieStore } from '../src/stores/cookie.js'
+import type { SessionConfig, SessionStoreContract } from '../src/types.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {})
 const emitter = new Emitter<EventsList>(app)
@@ -39,7 +38,6 @@ const sessionConfig: SessionConfig = {
   age: '2 hours',
   clearWithBrowser: false,
   cookieName: 'adonis_session',
-  driver: 'cookie',
   cookie: {},
 }
 
@@ -52,10 +50,8 @@ const redisConfig = defineConfig({
     },
   },
 })
-const redis = new RedisManagerFactory(redisConfig).create() as RedisService
-declare module '@adonisjs/redis/types' {
-  interface RedisConnections extends InferConnections<typeof redisConfig> {}
-}
+
+const redis = new RedisManagerFactory(redisConfig).create()
 
 /**
  * Re-usable request handler that creates different session scanerios
@@ -64,14 +60,14 @@ declare module '@adonisjs/redis/types' {
 async function requestHandler(
   req: IncomingMessage,
   res: ServerResponse,
-  driver: (ctx: HttpContext) => SessionDriverContract
+  driver: (ctx: HttpContext) => SessionStoreContract
 ) {
   try {
     const request = new RequestFactory().merge({ req, res, encryption }).create()
     const response = new ResponseFactory().merge({ req, res, encryption }).create()
     const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-    const session = new Session(sessionConfig, driver(ctx), emitter, ctx)
+    const session = new Session(sessionConfig, driver, emitter, ctx)
     await session.initiate(false)
 
     if (req.url === '/read-data') {
@@ -118,7 +114,7 @@ test.group('Concurrency | cookie driver', () => {
     let sessionId = cuid()
 
     const server = httpServer.create((req, res) =>
-      requestHandler(req, res, (ctx) => new CookieDriver(sessionConfig.cookie, ctx))
+      requestHandler(req, res, (ctx) => new CookieStore(sessionConfig.cookie, ctx))
     )
 
     const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
@@ -151,7 +147,7 @@ test.group('Concurrency | cookie driver', () => {
     let sessionId = cuid()
 
     const server = httpServer.create((req, res) =>
-      requestHandler(req, res, (ctx) => new CookieDriver(sessionConfig.cookie, ctx))
+      requestHandler(req, res, (ctx) => new CookieStore(sessionConfig.cookie, ctx))
     )
 
     const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
@@ -188,7 +184,7 @@ test.group('Concurrency | cookie driver', () => {
     let sessionId = cuid()
 
     const server = httpServer.create((req, res) =>
-      requestHandler(req, res, (ctx) => new CookieDriver(sessionConfig.cookie, ctx))
+      requestHandler(req, res, (ctx) => new CookieStore(sessionConfig.cookie, ctx))
     )
 
     const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
@@ -231,7 +227,7 @@ test.group('Concurrency | file driver', () => {
   test('concurrently read and read slowly', async ({ fs, assert }) => {
     let sessionId = cuid()
 
-    const fileDriver = new FileDriver({ location: fs.basePath }, sessionConfig.age)
+    const fileDriver = new FileStore({ location: fs.basePath }, sessionConfig.age)
     await fileDriver.write(sessionId, { age: 22 })
 
     const server = httpServer.create((req, res) => requestHandler(req, res, () => fileDriver))
@@ -257,7 +253,7 @@ test.group('Concurrency | file driver', () => {
   test('concurrently write and read slowly', async ({ fs, assert }) => {
     let sessionId = cuid()
 
-    const fileDriver = new FileDriver({ location: fs.basePath }, sessionConfig.age)
+    const fileDriver = new FileStore({ location: fs.basePath }, sessionConfig.age)
     await fileDriver.write(sessionId, { age: 22 })
 
     const server = httpServer.create((req, res) => requestHandler(req, res, () => fileDriver))
@@ -280,7 +276,7 @@ test.group('Concurrency | file driver', () => {
   test('HAS RACE CONDITON: concurrently write and write slowly', async ({ fs, assert }) => {
     let sessionId = cuid()
 
-    const fileDriver = new FileDriver({ location: fs.basePath }, sessionConfig.age)
+    const fileDriver = new FileStore({ location: fs.basePath }, sessionConfig.age)
     await fileDriver.write(sessionId, { age: 22 })
 
     const server = httpServer.create((req, res) => requestHandler(req, res, () => fileDriver))
@@ -313,7 +309,7 @@ test.group('Concurrency | redis driver', (group) => {
       await redisDriver.destroy(sessionId)
     })
 
-    const redisDriver = new RedisDriver(redis, { connection: 'main' }, sessionConfig.age)
+    const redisDriver = new RedisStore(redis.connection('main'), sessionConfig.age)
     await redisDriver.write(sessionId, { age: 22 })
 
     const server = httpServer.create((req, res) => requestHandler(req, res, () => redisDriver))
@@ -338,7 +334,7 @@ test.group('Concurrency | redis driver', (group) => {
       await redisDriver.destroy(sessionId)
     })
 
-    const redisDriver = new RedisDriver(redis, { connection: 'main' }, sessionConfig.age)
+    const redisDriver = new RedisStore(redis.connection('main'), sessionConfig.age)
     await redisDriver.write(sessionId, { age: 22 })
 
     const server = httpServer.create((req, res) => requestHandler(req, res, () => redisDriver))
@@ -358,7 +354,7 @@ test.group('Concurrency | redis driver', (group) => {
       await redisDriver.destroy(sessionId)
     })
 
-    const redisDriver = new RedisDriver(redis, { connection: 'main' }, sessionConfig.age)
+    const redisDriver = new RedisStore(redis.connection('main'), sessionConfig.age)
     await redisDriver.write(sessionId, { age: 22 })
 
     const server = httpServer.create((req, res) => requestHandler(req, res, () => redisDriver))

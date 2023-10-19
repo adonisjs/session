@@ -9,15 +9,15 @@
 
 import { test } from '@japa/runner'
 import { SessionClient } from '../src/client.js'
-import { MemoryDriver } from '../src/drivers/memory.js'
+import { MemoryStore } from '../src/stores/memory.js'
 
 test.group('Session Client', (group) => {
   group.each.teardown(async () => {
-    MemoryDriver.sessions.clear()
+    MemoryStore.sessions.clear()
   })
 
   test('define session data using session id', async ({ assert }) => {
-    const driver = new MemoryDriver()
+    const driver = new MemoryStore()
     const client = new SessionClient(driver)
 
     client.merge({ foo: 'bar' })
@@ -33,7 +33,7 @@ test.group('Session Client', (group) => {
   })
 
   test('load data from the store', async ({ assert }) => {
-    const driver = new MemoryDriver()
+    const driver = new MemoryStore()
     const client = new SessionClient(driver)
 
     client.merge({ foo: 'bar' })
@@ -51,7 +51,7 @@ test.group('Session Client', (group) => {
   })
 
   test('destroy session', async ({ assert }) => {
-    const driver = new MemoryDriver()
+    const driver = new MemoryStore()
     const client = new SessionClient(driver)
 
     client.merge({ foo: 'bar' })

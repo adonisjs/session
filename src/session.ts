@@ -15,13 +15,14 @@ import type { HttpError } from '@adonisjs/core/types/http'
 
 import debug from './debug.js'
 import * as errors from './errors.js'
-import { ReadOnlyStore, Store } from './store.js'
+import { ReadOnlyValuesStore, ValuesStore } from './values_store.js'
 import type {
   SessionData,
   SessionConfig,
+  SessionStoreFactory,
   AllowedSessionValues,
-  SessionDriverContract,
-} from './types/main.js'
+  SessionStoreContract,
+} from './types.js'
 
 /**
  * The session class exposes the API to read and write values to
@@ -32,11 +33,15 @@ import type {
  */
 export class Session {
   #config: SessionConfig
-  #driver: SessionDriverContract
+  #store: SessionStoreContract
   #emitter: EmitterService
   #ctx: HttpContext
   #readonly: boolean = false
-  #store?: Store
+
+  /**
+   * Session values store
+   */
+  #valuesStore?: ValuesStore
 
   /**
    * Session id refers to the session id that will be committed
@@ -58,12 +63,12 @@ export class Session {
    * Store of flash messages that be written during the
    * HTTP request
    */
-  responseFlashMessages = new Store({})
+  responseFlashMessages = new ValuesStore({})
 
   /**
    * Store of flash messages for the current HTTP request.
    */
-  flashMessages = new Store({})
+  flashMessages = new ValuesStore({})
 
   /**
    * The key to use for storing flash messages inside
@@ -98,7 +103,7 @@ export class Session {
    * A boolean to know if session store has been initiated
    */
   get initiated() {
-    return !!this.#store
+    return !!this.#valuesStore
   }
 
   /**
@@ -113,7 +118,7 @@ export class Session {
    * A boolean to know if the session store is empty
    */
   get isEmpty() {
-    return this.#store?.isEmpty ?? true
+    return this.#valuesStore?.isEmpty ?? true
   }
 
   /**
@@ -121,19 +126,19 @@ export class Session {
    * modified
    */
   get hasBeenModified() {
-    return this.#store?.hasBeenModified ?? false
+    return this.#valuesStore?.hasBeenModified ?? false
   }
 
   constructor(
     config: SessionConfig,
-    driver: SessionDriverContract,
+    storeFactory: SessionStoreFactory,
     emitter: EmitterService,
     ctx: HttpContext
   ) {
     this.#ctx = ctx
     this.#config = config
-    this.#driver = driver
     this.#emitter = emitter
+    this.#store = storeFactory(ctx, config)
     this.#sessionIdFromCookie = ctx.request.cookie(config.cookieName, undefined)
     this.#sessionId = this.#sessionIdFromCookie || cuid()
   }
@@ -142,8 +147,8 @@ export class Session {
    * Returns the flash messages store for a given
    * mode
    */
-  #getFlashStore(mode: 'write' | 'read'): Store {
-    if (!this.#store) {
+  #getFlashStore(mode: 'write' | 'read'): ValuesStore {
+    if (!this.#valuesStore) {
       throw new errors.E_SESSION_NOT_READY()
     }
 
@@ -157,8 +162,8 @@ export class Session {
   /**
    * Returns the store instance for a given mode
    */
-  #getStore(mode: 'write' | 'read'): Store {
-    if (!this.#store) {
+  #getValuesStore(mode: 'write' | 'read'): ValuesStore {
+    if (!this.#valuesStore) {
       throw new errors.E_SESSION_NOT_READY()
     }
 
@@ -166,7 +171,7 @@ export class Session {
       throw new errors.E_SESSION_NOT_MUTABLE()
     }
 
-    return this.#store
+    return this.#valuesStore
   }
 
   /**
@@ -174,15 +179,15 @@ export class Session {
    * when called multiple times
    */
   async initiate(readonly: boolean): Promise<void> {
-    if (this.#store) {
+    if (this.#valuesStore) {
       return
     }
 
     debug('initiating session (readonly: %s)', readonly)
 
     this.#readonly = readonly
-    const contents = await this.#driver.read(this.#sessionId)
-    this.#store = new Store(contents)
+    const contents = await this.#store.read(this.#sessionId)
+    this.#valuesStore = new ValuesStore(contents)
 
     /**
      * Extract flash messages from the store and keep a local
@@ -203,8 +208,8 @@ export class Session {
      */
     if ('view' in this.#ctx) {
       this.#ctx.view.share({
-        session: new ReadOnlyStore(this.#store.all()),
-        flashMessages: new ReadOnlyStore(this.flashMessages.all()),
+        session: new ReadOnlyValuesStore(this.#valuesStore.all()),
+        flashMessages: new ReadOnlyValuesStore(this.flashMessages.all()),
         old: function (key: string, defaultValue?: any) {
           return this.flashMessages.get(key, defaultValue)
         },
@@ -218,14 +223,14 @@ export class Session {
    * Put a key-value pair to the session data store
    */
   put(key: string, value: AllowedSessionValues) {
-    this.#getStore('write').set(key, value)
+    this.#getValuesStore('write').set(key, value)
   }
 
   /**
    * Check if a key exists inside the datastore
    */
   has(key: string): boolean {
-    return this.#getStore('read').has(key)
+    return this.#getValuesStore('read').has(key)
   }
 
   /**
@@ -234,21 +239,21 @@ export class Session {
    * does not exists or has undefined value.
    */
   get(key: string, defaultValue?: any) {
-    return this.#getStore('read').get(key, defaultValue)
+    return this.#getValuesStore('read').get(key, defaultValue)
   }
 
   /**
    * Get everything from the session store
    */
   all() {
-    return this.#getStore('read').all()
+    return this.#getValuesStore('read').all()
   }
 
   /**
    * Remove a key from the session datastore
    */
   forget(key: string) {
-    return this.#getStore('write').unset(key)
+    return this.#getValuesStore('write').unset(key)
   }
 
   /**
@@ -256,7 +261,7 @@ export class Session {
    * and remove it simultaneously.
    */
   pull(key: string, defaultValue?: any) {
-    return this.#getStore('write').pull(key, defaultValue)
+    return this.#getValuesStore('write').pull(key, defaultValue)
   }
 
   /**
@@ -267,7 +272,7 @@ export class Session {
    * The value of a new key will be 1
    */
   increment(key: string, steps: number = 1) {
-    return this.#getStore('write').increment(key, steps)
+    return this.#getValuesStore('write').increment(key, steps)
   }
 
   /**
@@ -278,14 +283,14 @@ export class Session {
    * The value of a new key will be -1
    */
   decrement(key: string, steps: number = 1) {
-    return this.#getStore('write').decrement(key, steps)
+    return this.#getValuesStore('write').decrement(key, steps)
   }
 
   /**
    * Empty the session store
    */
   clear() {
-    return this.#getStore('write').clear()
+    return this.#getValuesStore('write').clear()
   }
 
   /**
@@ -377,7 +382,7 @@ export class Session {
    * allowed after commit.
    */
   async commit() {
-    if (!this.#store || this.readonly) {
+    if (!this.#valuesStore || this.readonly) {
       return
     }
 
@@ -407,7 +412,7 @@ export class Session {
      */
     if (this.isEmpty) {
       if (this.#sessionIdFromCookie) {
-        await this.#driver.destroy(this.#sessionIdFromCookie)
+        await this.#store.destroy(this.#sessionIdFromCookie)
       }
       this.#emitter.emit('session:committed', { session: this })
       return
@@ -419,15 +424,15 @@ export class Session {
      */
     if (!this.hasBeenModified) {
       if (this.#sessionIdFromCookie && this.#sessionIdFromCookie !== this.#sessionId) {
-        await this.#driver.destroy(this.#sessionIdFromCookie)
-        await this.#driver.write(this.#sessionId, this.#store.toJSON())
+        await this.#store.destroy(this.#sessionIdFromCookie)
+        await this.#store.write(this.#sessionId, this.#valuesStore.toJSON())
         this.#emitter.emit('session:migrated', {
           fromSessionId: this.#sessionIdFromCookie,
           toSessionId: this.sessionId,
           session: this,
         })
       } else {
-        await this.#driver.touch(this.#sessionId)
+        await this.#store.touch(this.#sessionId)
       }
       this.#emitter.emit('session:committed', { session: this })
       return
@@ -437,15 +442,15 @@ export class Session {
      * Otherwise commit to the session store
      */
     if (this.#sessionIdFromCookie && this.#sessionIdFromCookie !== this.#sessionId) {
-      await this.#driver.destroy(this.#sessionIdFromCookie)
-      await this.#driver.write(this.#sessionId, this.#store.toJSON())
+      await this.#store.destroy(this.#sessionIdFromCookie)
+      await this.#store.write(this.#sessionId, this.#valuesStore.toJSON())
       this.#emitter.emit('session:migrated', {
         fromSessionId: this.#sessionIdFromCookie,
         toSessionId: this.sessionId,
         session: this,
       })
     } else {
-      await this.#driver.write(this.#sessionId, this.#store.toJSON())
+      await this.#store.write(this.#sessionId, this.#valuesStore.toJSON())
     }
 
     this.#emitter.emit('session:committed', { session: this })

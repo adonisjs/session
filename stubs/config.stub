@@ -2,8 +2,8 @@
   exports({ to: app.configPath('session.ts') })
 }}}
 import env from '#start/env'
-import app from '@adonisjs/core/services/app';
-import { defineConfig } from '@adonisjs/session'
+import app from '@adonisjs/core/services/app'
+import { defineConfig, stores } from '@adonisjs/session'
 
 export default defineConfig({
   enabled: true,
@@ -22,12 +22,9 @@ export default defineConfig({
   age: '2h',
 
   /**
-   * The driver to use. Make sure to validate the environment
-   * variable in order to infer the driver name without any
-   * errors.
+   * Configuration for session cookie and the
+   * cookie store
    */
-  driver: env.get('SESSION_DRIVER'),
-
   cookie: {
     path: '/',
     httpOnly: true,
@@ -36,16 +33,17 @@ export default defineConfig({
   },
 
   /**
-   * Settings for the file driver
+   * The store to use. Make sure to validate the environment
+   * variable in order to infer the store name without any
+   * errors.
    */
-  // file: {
-  //   location: app.tmpPath('sessions'),
-  // },
+  store: env.get('SESSION_DRIVER'),
 
   /**
-   * Settings for the redis driver
+   * List of configured stores. Refer documentation to see
+   * list of available stores and their config.
    */
-  // redis: {
-  //   connection: 'main'
-  // },
+  stores: {
+    cookie: stores.cookie(),
+  }
 })

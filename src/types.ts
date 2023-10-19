@@ -7,14 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import type { HttpContext } from '@adonisjs/core/http'
+import { HttpContext } from '@adonisjs/core/http'
 import { RedisConnections } from '@adonisjs/redis/types'
 import type { CookieOptions } from '@adonisjs/core/types/http'
-
-import type { FileDriver } from '../drivers/file.js'
-import type { RedisDriver } from '../drivers/redis.js'
-import type { MemoryDriver } from '../drivers/memory.js'
-import type { CookieDriver } from '../drivers/cookie.js'
 
 /**
  * The values allowed by the `session.put` method
@@ -23,9 +18,9 @@ export type AllowedSessionValues = string | boolean | number | object | Date | A
 export type SessionData = Record<string, AllowedSessionValues>
 
 /**
- * Session drivers must implement the session driver contract.
+ * Session stores must implement the session store contract.
  */
-export interface SessionDriverContract {
+export interface SessionStoreContract {
   /**
    * The read method is used to read the data from the persistence
    * store and return it back as an object
@@ -52,18 +47,14 @@ export interface SessionDriverContract {
 }
 
 /**
- * Shape of session config.
+ * Base configuration for managing sessions without
+ * stores.
  */
 export interface SessionConfig {
   /**
    * Enable/disable sessions temporarily
    */
   enabled: boolean
-
-  /**
-   * The drivers to use
-   */
-  driver: keyof SessionDriversList
 
   /**
    * The name of the cookie for storing the session id.
@@ -98,34 +89,23 @@ export interface SessionConfig {
 }
 
 /**
- * Configuration used by the file driver.
+ * Configuration used by the file store.
  */
-export type FileDriverConfig = {
+export type FileStoreConfig = {
   location: string
 }
 
 /**
- * Configuration used by the redis driver.
+ * Configuration used by the redis store.
  */
-export type RedisDriverConfig = {
+export type RedisStoreConfig = {
   connection: keyof RedisConnections
 }
 
 /**
- * Extending session config with the drivers config
+ * Factory function to instantiate session store
  */
-export interface SessionConfig {
-  file?: FileDriverConfig
-  redis?: RedisDriverConfig
-}
-
-/**
- * List of the session drivers. The list can be extended using
- * declaration merging
- */
-export interface SessionDriversList {
-  file: (config: SessionConfig, ctx: HttpContext) => FileDriver
-  cookie: (config: SessionConfig, ctx: HttpContext) => CookieDriver
-  redis: (config: SessionConfig, ctx: HttpContext) => RedisDriver
-  memory: (config: SessionConfig, ctx?: HttpContext) => MemoryDriver
-}
+export type SessionStoreFactory = (
+  ctx: HttpContext,
+  sessionConfig: SessionConfig
+) => SessionStoreContract

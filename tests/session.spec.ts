@@ -29,9 +29,9 @@ import {
 
 import { Session } from '../src/session.js'
 import { httpServer } from '../test_helpers/index.js'
-import { CookieDriver } from '../src/drivers/cookie.js'
-import type { SessionConfig } from '../src/types/main.js'
+import { CookieStore } from '../src/stores/cookie.js'
 import SessionProvider from '../providers/session_provider.js'
+import type { SessionConfig, SessionStoreFactory } from '../src/types.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 const emitter = new Emitter<EventsList>(app)
@@ -42,8 +42,10 @@ const sessionConfig: SessionConfig = {
   age: '2 hours',
   clearWithBrowser: false,
   cookieName: 'adonis_session',
-  driver: 'cookie',
   cookie: {},
+}
+const cookieDriver: SessionStoreFactory = (ctx, config) => {
+  return new CookieStore(config.cookie, ctx)
 }
 
 test.group('Session', (group) => {
@@ -54,7 +56,6 @@ test.group('Session', (group) => {
     app.container.singleton('router', () => router)
 
     await new EdgeServiceProvider(app).boot()
-    await new SessionProvider(app).boot()
   })
 
   test('do not define session id cookie when not initiated', async ({ assert }) => {
@@ -63,8 +64,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
 
       assert.isFalse(session.initiated)
 
@@ -85,8 +85,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       assert.isTrue(session.fresh)
@@ -107,8 +106,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       assert.isTrue(session.fresh)
@@ -132,8 +130,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.put('username', 'virk')
@@ -162,8 +159,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.put('username', 'virk')
@@ -201,8 +197,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.forget('age')
@@ -232,8 +227,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       assert.equal(session.pull('age'), 22)
@@ -263,8 +257,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.increment('visits')
@@ -291,8 +284,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.decrement('visits')
@@ -319,8 +311,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       await session.commit()
@@ -352,8 +343,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.clear()
@@ -377,8 +367,7 @@ test.group('Session', (group) => {
 
   test('throw error when trying to read from uninitiated store', async () => {
     const ctx = new HttpContextFactory().create()
-    const driver = new CookieDriver(sessionConfig.cookie, ctx)
-    const session = new Session(sessionConfig, driver, emitter, ctx)
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
     session.get('username')
   }).throws(
     'Session store has not been initiated. Make sure you have registered the session middleware'
@@ -386,8 +375,7 @@ test.group('Session', (group) => {
 
   test('throw error when trying to write to a read only store', async ({ assert }) => {
     const ctx = new HttpContextFactory().create()
-    const driver = new CookieDriver(sessionConfig.cookie, ctx)
-    const session = new Session(sessionConfig, driver, emitter, ctx)
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
 
     await session.initiate(true)
     assert.isUndefined(session.get('username'))
@@ -407,8 +395,7 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       try {
@@ -441,8 +428,7 @@ test.group('Session | Regenerate', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.regenerate()
@@ -466,8 +452,7 @@ test.group('Session | Regenerate', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.regenerate()
@@ -494,8 +479,7 @@ test.group('Session | Regenerate', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.regenerate()
@@ -528,8 +512,7 @@ test.group('Session | Regenerate', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.put('username', 'virk')
@@ -571,8 +554,7 @@ test.group('Session | Regenerate', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.forget('age')
@@ -610,8 +592,7 @@ test.group('Session | Regenerate', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       session.regenerate()
       newSessionId = session.sessionId
@@ -661,8 +642,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.flash('status', 'Task created successfully')
@@ -690,8 +670,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.flash({ status: 'Task created successfully' })
@@ -722,8 +701,7 @@ test.group('Session | Flash', (group) => {
         username: 'virk',
       })
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.flash({ status: 'Task created successfully' })
@@ -757,8 +735,7 @@ test.group('Session | Flash', (group) => {
         age: 22,
       })
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       session.flash({ status: 'Task created successfully' })
@@ -795,8 +772,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       sessionId = session.sessionId
 
@@ -836,8 +812,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       sessionId = session.sessionId
 
@@ -890,8 +865,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       sessionId = session.sessionId
 
@@ -941,8 +915,7 @@ test.group('Session | Flash', (group) => {
 
   test('throw error when trying to write to flash messages without initialization', async () => {
     const ctx = new HttpContextFactory().create()
-    const driver = new CookieDriver(sessionConfig.cookie, ctx)
-    const session = new Session(sessionConfig, driver, emitter, ctx)
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
     session.flash('username', 'virk')
   }).throws(
     'Session store has not been initiated. Make sure you have registered the session middleware'
@@ -950,8 +923,7 @@ test.group('Session | Flash', (group) => {
 
   test('throw error when trying to write flash messages to a read only store', async () => {
     const ctx = new HttpContextFactory().create()
-    const driver = new CookieDriver(sessionConfig.cookie, ctx)
-    const session = new Session(sessionConfig, driver, emitter, ctx)
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
 
     await session.initiate(true)
     session.flash('username', 'foo')
@@ -965,8 +937,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       const errorReporter = new SimpleErrorReporter()
@@ -1011,8 +982,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       sessionId = session.sessionId
 
@@ -1061,8 +1031,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       sessionId = session.sessionId
 
@@ -1112,8 +1081,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
 
       response.send(await ctx.view.render('flash_no_errors_messages'))
@@ -1149,8 +1117,7 @@ test.group('Session | Flash', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const driver = new CookieDriver(sessionConfig.cookie, ctx)
-      const session = new Session(sessionConfig, driver, emitter, ctx)
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
       await session.initiate(false)
       sessionId = session.sessionId
 

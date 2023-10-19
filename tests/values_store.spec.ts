@@ -8,23 +8,23 @@
  */
 
 import { test } from '@japa/runner'
-import { Store } from '../src/store.js'
+import { ValuesStore } from '../src/values_store.js'
 
 test.group('Store', () => {
   test('return empty object for empty store', ({ assert }) => {
-    const store = new Store(null)
+    const store = new ValuesStore(null)
     assert.deepEqual(store.toJSON(), {})
     assert.isTrue(store.isEmpty)
     assert.isFalse(store.hasBeenModified)
   })
 
   test('return default value when original value is null', ({ assert }) => {
-    const store = new Store({ title: null } as any)
+    const store = new ValuesStore({ title: null } as any)
     assert.equal(store.get('title', ''), '')
   })
 
   test('mutate values inside store', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     store.set('username', 'virk')
 
     assert.isFalse(store.isEmpty)
@@ -33,7 +33,7 @@ test.group('Store', () => {
   })
 
   test('mutate nested values inside store', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     store.set('user.username', 'virk')
 
     assert.isFalse(store.isEmpty)
@@ -42,7 +42,7 @@ test.group('Store', () => {
   })
 
   test('remove value from store', ({ assert }) => {
-    const store = new Store(null)
+    const store = new ValuesStore(null)
     store.set('user.username', 'virk')
     store.unset('user.username')
 
@@ -52,7 +52,7 @@ test.group('Store', () => {
   })
 
   test('increment value inside store', ({ assert }) => {
-    const store = new Store(null)
+    const store = new ValuesStore(null)
     store.set('user.age', 22)
     store.increment('user.age')
 
@@ -62,13 +62,13 @@ test.group('Store', () => {
   })
 
   test('throw when incrementing a non integer value', () => {
-    const store = new Store(null)
+    const store = new ValuesStore(null)
     store.set('user.age', 'foo')
     store.increment('user.age')
   }).throws('Cannot increment "user.age". Existing value is not a number')
 
   test('decrement value inside store', ({ assert }) => {
-    const store = new Store(null)
+    const store = new ValuesStore(null)
     store.set('user.age', 22)
     store.decrement('user.age')
 
@@ -78,13 +78,13 @@ test.group('Store', () => {
   })
 
   test('throw when decrementing a non integer value', () => {
-    const store = new Store(null)
+    const store = new ValuesStore(null)
     store.set('user.age', 'foo')
     store.decrement('user.age')
   }).throws('Cannot decrement "user.age". Existing value is not a number')
 
   test('find if value exists in the store', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     assert.isFalse(store.has('username'))
 
     store.update({ username: 'virk' })
@@ -95,7 +95,7 @@ test.group('Store', () => {
   })
 
   test('check for arrays length', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     assert.isFalse(store.has('users'))
 
     store.update({ users: [] })
@@ -106,7 +106,7 @@ test.group('Store', () => {
   })
 
   test('do not check for array length when explicitly said no', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     assert.isFalse(store.has('users'))
 
     store.update({ users: [] })
@@ -117,7 +117,7 @@ test.group('Store', () => {
   })
 
   test('pull key from the store', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     store.set('username', 'virk')
 
     assert.equal(store.pull('username'), 'virk')
@@ -128,7 +128,7 @@ test.group('Store', () => {
   })
 
   test('deep merge with existing values', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     store.set('user', { profile: { username: 'virk' }, id: 1 })
     store.merge({ user: { profile: { age: 32 } } })
 
@@ -139,7 +139,7 @@ test.group('Store', () => {
   })
 
   test('clear store', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     store.set('user', { profile: { username: 'virk' }, id: 1 })
     store.clear()
 
@@ -149,7 +149,7 @@ test.group('Store', () => {
   })
 
   test('stringify store data object', ({ assert }) => {
-    const store = new Store({})
+    const store = new ValuesStore({})
     store.set('user', { profile: { username: 'virk' }, id: 1 })
     store.merge({ user: { profile: { age: 32 } } })
 

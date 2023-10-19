@@ -9,13 +9,12 @@
 
 import lodash from '@poppinss/utils/lodash'
 import { RuntimeException } from '@poppinss/utils'
-
-import type { AllowedSessionValues, SessionData } from './types/main.js'
+import type { AllowedSessionValues, SessionData } from './types.js'
 
 /**
  * Readonly session store
  */
-export class ReadOnlyStore {
+export class ReadOnlyValuesStore {
   /**
    * Underlying store values
    */
@@ -90,7 +89,7 @@ export class ReadOnlyStore {
  * Session store encapsulates the session data and offers a
  * declarative API to mutate it.
  */
-export class Store extends ReadOnlyStore {
+export class ValuesStore extends ReadOnlyValuesStore {
   /**
    * A boolean to know if store has been
    * modified

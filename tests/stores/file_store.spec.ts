@@ -12,12 +12,12 @@ import { test } from '@japa/runner'
 import { stat } from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
 
-import { FileDriver } from '../../src/drivers/file.js'
+import { FileStore } from '../../src/stores/file.js'
 
-test.group('File driver', () => {
+test.group('File store', () => {
   test('do not create file for a new session', async ({ fs, assert }) => {
     const sessionId = '1234'
-    const session = new FileDriver({ location: fs.basePath }, '2 hours')
+    const session = new FileStore({ location: fs.basePath }, '2 hours')
 
     const value = await session.read(sessionId)
     assert.isNull(value)
@@ -27,7 +27,7 @@ test.group('File driver', () => {
 
   test('create intermediate directories when missing', async ({ fs, assert }) => {
     const sessionId = '1234'
-    const session = new FileDriver(
+    const session = new FileStore(
       {
         location: join(fs.basePath, 'app/sessions'),
       },
@@ -45,7 +45,7 @@ test.group('File driver', () => {
 
   test('update existing session', async ({ fs, assert }) => {
     const sessionId = '1234'
-    const session = new FileDriver(
+    const session = new FileStore(
       {
         location: fs.basePath,
       },
@@ -67,7 +67,7 @@ test.group('File driver', () => {
 
   test('get session existing value', async ({ assert, fs }) => {
     const sessionId = '1234'
-    const session = new FileDriver({ location: fs.basePath }, '2 hours')
+    const session = new FileStore({ location: fs.basePath }, '2 hours')
     await session.write(sessionId, { message: 'hello-world' })
 
     const value = await session.read(sessionId)
@@ -76,7 +76,7 @@ test.group('File driver', () => {
 
   test('return null when session data is expired', async ({ assert, fs }) => {
     const sessionId = '1234'
-    const session = new FileDriver({ location: fs.basePath }, 1000)
+    const session = new FileStore({ location: fs.basePath }, 1000)
     await session.write(sessionId, { message: 'hello-world' })
 
     await setTimeout(2000)
@@ -87,7 +87,7 @@ test.group('File driver', () => {
 
   test('ignore malformed file contents', async ({ fs, assert }) => {
     const sessionId = '1234'
-    const session = new FileDriver({ location: fs.basePath }, '2 hours')
+    const session = new FileStore({ location: fs.basePath }, '2 hours')
 
     await fs.create('1234.txt', '')
     assert.isNull(await session.read(sessionId))
@@ -102,7 +102,7 @@ test.group('File driver', () => {
   test('remove file on destroy', async ({ assert, fs }) => {
     const sessionId = '1234'
 
-    const session = new FileDriver({ location: fs.basePath }, '2 hours')
+    const session = new FileStore({ location: fs.basePath }, '2 hours')
     await session.write(sessionId, { message: 'hello-world' })
     await session.destroy(sessionId)
 
@@ -114,7 +114,7 @@ test.group('File driver', () => {
 
     await assert.fileNotExists('1234.txt')
 
-    const session = new FileDriver({ location: fs.basePath }, '2 hours')
+    const session = new FileStore({ location: fs.basePath }, '2 hours')
     await session.destroy(sessionId)
 
     await assert.fileNotExists('1234.txt')
@@ -123,7 +123,7 @@ test.group('File driver', () => {
   test('update session expiry on touch', async ({ assert, fs }) => {
     const sessionId = '1234'
 
-    const session = new FileDriver({ location: fs.basePath }, '2 hours')
+    const session = new FileStore({ location: fs.basePath }, '2 hours')
     await session.write(sessionId, { message: 'hello-world' })
 
     /**

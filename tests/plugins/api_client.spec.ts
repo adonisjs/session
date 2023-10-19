@@ -16,10 +16,9 @@ import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { Session } from '../../src/session.js'
-import { SessionConfig } from '../../src/types/main.js'
+import { SessionConfig } from '../../src/types.js'
 import { defineConfig } from '../../src/define_config.js'
-import { MemoryDriver } from '../../src/drivers/memory.js'
-import sessionDriversList from '../../src/drivers_collection.js'
+import { MemoryStore } from '../../src/stores/memory.js'
 import { httpServer, runJapaTest } from '../../test_helpers/index.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
@@ -32,7 +31,6 @@ const sessionConfig: SessionConfig = {
   age: '2 hours',
   clearWithBrowser: false,
   cookieName: 'adonis_session',
-  driver: 'cookie',
   cookie: {},
 }
 
@@ -40,7 +38,8 @@ test.group('Api client', (group) => {
   group.setup(async () => {
     app.useConfig({
       session: defineConfig({
-        driver: 'memory',
+        store: 'memory',
+        stores: {},
       }),
     })
     await app.init()
@@ -54,12 +53,7 @@ test.group('Api client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       assert.deepEqual(session.all(), { username: 'virk' })
@@ -74,7 +68,7 @@ test.group('Api client', (group) => {
 
     await runJapaTest(app, async ({ client }) => {
       await client.get(url).withSession({ username: 'virk' })
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -84,12 +78,7 @@ test.group('Api client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       assert.deepEqual(session.flashMessages.all(), { username: 'virk' })
@@ -104,7 +93,7 @@ test.group('Api client', (group) => {
 
     await runJapaTest(app, async ({ client }) => {
       await client.get(url).withFlashMessages({ username: 'virk' })
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -114,12 +103,7 @@ test.group('Api client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       session.put('name', 'virk')
@@ -135,7 +119,7 @@ test.group('Api client', (group) => {
     await runJapaTest(app, async ({ client }) => {
       const response = await client.get(url)
       assert.deepEqual(response.session(), { name: 'virk' })
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -145,12 +129,7 @@ test.group('Api client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       session.flash('name', 'virk')
@@ -166,7 +145,7 @@ test.group('Api client', (group) => {
     await runJapaTest(app, async ({ client }) => {
       const response = await client.get(url)
       assert.deepEqual(response.flashMessages(), { name: 'virk' })
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
     })
   })
 
@@ -176,12 +155,7 @@ test.group('Api client', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(
-        sessionConfig,
-        sessionDriversList.create('memory', sessionConfig),
-        emitter,
-        ctx
-      )
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
 
       await session.initiate(false)
       session.put('name', 'virk')
@@ -201,7 +175,7 @@ test.group('Api client', (group) => {
 
     await runJapaTest(app, async ({ client }) => {
       const response = await client.get(url)
-      assert.lengthOf(MemoryDriver.sessions, 0)
+      assert.lengthOf(MemoryStore.sessions, 0)
 
       response.assertSession('name')
       response.assertSession('name', 'virk')

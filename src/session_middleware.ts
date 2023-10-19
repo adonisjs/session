@@ -12,8 +12,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { ExceptionHandler, HttpContext } from '@adonisjs/core/http'
 
 import { Session } from './session.js'
-import type { SessionConfig } from './types/main.js'
-import sessionDriversList from './drivers_collection.js'
+import type { SessionConfig, SessionStoreFactory } from './types.js'
 
 /**
  * HttpContext augmentations
@@ -41,11 +40,20 @@ ExceptionHandler.macro('renderValidationErrorAsHTML', async function (error, ctx
  * Session middleware is used to initiate the session store
  * and commit its values during an HTTP request
  */
-export default class SessionMiddleware {
-  #config: SessionConfig
+export default class SessionMiddleware<KnownStores extends Record<string, SessionStoreFactory>> {
+  #config: SessionConfig & {
+    store: keyof KnownStores
+    stores: KnownStores
+  }
   #emitter: EmitterService
 
-  constructor(config: SessionConfig, emitter: EmitterService) {
+  constructor(
+    config: SessionConfig & {
+      store: keyof KnownStores
+      stores: KnownStores
+    },
+    emitter: EmitterService
+  ) {
     this.#config = config
     this.#emitter = emitter
   }
@@ -55,8 +63,12 @@ export default class SessionMiddleware {
       return next()
     }
 
-    const driver = sessionDriversList.create(this.#config.driver, this.#config, ctx)
-    ctx.session = new Session(this.#config, driver, this.#emitter, ctx)
+    ctx.session = new Session(
+      this.#config,
+      this.#config.stores[this.#config.store], // reference to store factory
+      this.#emitter,
+      ctx
+    )
 
     /**
      * Initiate session store

@@ -8,11 +8,23 @@
  */
 
 import type { Edge } from 'edge.js'
+import { configProvider } from '@adonisjs/core'
+import { RuntimeException } from '@poppinss/utils'
 import type { ApplicationService } from '@adonisjs/core/types'
 
-import debug from '../src/debug.js'
-import { registerSessionDriver } from '../src/helpers.js'
+import type { Session } from '../src/session.js'
 import SessionMiddleware from '../src/session_middleware.js'
+
+/**
+ * Events emitted by the session class
+ */
+declare module '@adonisjs/core/types' {
+  interface EventsList {
+    'session:initiated': { session: Session }
+    'session:committed': { session: Session }
+    'session:migrated': { fromSessionId: string; toSessionId: string; session: Session }
+  }
+}
 
 /**
  * Session provider configures the session management inside an
@@ -22,15 +34,19 @@ export default class SessionProvider {
   constructor(protected app: ApplicationService) {}
 
   /**
-   * Returns edge when it's installed
+   * Registers edge plugin when edge is installed
+   * in the user application.
    */
-  protected async getEdge(): Promise<Edge | null> {
+  protected async registerEdgePlugin() {
+    let edge: Edge | null = null
     try {
-      const { default: edge } = await import('edge.js')
-      debug('Detected edge.js package. Adding session primitives to it')
-      return edge
-    } catch {
-      return null
+      const edgeExports = await import('edge.js')
+      edge = edgeExports.default
+    } catch {}
+
+    if (edge) {
+      const { edgePluginSession } = await import('../src/plugins/edge.js')
+      edge.use(edgePluginSession)
     }
   }
 
@@ -39,27 +55,27 @@ export default class SessionProvider {
    */
   register() {
     this.app.container.singleton(SessionMiddleware, async (resolver) => {
-      const config = this.app.config.get<any>('session', {})
+      const sessionConfigProvider = this.app.config.get('session', {})
+
+      /**
+       * Resolve config from the provider
+       */
+      const config = await configProvider.resolve<any>(this.app, sessionConfigProvider)
+      if (!config) {
+        throw new RuntimeException(
+          'Invalid "config/session.ts" file. Make sure you are using the "defineConfig" method'
+        )
+      }
+
       const emitter = await resolver.make('emitter')
       return new SessionMiddleware(config, emitter)
     })
   }
 
   /**
-   * Registering the active driver when middleware is used
-   * +
    * Adding edge tags (if edge is installed)
    */
   async boot() {
-    this.app.container.resolving(SessionMiddleware, async () => {
-      const config = this.app.config.get<any>('session')
-      await registerSessionDriver(this.app, config.driver)
-    })
-
-    const edge = await this.getEdge()
-    if (edge) {
-      const { edgePluginSession } = await import('../src/plugins/edge.js')
-      edge.use(edgePluginSession)
-    }
+    await this.registerEdgePlugin()
   }
 }

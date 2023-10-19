@@ -11,9 +11,8 @@ import { test } from '@japa/runner'
 import { defineConfig } from '@adonisjs/redis'
 import { setTimeout } from 'node:timers/promises'
 import { RedisManagerFactory } from '@adonisjs/redis/factories'
-import type { RedisService, InferConnections } from '@adonisjs/redis/types'
 
-import { RedisDriver } from '../../src/drivers/redis.js'
+import { RedisStore } from '../../src/stores/redis.js'
 
 const sessionId = '1234'
 const redisConfig = defineConfig({
@@ -25,12 +24,9 @@ const redisConfig = defineConfig({
     },
   },
 })
-const redis = new RedisManagerFactory(redisConfig).create() as RedisService
-declare module '@adonisjs/redis/types' {
-  export interface RedisConnections extends InferConnections<typeof redisConfig> {}
-}
+const redis = new RedisManagerFactory(redisConfig).create()
 
-test.group('Redis driver', (group) => {
+test.group('Redis store', (group) => {
   group.tap((t) => {
     t.skip(!!process.env.NO_REDIS, 'Redis not available in windows env')
   })
@@ -42,13 +38,13 @@ test.group('Redis driver', (group) => {
   })
 
   test('return null when value is missing', async ({ assert }) => {
-    const session = new RedisDriver(redis, { connection: 'main' }, '2 hours')
+    const session = new RedisStore(redis.connection('main'), '2 hours')
     const value = await session.read(sessionId)
     assert.isNull(value)
   })
 
   test('save session data in a set', async ({ assert }) => {
-    const session = new RedisDriver(redis, { connection: 'main' }, '2 hours')
+    const session = new RedisStore(redis.connection('main'), '2 hours')
     await session.write(sessionId, { message: 'hello-world' })
 
     assert.equal(
@@ -61,7 +57,7 @@ test.group('Redis driver', (group) => {
   })
 
   test('return null when session data is expired', async ({ assert }) => {
-    const session = new RedisDriver(redis, { connection: 'main' }, 1)
+    const session = new RedisStore(redis.connection('main'), 1)
     await session.write(sessionId, { message: 'hello-world' })
 
     await setTimeout(2000)
@@ -71,7 +67,7 @@ test.group('Redis driver', (group) => {
   }).disableTimeout()
 
   test('ignore malformed contents', async ({ assert }) => {
-    const session = new RedisDriver(redis, { connection: 'main' }, 1)
+    const session = new RedisStore(redis.connection('main'), 1)
     await redis.set(sessionId, 'foo')
 
     const value = await session.read(sessionId)
@@ -79,7 +75,7 @@ test.group('Redis driver', (group) => {
   })
 
   test('delete key on destroy', async ({ assert }) => {
-    const session = new RedisDriver(redis, { connection: 'main' }, '2 hours')
+    const session = new RedisStore(redis.connection('main'), '2 hours')
 
     await session.write(sessionId, { message: 'hello-world' })
     await session.destroy(sessionId)
@@ -88,7 +84,7 @@ test.group('Redis driver', (group) => {
   })
 
   test('update session expiry on touch', async ({ assert }) => {
-    const session = new RedisDriver(redis, { connection: 'main' }, 10)
+    const session = new RedisStore(redis.connection('main'), 10)
     await session.write(sessionId, { message: 'hello-world' })
 
     /**

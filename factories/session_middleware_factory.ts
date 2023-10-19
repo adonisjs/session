@@ -8,20 +8,26 @@
  */
 
 import { Emitter } from '@adonisjs/core/events'
-import { ApplicationService, EventsList } from '@adonisjs/core/types'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import type { ApplicationService, EventsList } from '@adonisjs/core/types'
 
 import { defineConfig } from '../index.js'
-import { SessionConfig } from '../src/types/main.js'
-import { registerSessionDriver } from '../src/helpers.js'
 import SessionMiddleware from '../src/session_middleware.js'
+import type { SessionConfig, SessionStoreFactory } from '../src/types.js'
 
 /**
  * Exposes the API to create an instance of the session middleware
  * without additional plumbing
  */
 export class SessionMiddlewareFactory {
-  #config: Partial<SessionConfig> = { driver: 'memory' }
+  #config: Partial<SessionConfig> & {
+    store: string
+    stores: Record<string, SessionStoreFactory>
+  } = {
+    store: 'memory',
+    stores: {},
+  }
+
   #emitter?: Emitter<EventsList>
 
   #getApp() {
@@ -35,7 +41,13 @@ export class SessionMiddlewareFactory {
   /**
    * Merge custom options
    */
-  merge(options: { config?: Partial<SessionConfig>; emitter?: Emitter<EventsList> }) {
+  merge(options: {
+    config?: Partial<SessionConfig> & {
+      store: string
+      stores: Record<string, SessionStoreFactory>
+    }
+    emitter?: Emitter<EventsList>
+  }) {
     if (options.config) {
       this.#config = options.config
     }
@@ -51,8 +63,7 @@ export class SessionMiddlewareFactory {
    * Creates an instance of the session middleware
    */
   async create() {
-    const config = defineConfig(this.#config)
-    await registerSessionDriver(this.#getApp(), config.driver)
+    const config = await defineConfig(this.#config).resolver(this.#getApp())
     return new SessionMiddleware(config, this.#getEmitter())
   }
 }

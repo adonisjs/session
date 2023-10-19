@@ -56,7 +56,7 @@
     "@japa/browser-client": "^2.0.0",
     "@japa/file-system": "^2.0.0",
     "@japa/plugin-adonisjs": "^2.0.0-3",
-    "@japa/runner": "^3.0.3",
+    "@japa/runner": "^3.0.4",
     "@japa/snapshot": "^2.0.0",
     "@swc/core": "1.3.82",
     "@types/node": "^20.8.7",

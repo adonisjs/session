@@ -16,7 +16,7 @@ import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { httpServer } from '../../test_helpers/index.js'
-import { CookieDriver } from '../../src/drivers/cookie.js'
+import { CookieStore } from '../../src/stores/cookie.js'
 
 const encryption = new EncryptionFactory().create()
 const cookieClient = new CookieClient(encryption)
@@ -25,7 +25,7 @@ const cookieConfig: Partial<CookieOptions> = {
   maxAge: '5mins',
 }
 
-test.group('Cookie driver', () => {
+test.group('Cookie store', () => {
   test('return null when session data cookie does not exists', async ({ assert }) => {
     const sessionId = '1234'
 
@@ -34,7 +34,7 @@ test.group('Cookie driver', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new CookieDriver(cookieConfig, ctx)
+      const session = new CookieStore(cookieConfig, ctx)
       const value = session.read(sessionId)
       response.json(value)
       response.finish()
@@ -53,7 +53,7 @@ test.group('Cookie driver', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new CookieDriver(cookieConfig, ctx)
+      const session = new CookieStore(cookieConfig, ctx)
       const value = session.read(sessionId)
       response.json(value)
       response.finish()
@@ -74,7 +74,7 @@ test.group('Cookie driver', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new CookieDriver(cookieConfig, ctx)
+      const session = new CookieStore(cookieConfig, ctx)
       session.write(sessionId, { visits: 0 })
       response.finish()
     })
@@ -94,7 +94,7 @@ test.group('Cookie driver', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new CookieDriver(cookieConfig, ctx)
+      const session = new CookieStore(cookieConfig, ctx)
       session.touch(sessionId)
       response.finish()
     })
@@ -119,7 +119,7 @@ test.group('Cookie driver', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new CookieDriver(cookieConfig, ctx)
+      const session = new CookieStore(cookieConfig, ctx)
       response.json(session.read(sessionId))
       response.finish()
     })
@@ -141,7 +141,7 @@ test.group('Cookie driver', () => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new CookieDriver(cookieConfig, ctx)
+      const session = new CookieStore(cookieConfig, ctx)
       response.json(session.read(sessionId))
       session.destroy(sessionId)
       response.finish()
