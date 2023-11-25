@@ -8,14 +8,10 @@
   "main": "build/index.js",
   "type": "module",
   "files": [
-    "build/src",
-    "build/stubs",
-    "build/providers",
-    "build/factories",
-    "build/configure.d.ts",
-    "build/configure.js",
-    "build/index.d.ts",
-    "build/index.js"
+    "build",
+    "!build/bin",
+    "!build/tests",
+    "!build/tests_helpers"
   ],
   "exports": {
     ".": "./build/index.js",
@@ -34,8 +30,10 @@
     "clean": "del-cli build",
     "typecheck": "tsc --noEmit",
     "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
-    "compile": "npm run lint && npm run clean && tsc",
-    "build": "npm run compile && npm run copy:templates",
+    "precompile": "npm run lint && npm run clean",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "postcompile": "npm run copy:templates",
+    "build": "npm run compile",
     "prepublishOnly": "npm run build",
     "lint": "eslint . --ext=.ts",
     "format": "prettier --write .",
@@ -78,6 +76,7 @@
     "set-cookie-parser": "^2.6.0",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.1",
+    "tsup": "^8.0.1",
     "typescript": "^5.3.2"
   },
   "dependencies": {
@@ -148,5 +147,23 @@
       "factories/**",
       "bin/**"
     ]
+  },
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./factories/main.ts",
+      "./providers/session_provider.ts",
+      "./src/session_middleware.ts",
+      "./src/plugins/edge.ts",
+      "./src/plugins/japa/api_client.ts",
+      "./src/plugins/japa/browser_client.ts",
+      "./src/client.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": true,
+    "target": "esnext"
   }
 }

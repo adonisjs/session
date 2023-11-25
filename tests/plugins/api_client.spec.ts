@@ -19,7 +19,7 @@ import { Session } from '../../src/session.js'
 import { SessionConfig } from '../../src/types.js'
 import { defineConfig } from '../../src/define_config.js'
 import { MemoryStore } from '../../src/stores/memory.js'
-import { httpServer, runJapaTest } from '../../test_helpers/index.js'
+import { httpServer, runJapaTest } from '../../tests_helpers/index.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 

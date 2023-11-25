@@ -25,7 +25,7 @@ import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/c
 import { Session } from '../src/session.js'
 import { FileStore } from '../src/stores/file.js'
 import { RedisStore } from '../src/stores/redis.js'
-import { httpServer } from '../test_helpers/index.js'
+import { httpServer } from '../tests_helpers/index.js'
 import { CookieStore } from '../src/stores/cookie.js'
 import type { SessionConfig, SessionStoreContract } from '../src/types.js'
 

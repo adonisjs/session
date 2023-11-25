@@ -28,7 +28,7 @@ import {
 } from '@adonisjs/core/factories/http'
 
 import { Session } from '../src/session.js'
-import { httpServer } from '../test_helpers/index.js'
+import { httpServer } from '../tests_helpers/index.js'
 import { CookieStore } from '../src/stores/cookie.js'
 import SessionProvider from '../providers/session_provider.js'
 import type { SessionConfig, SessionStoreFactory } from '../src/types.js'
