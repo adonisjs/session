@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import type { Edge } from 'edge.js'
 import { configProvider } from '@adonisjs/core'
 import { RuntimeException } from '@poppinss/utils'
 import type { ApplicationService } from '@adonisjs/core/types'
@@ -38,15 +37,10 @@ export default class SessionProvider {
    * in the user application.
    */
   protected async registerEdgePlugin() {
-    let edge: Edge | null = null
-    try {
-      const edgeExports = await import('edge.js')
-      edge = edgeExports.default
-    } catch {}
-
-    if (edge) {
+    if (this.app.usingEdgeJS) {
+      const edge = await import('edge.js')
       const { edgePluginSession } = await import('../src/plugins/edge.js')
-      edge.use(edgePluginSession)
+      edge.default.use(edgePluginSession)
     }
   }
 

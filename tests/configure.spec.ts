@@ -55,7 +55,7 @@ test.group('Configure', (group) => {
     await assert.fileContains('.env', 'SESSION_DRIVER=cookie')
     await assert.fileContains(
       'start/env.ts',
-      `SESSION_DRIVER: Env.schema.enum(['cookie', 'redis', 'file', 'memory'] as const)`
+      `SESSION_DRIVER: Env.schema.enum(['cookie', 'memory'] as const)`
     )
   }).timeout(60 * 1000)
 })
