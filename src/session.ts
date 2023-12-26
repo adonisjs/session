@@ -294,24 +294,6 @@ export class Session {
   }
 
   /**
-   * Flash validation error messages. Make sure the error
-   * is an instance of VineJS ValidationException
-   */
-  flashValidationErrors(error: HttpError) {
-    const errorsBag = error.messages.reduce((result: Record<string, string[]>, message: any) => {
-      if (result[message.field]) {
-        result[message.field].push(message.message)
-      } else {
-        result[message.field] = [message.message]
-      }
-      return result
-    }, {})
-
-    this.flashExcept(['_csrf', '_method'])
-    this.flash('errors', errorsBag)
-  }
-
-  /**
    * Add a key-value pair to flash messages
    */
   flash(key: string, value: AllowedSessionValues): void
@@ -324,6 +306,47 @@ export class Session {
     } else {
       this.#getFlashStore('write').merge(key)
     }
+  }
+
+  /**
+   * Flash errors to the errorsBag. You can read these
+   * errors via the "@error" tag.
+   *
+   * Appends new messages to the existing collection.
+   */
+  flashErrors(errorsCollection: Record<string, string | string[]>) {
+    this.flash({ errorsBag: errorsCollection })
+  }
+
+  /**
+   * Flash validation error messages. Make sure the error
+   * is an instance of VineJS ValidationException.
+   *
+   * Overrides existing inputErrors
+   */
+  flashValidationErrors(error: HttpError) {
+    const errorsBag = error.messages.reduce((result: Record<string, string[]>, message: any) => {
+      if (result[message.field]) {
+        result[message.field].push(message.message)
+      } else {
+        result[message.field] = [message.message]
+      }
+      return result
+    }, {})
+
+    this.flashExcept(['_csrf', '_method'])
+
+    /**
+     * Adding to inputErrorsBag for "@inputError" tag
+     * to read validation errors
+     */
+    this.flash('inputErrorsBag', errorsBag)
+
+    /**
+     * For legacy support and not to break apps using
+     * the older version of @adonisjs/session package
+     */
+    this.flash('errors', errorsBag)
   }
 
   /**

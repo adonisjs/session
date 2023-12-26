@@ -34,7 +34,7 @@ export class ReadOnlyValuesStore {
   /**
    * Get value for a given key
    */
-  get(key: string, defaultValue?: any): any {
+  get(key: string | string[], defaultValue?: any): any {
     const value = lodash.get(this.values, key)
     if (defaultValue !== undefined && (value === null || value === undefined)) {
       return defaultValue
@@ -47,7 +47,7 @@ export class ReadOnlyValuesStore {
    * A boolean to know if value exists. Extra guards to check
    * arrays for it's length as well.
    */
-  has(key: string, checkForArraysLength: boolean = true): boolean {
+  has(key: string | string[], checkForArraysLength: boolean = true): boolean {
     const value = this.get(key)
     if (!Array.isArray(value)) {
       return !!value
@@ -110,7 +110,7 @@ export class ValuesStore extends ReadOnlyValuesStore {
   /**
    * Set key/value pair
    */
-  set(key: string, value: AllowedSessionValues): void {
+  set(key: string | string[], value: AllowedSessionValues): void {
     this.#modified = true
     lodash.set(this.values, key, value)
   }
@@ -118,7 +118,7 @@ export class ValuesStore extends ReadOnlyValuesStore {
   /**
    * Remove key
    */
-  unset(key: string): void {
+  unset(key: string | string[]): void {
     this.#modified = true
     lodash.unset(this.values, key)
   }
@@ -127,7 +127,7 @@ export class ValuesStore extends ReadOnlyValuesStore {
    * Pull value from the store. It is same as calling
    * store.get and then store.unset
    */
-  pull(key: string, defaultValue?: any): any {
+  pull(key: string | string[], defaultValue?: any): any {
     return ((value): any => {
       this.unset(key)
       return value
@@ -138,7 +138,7 @@ export class ValuesStore extends ReadOnlyValuesStore {
    * Increment number. The method raises an error when
    * nderlying value is not a number
    */
-  increment(key: string, steps: number = 1): void {
+  increment(key: string | string[], steps: number = 1): void {
     const value = this.get(key, 0)
     if (typeof value !== 'number') {
       throw new RuntimeException(`Cannot increment "${key}". Existing value is not a number`)
@@ -151,7 +151,7 @@ export class ValuesStore extends ReadOnlyValuesStore {
    * Increment number. The method raises an error when
    * nderlying value is not a number
    */
-  decrement(key: string, steps: number = 1): void {
+  decrement(key: string | string[], steps: number = 1): void {
     const value = this.get(key, 0)
     if (typeof value !== 'number') {
       throw new RuntimeException(`Cannot decrement "${key}". Existing value is not a number`)
