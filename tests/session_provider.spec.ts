@@ -14,19 +14,13 @@ import { defineConfig } from '../index.js'
 import SessionMiddleware from '../src/session_middleware.js'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
-const IMPORTER = (filePath: string) => {
-  if (filePath.startsWith('./') || filePath.startsWith('../')) {
-    return import(new URL(filePath, BASE_URL).href)
-  }
-  return import(filePath)
-}
 
 test.group('Session Provider', () => {
   test('register session provider', async ({ assert }) => {
     const ignitor = new IgnitorFactory()
       .merge({
         rcFileContents: {
-          providers: ['../../providers/session_provider.js'],
+          providers: [() => import('../providers/session_provider.js')],
         },
       })
       .withCoreConfig()
@@ -39,9 +33,7 @@ test.group('Session Provider', () => {
           }),
         },
       })
-      .create(BASE_URL, {
-        importer: IMPORTER,
-      })
+      .create(BASE_URL)
 
     const app = ignitor.createApp('web')
     await app.init()
