@@ -154,6 +154,7 @@
       "./factories/main.ts",
       "./providers/session_provider.ts",
       "./src/session_middleware.ts",
+      "./src/types.ts",
       "./src/plugins/edge.ts",
       "./src/plugins/japa/api_client.ts",
       "./src/plugins/japa/browser_client.ts",
