@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    command: redis-server --appendonly yes
+
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - 8001:8001
+    environment:
+      - REDIS_URI=redis://redis:6379

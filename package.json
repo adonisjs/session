@@ -1,167 +1,170 @@
 {
   "name": "@adonisjs/session",
-  "version": "6.4.0",
   "description": "Session provider for AdonisJS",
-  "typings": "./build/adonis-typings/index.d.ts",
-  "main": "build/providers/SessionProvider.js",
+  "version": "7.0.0-15",
+  "engines": {
+    "node": ">=18.16.0"
+  },
+  "main": "build/index.js",
+  "type": "module",
   "files": [
-    "build/adonis-typings",
-    "build/providers",
-    "build/src",
-    "build/config.js",
-    "build/config.d.ts",
-    "build/templates",
-    "build/instructions.md"
+    "build",
+    "!build/bin",
+    "!build/tests",
+    "!build/tests_helpers"
   ],
-  "dependencies": {
-    "@poppinss/utils": "^5.0.0",
-    "fs-extra": "^10.1.0"
-  },
-  "peerDependencies": {
-    "@adonisjs/core": "^5.8.0"
-  },
-  "devDependencies": {
-    "@adonisjs/core": "^5.8.6",
-    "@adonisjs/mrm-preset": "^5.0.3",
-    "@adonisjs/redis": "^7.3.1",
-    "@adonisjs/require-ts": "^2.0.12",
-    "@japa/assert": "^1.3.5",
-    "@japa/preset-adonis": "^1.1.1",
-    "@japa/run-failed-tests": "^1.0.8",
-    "@japa/runner": "^2.1.1",
-    "@japa/spec-reporter": "^1.2.0",
-    "@poppinss/dev-utils": "^2.0.3",
-    "@types/node": "^18.7.15",
-    "@types/supertest": "^2.0.12",
-    "commitizen": "^4.2.5",
-    "copyfiles": "^2.4.1",
-    "cz-conventional-changelog": "^3.3.0",
-    "del-cli": "^5.0.0",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-adonis": "^2.1.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "github-label-sync": "^2.2.0",
-    "husky": "^8.0.1",
-    "mrm": "^4.1.0",
-    "np": "^7.6.2",
-    "prettier": "^2.7.1",
-    "set-cookie-parser": "^2.5.1",
-    "supertest": "^6.2.4",
-    "typescript": "^4.8.2"
+  "exports": {
+    ".": "./build/index.js",
+    "./factories": "./build/factories/main.js",
+    "./session_provider": "./build/providers/session_provider.js",
+    "./session_middleware": "./build/src/session_middleware.js",
+    "./plugins/edge": "./build/src/plugins/edge.js",
+    "./plugins/api_client": "./build/src/plugins/japa/api_client.js",
+    "./plugins/browser_client": "./build/src/plugins/japa/browser_client.js",
+    "./client": "./build/src/client.js",
+    "./types": "./build/src/types.js"
   },
   "scripts": {
-    "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
-    "test": "node -r @adonisjs/require-ts/build/register ./bin/test.ts",
-    "clean": "del build",
-    "compile": "npm run lint && npm run clean && tsc",
-    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
-    "build": "npm run compile && npm run copyfiles",
-    "commit": "git-cz",
-    "release": "np --message=\"chore(release): %s\"",
-    "version": "npm run build",
+    "test": "cross-env NODE_DEBUG=adonisjs:session c8 npm run quick:test",
+    "clean": "del-cli build",
+    "typecheck": "tsc --noEmit",
+    "copy:templates": "copyfiles \"stubs/**/*.stub\" --up=\"1\" build",
+    "precompile": "npm run lint && npm run clean",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "postcompile": "npm run copy:templates",
+    "build": "npm run compile",
     "prepublishOnly": "npm run build",
     "lint": "eslint . --ext=.ts",
     "format": "prettier --write .",
-    "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/session"
+    "release": "np",
+    "version": "npm run build",
+    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/session",
+    "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts"
   },
+  "devDependencies": {
+    "@adonisjs/assembler": "^7.0.0",
+    "@adonisjs/core": "^6.2.0",
+    "@adonisjs/eslint-config": "^1.2.1",
+    "@adonisjs/prettier-config": "^1.2.1",
+    "@adonisjs/redis": "^8.0.0",
+    "@adonisjs/tsconfig": "^1.2.1",
+    "@japa/api-client": "^2.0.2",
+    "@japa/assert": "^2.1.0",
+    "@japa/browser-client": "^2.0.2",
+    "@japa/file-system": "^2.1.1",
+    "@japa/plugin-adonisjs": "^3.0.0",
+    "@japa/runner": "^3.1.1",
+    "@japa/snapshot": "^2.0.4",
+    "@swc/core": "^1.3.102",
+    "@types/node": "^20.10.7",
+    "@types/set-cookie-parser": "^2.4.7",
+    "@types/supertest": "^6.0.2",
+    "@vinejs/vine": "^1.7.0",
+    "c8": "^9.0.0",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "del-cli": "^5.0.0",
+    "edge.js": "^6.0.1",
+    "eslint": "^8.56.0",
+    "get-port": "^7.0.0",
+    "github-label-sync": "^2.3.1",
+    "husky": "^8.0.3",
+    "np": "^9.2.0",
+    "playwright": "^1.40.1",
+    "prettier": "^3.1.1",
+    "set-cookie-parser": "^2.6.0",
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@poppinss/utils": "^6.7.0"
+  },
+  "peerDependencies": {
+    "@adonisjs/core": "^6.2.0",
+    "@adonisjs/redis": "^8.0.0",
+    "@japa/api-client": "^2.0.2",
+    "@japa/browser-client": "^2.0.2",
+    "edge.js": "^6.0.1"
+  },
+  "peerDependenciesMeta": {
+    "@adonisjs/redis": {
+      "optional": true
+    },
+    "edge.js": {
+      "optional": true
+    },
+    "@japa/api-client": {
+      "optional": true
+    },
+    "@japa/browser-client": {
+      "optional": true
+    }
+  },
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "homepage": "https://github.com/adonisjs/adonis-session#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adonisjs/adonis-session.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/adonis-session/issues"
   },
   "keywords": [
     "session",
     "adonisjs"
   ],
-  "author": "virk,adonisjs",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/adonisjs/adonis-session/issues"
+  "eslintConfig": {
+    "extends": "@adonisjs/eslint-config/package"
   },
-  "homepage": "https://github.com/adonisjs/adonis-session#readme",
-  "nyc": {
-    "exclude": [
-      "test"
-    ],
-    "extension": [
-      ".ts"
+  "prettier": "@adonisjs/prettier-config",
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
-    }
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
   },
   "publishConfig": {
-    "tag": "latest",
-    "access": "public"
-  },
-  "adonisjs": {
-    "instructionsMd": "./build/instructions.md",
-    "templates": {
-      "config": [
-        "session.txt"
-      ]
-    },
-    "env": {
-      "SESSION_DRIVER": "cookie"
-    },
-    "types": "@adonisjs/session",
-    "providers": [
-      "@adonisjs/session"
-    ]
+    "access": "public",
+    "tag": "next"
   },
   "np": {
-    "contents": ".",
+    "message": "chore(release): %s",
+    "tag": "next",
+    "branch": "main",
     "anyBranch": false
   },
-  "mrmConfig": {
-    "core": true,
-    "license": "MIT",
-    "services": [
-      "github-actions"
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
     ],
-    "minNodeVersion": "14.15.4",
-    "probotApps": [
-      "stale",
-      "lock"
-    ],
-    "runGhActionsOnWindows": false
+    "exclude": [
+      "tests/**",
+      "stubs/**",
+      "factories/**",
+      "bin/**"
+    ]
   },
-  "eslintConfig": {
-    "extends": [
-      "plugin:adonis/typescriptPackage",
-      "prettier"
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./factories/main.ts",
+      "./providers/session_provider.ts",
+      "./src/session_middleware.ts",
+      "./src/types.ts",
+      "./src/plugins/edge.ts",
+      "./src/plugins/japa/api_client.ts",
+      "./src/plugins/japa/browser_client.ts",
+      "./src/client.ts"
     ],
-    "plugins": [
-      "prettier"
-    ],
-    "rules": {
-      "prettier/prettier": [
-        "error",
-        {
-          "endOfLine": "auto"
-        }
-      ]
-    }
-  },
-  "eslintIgnore": [
-    "build"
-  ],
-  "prettier": {
-    "trailingComma": "es5",
-    "semi": false,
-    "singleQuote": true,
-    "useTabs": false,
-    "quoteProps": "consistent",
-    "bracketSpacing": true,
-    "arrowParens": "always",
-    "printWidth": 100
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": true,
+    "target": "esnext"
   }
 }
