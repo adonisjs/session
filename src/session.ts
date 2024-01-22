@@ -334,7 +334,7 @@ export class Session {
       return result
     }, {})
 
-    this.flashExcept(['_csrf', '_method'])
+    this.flashExcept(['_csrf', '_method', 'password', 'password_confirmation'])
 
     /**
      * Adding to inputErrorsBag for "@inputError" tag
