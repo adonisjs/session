@@ -32,7 +32,6 @@ import type {
  * uses a centralized persistence store and
  */
 export class Session {
-  #config: SessionConfig
   #store: SessionStoreContract
   #emitter: EmitterService
   #ctx: HttpContext
@@ -130,13 +129,12 @@ export class Session {
   }
 
   constructor(
-    config: SessionConfig,
+    public config: SessionConfig,
     storeFactory: SessionStoreFactory,
     emitter: EmitterService,
     ctx: HttpContext
   ) {
     this.#ctx = ctx
-    this.#config = config
     this.#emitter = emitter
     this.#store = storeFactory(ctx, config)
     this.#sessionIdFromCookie = ctx.request.cookie(config.cookieName, undefined)
@@ -423,7 +421,7 @@ export class Session {
     /**
      * Touch the session id cookie to stay alive
      */
-    this.#ctx.response.cookie(this.#config.cookieName, this.#sessionId, this.#config.cookie!)
+    this.#ctx.response.cookie(this.config.cookieName, this.#sessionId, this.config.cookie!)
 
     /**
      * Delete the session data when the session store
