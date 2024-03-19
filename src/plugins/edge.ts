@@ -190,4 +190,54 @@ export const edgePluginSession: PluginFn<undefined> = (edge) => {
       buffer.writeStatement(`}`, token.filename, token.loc.start.line)
     },
   })
+
+  edge.registerTag({
+    tagName: 'errors',
+    seekable: true,
+    block: true,
+    compile(parser, buffer, token) {
+      /**
+       * Write an if statement
+       */
+      buffer.writeStatement(
+        `if (state.flashMessages.has('errorsBag')) {`,
+        token.filename,
+        token.loc.start.line
+      )
+
+      /**
+       * Define a local variable
+       */
+      buffer.writeExpression(
+        `let $messages = state.flashMessages.get('errorsBag')`,
+        token.filename,
+        token.loc.start.line
+      )
+
+      /**
+       * Create a local variables scope and tell the parser about
+       * the existence of the "messages" variable
+       */
+      parser.stack.defineScope()
+      parser.stack.defineVariable('$messages')
+
+      /**
+       * Process component children using the parser
+       */
+      token.children.forEach((child) => {
+        parser.processToken(child, buffer)
+      })
+
+      /**
+       * Clear the scope of the local variables before we
+       * close the if statement
+       */
+      parser.stack.clearScope()
+
+      /**
+       * Close if statement
+       */
+      buffer.writeStatement(`}`, token.filename, token.loc.start.line)
+    },
+  })
 }

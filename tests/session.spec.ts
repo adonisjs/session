@@ -1419,4 +1419,60 @@ test.group('Session | Flash', (group) => {
       ['<p> Access denied </p>', '']
     )
   })
+
+  test('access errorsBag using the @errors tag', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    edge.registerTemplate('flash_errors_messages', {
+      template: `
+      @errors()
+        <div>
+          @each(message in $messages)
+            <p> {{ message }} </p>
+          @end
+        </div>
+      @else
+        <p> No error messages </p>
+      @end
+      `,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+      sessionId = session.sessionId
+
+      if (request.url() === '/prg') {
+        response.send(await ctx.view.render('flash_errors_messages'))
+        await session.commit()
+        response.finish()
+      } else {
+        session.flashErrors({
+          E_ACCESS_DENIED: 'Access denied',
+        })
+        await session.commit()
+      }
+
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    const { text } = await supertest(server)
+      .get('/prg')
+      .set(
+        'Cookie',
+        `adonis_session=${cookies.adonis_session.value}; ${sessionId}=${cookies[sessionId!].value}`
+      )
+
+    assert.deepEqual(
+      text.split('\n').map((line) => line.trim()),
+      ['<div>', '<p> Access denied </p>', '</div>', '']
+    )
+  })
 })
