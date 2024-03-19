@@ -17,6 +17,7 @@ import { SimpleErrorReporter } from '@vinejs/vine'
 import { CookieClient } from '@adonisjs/core/http'
 import { fieldContext } from '@vinejs/vine/factories'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import { I18nManagerFactory } from '@adonisjs/i18n/factories'
 import { ApplicationService, EventsList } from '@adonisjs/core/types'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import EdgeServiceProvider from '@adonisjs/core/providers/edge_provider'
@@ -973,6 +974,80 @@ test.group('Session | Flash', (group) => {
           email: ['Invalid email'],
           username: ['Invalid username', 'Username is required'],
         },
+        errorsBag: {
+          E_VALIDATION_ERROR: 'The form could not be saved. Please check the errors below.',
+        },
+        inputErrorsBag: {
+          email: ['Invalid email'],
+          username: ['Invalid username', 'Username is required'],
+        },
+      },
+    })
+  })
+
+  test('translate validation error summary', async ({ assert }) => {
+    const i18nManager = new I18nManagerFactory()
+      .merge({
+        config: {
+          loaders: [
+            () => {
+              return {
+                async load() {
+                  return {
+                    en: {
+                      'errors.E_VALIDATION_ERROR': '{count} errors prohibited form submission',
+                    },
+                  }
+                },
+              }
+            },
+          ],
+        },
+      })
+      .create()
+
+    await i18nManager.loadTranslations()
+
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.i18n = i18nManager.locale('en')
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+
+      const errorReporter = new SimpleErrorReporter()
+      errorReporter.report('Invalid username', 'alpha', fieldContext.create('username', ''), {})
+      errorReporter.report(
+        'Username is required',
+        'required',
+        fieldContext.create('username', ''),
+        {}
+      )
+      errorReporter.report('Invalid email', 'email', fieldContext.create('email', ''), {})
+
+      session.flashValidationErrors(errorReporter.createError())
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
+        errors: {
+          email: ['Invalid email'],
+          username: ['Invalid username', 'Username is required'],
+        },
+        errorsBag: {
+          E_VALIDATION_ERROR: '3 errors prohibited form submission',
+        },
         inputErrorsBag: {
           email: ['Invalid email'],
           username: ['Invalid username', 'Username is required'],
@@ -1020,6 +1095,9 @@ test.group('Session | Flash', (group) => {
       __flash__: {
         errors: {
           name: ['Invalid name'],
+        },
+        errorsBag: {
+          E_VALIDATION_ERROR: 'The form could not be saved. Please check the errors below.',
         },
         inputErrorsBag: {
           name: ['Invalid name'],

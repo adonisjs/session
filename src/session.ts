@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import type { I18n } from '@adonisjs/i18n'
 import lodash from '@poppinss/utils/lodash'
 import { cuid } from '@adonisjs/core/helpers'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -333,6 +334,26 @@ export class Session {
     }, {})
 
     this.flashExcept(['_csrf', '_method', 'password', 'password_confirmation'])
+
+    /**
+     * Adding the error summary to the "errorsBag" so that
+     * we display the validation error globally using
+     * the "@error" tag.
+     */
+    let summary = 'The form could not be saved. Please check the errors below.'
+    if ('i18n' in this.#ctx) {
+      summary = (this.#ctx.i18n as I18n).t(
+        `errors.${error.code}`,
+        {
+          count: error.messages.length,
+        },
+        summary
+      )
+    }
+
+    this.flashErrors({
+      [String(error.code)]: summary,
+    })
 
     /**
      * Adding to inputErrorsBag for "@inputError" tag
