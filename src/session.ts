@@ -13,6 +13,7 @@ import { cuid } from '@adonisjs/core/helpers'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { EmitterService } from '@adonisjs/core/types'
 import type { HttpError } from '@adonisjs/core/types/http'
+import Macroable from '@poppinss/macroable'
 
 import debug from './debug.js'
 import * as errors from './errors.js'
@@ -32,7 +33,7 @@ import type {
  * A session instance is isolated between requests but
  * uses a centralized persistence store and
  */
-export class Session {
+export class Session extends Macroable {
   #store: SessionStoreContract
   #emitter: EmitterService
   #ctx: HttpContext
@@ -135,6 +136,8 @@ export class Session {
     emitter: EmitterService,
     ctx: HttpContext
   ) {
+    super()
+
     this.#ctx = ctx
     this.#emitter = emitter
     this.#store = storeFactory(ctx, config)
