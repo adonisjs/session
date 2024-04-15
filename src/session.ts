@@ -136,6 +136,7 @@ export class Session extends Macroable {
     emitter: EmitterService,
     ctx: HttpContext
   ) {
+    super()
     this.#ctx = ctx
     this.#emitter = emitter
     this.#store = storeFactory(ctx, config)
