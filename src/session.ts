@@ -8,6 +8,7 @@
  */
 
 import type { I18n } from '@adonisjs/i18n'
+import Macroable from '@poppinss/macroable'
 import lodash from '@poppinss/utils/lodash'
 import { cuid } from '@adonisjs/core/helpers'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -32,7 +33,7 @@ import type {
  * A session instance is isolated between requests but
  * uses a centralized persistence store and
  */
-export class Session {
+export class Session extends Macroable {
   #store: SessionStoreContract
   #emitter: EmitterService
   #ctx: HttpContext

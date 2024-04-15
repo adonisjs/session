@@ -81,6 +81,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@poppinss/macroable": "^1.0.2",
     "@poppinss/utils": "^6.7.3"
   },
   "peerDependencies": {
