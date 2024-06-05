@@ -100,7 +100,7 @@ export class FileStore implements SessionStoreContract {
     /**
      * Check if the file has been expired and return null (if expired)
      */
-    const sessionWillExpireAt = stats.mtimeMs + (string.seconds.parse(this.#age) * 1000)
+    const sessionWillExpireAt = stats.mtimeMs + string.seconds.parse(this.#age) * 1000
     if (Date.now() > sessionWillExpireAt) {
       debug('file store: expired session data %s', sessionId)
       return null
