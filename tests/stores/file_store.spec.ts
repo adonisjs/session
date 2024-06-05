@@ -76,7 +76,7 @@ test.group('File store', () => {
 
   test('return null when session data is expired', async ({ assert, fs }) => {
     const sessionId = '1234'
-    const session = new FileStore({ location: fs.basePath }, 1000)
+    const session = new FileStore({ location: fs.basePath }, 1)
     await session.write(sessionId, { message: 'hello-world' })
 
     await setTimeout(2000)

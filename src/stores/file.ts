@@ -19,11 +19,16 @@ import type { FileStoreConfig, SessionData, SessionStoreContract } from '../type
 /**
  * File store writes the session data on the file system as. Each session
  * id gets its own file.
+ *
  */
 export class FileStore implements SessionStoreContract {
   #config: FileStoreConfig
   #age: string | number
 
+  /**
+   * @param {FileStoreConfig} config
+   * @param {string|number}   The age must be in seconds or a time expression
+   */
   constructor(config: FileStoreConfig, age: string | number) {
     this.#config = config
     this.#age = age
@@ -95,7 +100,7 @@ export class FileStore implements SessionStoreContract {
     /**
      * Check if the file has been expired and return null (if expired)
      */
-    const sessionWillExpireAt = stats.mtimeMs + string.milliseconds.parse(this.#age)
+    const sessionWillExpireAt = stats.mtimeMs + (string.seconds.parse(this.#age) * 1000)
     if (Date.now() > sessionWillExpireAt) {
       debug('file store: expired session data %s', sessionId)
       return null
