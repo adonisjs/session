@@ -14,13 +14,33 @@ import debug from '../debug.ts'
 import type { SessionData, SessionStoreContract } from '../types.ts'
 
 /**
- * Cookie store stores the session data inside an encrypted
- * cookie.
+ * Cookie store stores the session data inside an encrypted cookie.
+ * Best for simple applications with minimal session data.
+ *
+ * @example
+ * const cookieStore = new CookieStore({
+ *   httpOnly: true,
+ *   secure: true,
+ *   sameSite: 'strict'
+ * }, ctx)
  */
 export class CookieStore implements SessionStoreContract {
+  /**
+   * HTTP context for request/response operations
+   */
   #ctx: HttpContext
+
+  /**
+   * Cookie configuration options
+   */
   #config: Partial<CookieOptions>
 
+  /**
+   * Creates a new cookie store instance
+   *
+   * @param config - Cookie configuration options
+   * @param ctx - HTTP context
+   */
   constructor(config: Partial<CookieOptions>, ctx: HttpContext) {
     this.#config = config
     this.#ctx = ctx
@@ -28,7 +48,12 @@ export class CookieStore implements SessionStoreContract {
   }
 
   /**
-   * Read session value from the cookie
+   * Reads session value from the encrypted cookie
+   *
+   * @param sessionId - Session identifier used as cookie name
+   *
+   * @example
+   * const data = store.read('sess_abc123')
    */
   read(sessionId: string): SessionData | null {
     debug('cookie store: reading session data %s', sessionId)
@@ -42,7 +67,13 @@ export class CookieStore implements SessionStoreContract {
   }
 
   /**
-   * Write session values to the cookie
+   * Writes session values to an encrypted cookie
+   *
+   * @param sessionId - Session identifier used as cookie name
+   * @param values - Session data to store
+   *
+   * @example
+   * store.write('sess_abc123', { userId: 123, theme: 'dark' })
    */
   write(sessionId: string, values: SessionData): void {
     debug('cookie store: writing session data %s: %O', sessionId, values)
@@ -50,7 +81,12 @@ export class CookieStore implements SessionStoreContract {
   }
 
   /**
-   * Removes the session cookie
+   * Removes the session cookie from the client
+   *
+   * @param sessionId - Session identifier used as cookie name
+   *
+   * @example
+   * store.destroy('sess_abc123')
    */
   destroy(sessionId: string): void {
     debug('cookie store: destroying session data %s', sessionId)
@@ -60,7 +96,12 @@ export class CookieStore implements SessionStoreContract {
   }
 
   /**
-   * Updates the cookie with existing cookie values
+   * Updates the cookie expiry by rewriting it with existing values
+   *
+   * @param sessionId - Session identifier used as cookie name
+   *
+   * @example
+   * store.touch('sess_abc123') // Refreshes cookie expiry
    */
   touch(sessionId: string): void {
     const value = this.read(sessionId)

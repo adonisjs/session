@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import '@japa/plugin-adonisjs'
 import lodash from '@poppinss/utils/lodash'
 import { configProvider } from '@adonisjs/core'
 import type { PluginFn } from '@japa/runner/types'
@@ -99,8 +100,25 @@ declare module '@japa/api-client' {
 }
 
 /**
- * Hooks AdonisJS Session with the Japa API client
- * plugin
+ * Hooks AdonisJS Session with the Japa API client plugin.
+ * Provides session methods and assertions for API testing.
+ *
+ * @param app - AdonisJS application service
+ *
+ * @example
+ * // Register in test setup
+ * import { sessionApiClient } from '@adonisjs/session/plugins/japa/api_client'
+ *
+ * // Use in API tests
+ * test('can authenticate user', async ({ client }) => {
+ *   const response = await client
+ *     .post('/login')
+ *     .withSession({ remember: true })
+ *     .json({ email: 'user@example.com', password: 'secret' })
+ *
+ *   response.assertSession('userId', 123)
+ *   response.assertFlashMessage('success', 'Welcome back!')
+ * })
  */
 export const sessionApiClient = (app: ApplicationService) => {
   const pluginFn: PluginFn = async function () {

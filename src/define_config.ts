@@ -26,7 +26,7 @@ import type {
 } from './types.ts'
 
 /**
- * Resolved config with stores
+ * Resolved session configuration with all stores resolved
  */
 type ResolvedConfig<KnownStores extends Record<string, SessionStoreFactory>> = SessionConfig & {
   store: keyof KnownStores
@@ -35,7 +35,24 @@ type ResolvedConfig<KnownStores extends Record<string, SessionStoreFactory>> = S
 }
 
 /**
- * Helper to normalize session config
+ * Defines and validates session configuration with store setup.
+ * Handles default values and store resolution.
+ *
+ * @param config - Session configuration with stores
+ *
+ * @example
+ * import { defineConfig, stores } from '@adonisjs/session'
+ *
+ * export default defineConfig({
+ *   enabled: true,
+ *   cookieName: 'adonis_session',
+ *   age: '2 hours',
+ *   store: 'cookie',
+ *   stores: {
+ *     cookie: stores.cookie(),
+ *     redis: stores.redis({ connection: 'main' })
+ *   }
+ * })
  */
 export function defineConfig<
   KnownStores extends Record<string, SessionStoreFactory | ConfigProvider<SessionStoreFactory>>,
@@ -116,7 +133,23 @@ export function defineConfig<
 }
 
 /**
- * Inbuilt stores to store the session data.
+ * Built-in session stores for different storage backends.
+ * Each store provides a different persistence mechanism for session data.
+ *
+ * @example
+ * import { stores } from '@adonisjs/session'
+ *
+ * // File store - stores on filesystem
+ * stores.file({ location: './tmp/sessions' })
+ *
+ * // Redis store - stores in Redis
+ * stores.redis({ connection: 'main' })
+ *
+ * // Cookie store - stores in encrypted cookies
+ * stores.cookie()
+ *
+ * // DynamoDB store - stores in AWS DynamoDB
+ * stores.dynamodb({ tableName: 'Sessions' })
  */
 export const stores: {
   file: (config: FileStoreConfig) => ConfigProvider<SessionStoreFactory>
@@ -124,6 +157,11 @@ export const stores: {
   cookie: () => ConfigProvider<SessionStoreFactory>
   dynamodb: (config: DynamoDBStoreConfig) => ConfigProvider<SessionStoreFactory>
 } = {
+  /**
+   * Creates a file-based session store
+   *
+   * @param config - File store configuration
+   */
   file: (config) => {
     return configProvider.create(async () => {
       const { FileStore } = await import('./stores/file.js')
@@ -132,6 +170,11 @@ export const stores: {
       }
     })
   },
+  /**
+   * Creates a Redis-based session store
+   *
+   * @param config - Redis store configuration
+   */
   redis: (config) => {
     return configProvider.create(async (app) => {
       const { RedisStore } = await import('./stores/redis.js')
@@ -142,6 +185,9 @@ export const stores: {
       }
     })
   },
+  /**
+   * Creates a cookie-based session store
+   */
   cookie: () => {
     return configProvider.create(async () => {
       const { CookieStore } = await import('./stores/cookie.js')
@@ -150,6 +196,11 @@ export const stores: {
       }
     })
   },
+  /**
+   * Creates a DynamoDB-based session store
+   *
+   * @param config - DynamoDB store configuration
+   */
   dynamodb: (config) => {
     return configProvider.create(async () => {
       const { DynamoDBStore } = await import('./stores/dynamodb.js')

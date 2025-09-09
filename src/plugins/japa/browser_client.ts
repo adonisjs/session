@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import '@japa/plugin-adonisjs'
 import { configProvider } from '@adonisjs/core'
 import type { PluginFn } from '@japa/runner/types'
 import { decoratorsCollection } from '@japa/browser-client'
@@ -50,8 +51,9 @@ declare module 'playwright' {
 }
 
 /**
- * Transforming AdonisJS same site option to playwright
- * same site option.
+ * Transforms AdonisJS same site option to playwright same site option
+ *
+ * @param sameSite - AdonisJS cookie sameSite option
  */
 function transformSameSiteOption(sameSite?: AdonisCookieOptions['sameSite']) {
   if (!sameSite) {
@@ -72,7 +74,10 @@ function transformSameSiteOption(sameSite?: AdonisCookieOptions['sameSite']) {
 }
 
 /**
- * Transforming AdonisJS session config to playwright cookie options.
+ * Transforms AdonisJS session config to playwright cookie options
+ *
+ * @param config - Session configuration
+ * @param cookieOptions - Optional cookie options to override
  */
 function getSessionCookieOptions(
   config: SessionConfig,
@@ -87,8 +92,21 @@ function getSessionCookieOptions(
 }
 
 /**
- * Hooks AdonisJS Session with the Japa browser client
- * plugin
+ * Hooks AdonisJS Session with the Japa browser client plugin.
+ * Provides session methods for browser testing context.
+ *
+ * @param app - AdonisJS application service
+ *
+ * @example
+ * // Register in test setup
+ * import { sessionBrowserClient } from '@adonisjs/session/plugins/japa/browser_client'
+ *
+ * // Use in browser tests
+ * test('can set session data', async ({ visit }) => {
+ *   await visit.context().setSession({ userId: 123 })
+ *   const response = await visit('/profile')
+ *   // Assert profile page shows user data
+ * })
  */
 export const sessionBrowserClient = (app: ApplicationService) => {
   const pluginFn: PluginFn = async function () {

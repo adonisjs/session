@@ -15,12 +15,29 @@ import debug from '../debug.ts'
 import type { SessionStoreContract, SessionData } from '../types.ts'
 
 /**
- * File store to read/write session to filesystem
+ * Redis store to read/write session data to Redis server.
+ * Provides fast, scalable session storage with automatic expiry.
+ *
+ * @example
+ * const redisStore = new RedisStore(redisConnection, '2 hours')
  */
 export class RedisStore implements SessionStoreContract {
+  /**
+   * Redis connection instance
+   */
   #connection: Connection
+
+  /**
+   * Time-to-live in seconds for session expiry
+   */
   #ttlSeconds: number
 
+  /**
+   * Creates a new Redis store instance
+   *
+   * @param connection - Redis connection instance
+   * @param age - Session age in seconds or time expression (e.g. '2 hours')
+   */
   constructor(connection: Connection, age: string | number) {
     this.#connection = connection
     this.#ttlSeconds = string.seconds.parse(age)
@@ -28,8 +45,12 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Returns file contents. A new file will be created if it's
-   * missing.
+   * Reads session data from Redis
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * const data = await store.read('sess_abc123')
    */
   async read(sessionId: string): Promise<SessionData | null> {
     debug('redis store: reading session data %s', sessionId)
@@ -51,7 +72,13 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Write session values to a file
+   * Writes session values to Redis with expiry
+   *
+   * @param sessionId - Session identifier
+   * @param values - Session data to store
+   *
+   * @example
+   * await store.write('sess_abc123', { userId: 123 })
    */
   async write(sessionId: string, values: Object): Promise<void> {
     debug('redis store: writing session data %s, %O', sessionId, values)
@@ -61,7 +88,12 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Cleanup session file by removing it
+   * Removes session data from Redis
+   *
+   * @param sessionId - Session identifier to remove
+   *
+   * @example
+   * await store.destroy('sess_abc123')
    */
   async destroy(sessionId: string): Promise<void> {
     debug('redis store: destroying session data %s', sessionId)
@@ -69,7 +101,12 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Updates the value expiry
+   * Updates the session expiry time in Redis
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * await store.touch('sess_abc123')
    */
   async touch(sessionId: string): Promise<void> {
     debug('redis store: touching session data %s', sessionId)

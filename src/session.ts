@@ -31,7 +31,17 @@ import type {
  * the session store.
  *
  * A session instance is isolated between requests but
- * uses a centralized persistence store and
+ * uses a centralized persistence store.
+ *
+ * @example
+ * // Creating and using a session
+ * const session = new Session(config, storeFactory, emitter, ctx)
+ * await session.initiate(false)
+ *
+ * session.put('username', 'john')
+ * const username = session.get('username')
+ *
+ * await session.commit()
  */
 export class Session extends Macroable {
   #store: SessionStoreContract
@@ -40,96 +50,93 @@ export class Session extends Macroable {
   #readonly: boolean = false
 
   /**
-   * Session values store
+   * Session values store that holds the actual session data
    */
   #valuesStore?: ValuesStore
 
   /**
-   * Session id refers to the session id that will be committed
-   * as a cookie during the response.
+   * Session id that will be committed as a cookie during the response
    */
   #sessionId: string
 
   /**
-   * Session id from cookie refers to the value we read from the
-   * cookie during the HTTP request.
-   *
-   * This only might not exist during the first request. Also during
-   * session id re-generation, this value will be different from
-   * the session id.
+   * Session id read from the cookie during the HTTP request.
+   * May not exist during the first request or will differ from sessionId during regeneration.
    */
   #sessionIdFromCookie?: string
 
   /**
-   * Store of flash messages that be written during the
-   * HTTP request
+   * Store of flash messages that will be written during the HTTP request
    */
   responseFlashMessages = new ValuesStore({})
 
   /**
-   * Store of flash messages for the current HTTP request.
+   * Store of flash messages for the current HTTP request
    */
   flashMessages = new ValuesStore({})
 
   /**
-   * The key to use for storing flash messages inside
-   * the session store.
+   * The key used for storing flash messages inside the session store
    */
   flashKey: string = '__flash__'
 
   /**
-   * Session id for the current HTTP request
+   * Gets the session id for the current HTTP request
    */
   get sessionId() {
     return this.#sessionId
   }
 
   /**
-   * A boolean to know if a fresh session is created during
-   * the request
+   * Returns true if a fresh session was created during the request
    */
   get fresh(): boolean {
     return this.#sessionIdFromCookie === undefined
   }
 
   /**
-   * A boolean to know if session is in readonly
-   * state
+   * Returns true if the session is in readonly state
    */
   get readonly() {
     return this.#readonly
   }
 
   /**
-   * A boolean to know if session store has been initiated
+   * Returns true if the session store has been initiated
    */
   get initiated() {
     return !!this.#valuesStore
   }
 
   /**
-   * A boolean to know if the session id has been re-generated
-   * during the current request
+   * Returns true if the session id has been re-generated during the current request
    */
   get hasRegeneratedSession() {
     return !!(this.#sessionIdFromCookie && this.#sessionIdFromCookie !== this.#sessionId)
   }
 
   /**
-   * A boolean to know if the session store is empty
+   * Returns true if the session store is empty
    */
   get isEmpty() {
     return this.#valuesStore?.isEmpty ?? true
   }
 
   /**
-   * A boolean to know if the session store has been
-   * modified
+   * Returns true if the session store has been modified
    */
   get hasBeenModified() {
     return this.#valuesStore?.hasBeenModified ?? false
   }
 
+  /**
+   * Creates a new session instance
+   *
+   * @param config - Session configuration
+   * @param storeFactory - Factory function to create session store
+   * @param emitter - Event emitter service
+   * @param ctx - HTTP context
+   */
   constructor(
     public config: SessionConfig,
     storeFactory: SessionStoreFactory,
@@ -145,8 +152,9 @@ export class Session extends Macroable {
   }
 
   /**
-   * Returns the flash messages store for a given
-   * mode
+   * Returns the flash messages store for a given mode
+   *
+   * @param mode - Access mode ('write' or 'read')
    */
   #getFlashStore(mode: 'write' | 'read'): ValuesStore {
     if (!this.#valuesStore) {
@@ -162,6 +170,8 @@ export class Session extends Macroable {
 
   /**
    * Returns the store instance for a given mode
+   *
+   * @param mode - Access mode ('write' or 'read')
    */
   #getValuesStore(mode: 'write' | 'read'): ValuesStore {
     if (!this.#valuesStore) {
@@ -176,8 +186,13 @@ export class Session extends Macroable {
   }
 
   /**
-   * Initiates the session store. The method results in a noop
-   * when called multiple times
+   * Initiates the session store. The method results in a noop when called multiple times.
+   *
+   * @param readonly - Whether to initiate the session in readonly mode
+   *
+   * @example
+   * await session.initiate(false) // Read-write mode
+   * await session.initiate(true)  // Readonly mode
    */
   async initiate(readonly: boolean): Promise<void> {
     if (this.#valuesStore) {
@@ -221,81 +236,135 @@ export class Session extends Macroable {
   }
 
   /**
-   * Put a key-value pair to the session data store
+   * Puts a key-value pair to the session data store
+   *
+   * @param key - The key to store the value under
+   * @param value - The value to store
+   *
+   * @example
+   * session.put('username', 'john')
+   * session.put('user.preferences', { theme: 'dark' })
    */
   put(key: string, value: AllowedSessionValues) {
     this.#getValuesStore('write').set(key, value)
   }
 
   /**
-   * Check if a key exists inside the datastore
+   * Checks if a key exists inside the datastore
+   *
+   * @param key - The key to check for existence
+   *
+   * @example
+   * if (session.has('username')) {
+   *   console.log('User is logged in')
+   * }
    */
   has(key: string): boolean {
     return this.#getValuesStore('read').has(key)
   }
 
   /**
-   * Get the value of a key from the session datastore.
-   * You can specify a default value to use, when key
-   * does not exists or has undefined value.
+   * Gets the value of a key from the session datastore.
+   * You can specify a default value to use when key does not exist or has undefined value.
+   *
+   * @param key - The key to retrieve
+   * @param defaultValue - Default value to return if key doesn't exist
+   *
+   * @example
+   * const username = session.get('username', 'guest')
+   * const preferences = session.get('user.preferences', {})
    */
   get(key: string, defaultValue?: any) {
     return this.#getValuesStore('read').get(key, defaultValue)
   }
 
   /**
-   * Get everything from the session store
+   * Gets everything from the session store
+   *
+   * @example
+   * const allData = session.all()
+   * console.log(allData) // { username: 'john', theme: 'dark' }
    */
   all() {
     return this.#getValuesStore('read').all()
   }
 
   /**
-   * Remove a key from the session datastore
+   * Removes a key from the session datastore
+   *
+   * @param key - The key to remove
+   *
+   * @example
+   * session.forget('temp_data')
+   * session.forget('user.cache')
    */
   forget(key: string) {
     return this.#getValuesStore('write').unset(key)
   }
 
   /**
-   * Read value for a key from the session datastore
-   * and remove it simultaneously.
+   * Reads value for a key from the session datastore and removes it simultaneously
+   *
+   * @param key - The key to pull
+   * @param defaultValue - Default value to return if key doesn't exist
+   *
+   * @example
+   * const message = session.pull('notification', 'No messages')
+   * // message contains the value, and it's removed from session
    */
   pull(key: string, defaultValue?: any) {
     return this.#getValuesStore('write').pull(key, defaultValue)
   }
 
   /**
-   * Increment the value of a key inside the session
-   * store.
+   * Increments the value of a key inside the session store.
+   * A new key will be defined if it doesn't exist already with value 1.
    *
-   * A new key will be defined if does not exists already.
-   * The value of a new key will be 1
+   * @param key - The key to increment
+   * @param steps - Number of steps to increment (default: 1)
+   *
+   * @example
+   * session.increment('page_views')     // Increments by 1
+   * session.increment('score', 10)      // Increments by 10
    */
   increment(key: string, steps: number = 1) {
     return this.#getValuesStore('write').increment(key, steps)
   }
 
   /**
-   * Increment the value of a key inside the session
-   * store.
+   * Decrements the value of a key inside the session store.
+   * A new key will be defined if it doesn't exist already with value -1.
    *
-   * A new key will be defined if does not exists already.
-   * The value of a new key will be -1
+   * @param key - The key to decrement
+   * @param steps - Number of steps to decrement (default: 1)
+   *
+   * @example
+   * session.decrement('attempts')       // Decrements by 1
+   * session.decrement('credits', 5)     // Decrements by 5
    */
   decrement(key: string, steps: number = 1) {
     return this.#getValuesStore('write').decrement(key, steps)
   }
 
   /**
-   * Empty the session store
+   * Empties the session store
+   *
+   * @example
+   * session.clear() // Removes all session data
    */
   clear() {
     return this.#getValuesStore('write').clear()
   }
 
   /**
-   * Add a key-value pair to flash messages
+   * Adds a key-value pair to flash messages
+   *
+   * @param key - The key or object of key-value pairs to flash
+   * @param value - The value to flash (when key is a string)
+   *
+   * @example
+   * session.flash('success', 'Data saved successfully!')
+   * session.flash({ error: 'Validation failed', info: 'Try again' })
    */
   flash(key: string, value: AllowedSessionValues): void
   flash(keyValue: SessionData): void
@@ -310,20 +379,33 @@ export class Session extends Macroable {
   }
 
   /**
-   * Flash errors to the errorsBag. You can read these
-   * errors via the "@error" tag.
-   *
+   * Flashes errors to the errorsBag. You can read these errors via the "@error" tag.
    * Appends new messages to the existing collection.
+   *
+   * @param errorsCollection - Collection of error messages
+   *
+   * @example
+   * session.flashErrors({
+   *   general: 'Something went wrong',
+   *   validation: ['Name is required', 'Email is invalid']
+   * })
    */
   flashErrors(errorsCollection: Record<string, string | string[]>) {
     this.flash({ errorsBag: errorsCollection })
   }
 
   /**
-   * Flash validation error messages. Make sure the error
-   * is an instance of VineJS ValidationException.
+   * Flashes validation error messages. Make sure the error is an instance of VineJS ValidationException.
+   * Overrides existing inputErrors.
    *
-   * Overrides existing inputErrors
+   * @param error - HTTP error containing validation messages
+   *
+   * @example
+   * try {
+   *   await request.validate(schema)
+   * } catch (error) {
+   *   session.flashValidationErrors(error)
+   * }
    */
   flashValidationErrors(error: HttpError) {
     const errorsBag = error.messages.reduce((result: Record<string, string[]>, message: any) => {
@@ -371,59 +453,88 @@ export class Session extends Macroable {
   }
 
   /**
-   * Flash form input data to the flash messages store
+   * Flashes all form input data to the flash messages store
+   *
+   * @example
+   * session.flashAll() // Flashes all request input for next request
    */
   flashAll() {
     return this.#getFlashStore('write').set('input', this.#ctx.request.original())
   }
 
   /**
-   * Flash form input data (except some keys) to the flash messages store
+   * Flashes form input data (except some keys) to the flash messages store
+   *
+   * @param keys - Array of keys to exclude from flashing
+   *
+   * @example
+   * session.flashExcept(['password', '_csrf'])
    */
   flashExcept(keys: string[]): void {
     this.#getFlashStore('write').set('input', lodash.omit(this.#ctx.request.original(), keys))
   }
 
   /**
-   * Flash form input data (only some keys) to the flash messages store
+   * Flashes form input data (only some keys) to the flash messages store
+   *
+   * @param keys - Array of keys to include in flashing
+   *
+   * @example
+   * session.flashOnly(['name', 'email'])
    */
   flashOnly(keys: string[]): void {
     this.#getFlashStore('write').set('input', lodash.pick(this.#ctx.request.original(), keys))
   }
 
   /**
-   * Reflash messages from the last request in the current response
+   * Reflashes messages from the last request in the current response
+   *
+   * @example
+   * session.reflash() // Keep all flash messages for another request
    */
   reflash(): void {
     this.#getFlashStore('write').set('reflashed', this.flashMessages.all())
   }
 
   /**
-   * Reflash messages (only some keys) from the last
-   * request in the current response
+   * Reflashes messages (only some keys) from the last request in the current response
+   *
+   * @param keys - Array of keys to reflash
+   *
+   * @example
+   * session.reflashOnly(['success', 'info'])
    */
   reflashOnly(keys: string[]) {
     this.#getFlashStore('write').set('reflashed', lodash.pick(this.flashMessages.all(), keys))
   }
 
   /**
-   * Reflash messages (except some keys) from the last
-   * request in the current response
+   * Reflashes messages (except some keys) from the last request in the current response
+   *
+   * @param keys - Array of keys to exclude from reflashing
+   *
+   * @example
+   * session.reflashExcept(['error', 'warning'])
    */
   reflashExcept(keys: string[]) {
     this.#getFlashStore('write').set('reflashed', lodash.omit(this.flashMessages.all(), keys))
   }
 
   /**
-   * Re-generate the session id and migrate data to it.
+   * Re-generates the session id and migrates data to it
+   *
+   * @example
+   * session.regenerate() // Generates new session ID for security
    */
   regenerate() {
     this.#sessionId = randomUUID()
   }
 
   /**
-   * Commit session changes. No more mutations will be
-   * allowed after commit.
+   * Commits session changes. No more mutations will be allowed after commit.
+   *
+   * @example
+   * await session.commit() // Save all changes to the session store
    */
   async commit() {
     if (!this.#valuesStore || this.readonly) {

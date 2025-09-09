@@ -88,6 +88,7 @@
     "@aws-sdk/util-dynamodb": "^3.883.0",
     "@japa/api-client": "^3.1.0",
     "@japa/browser-client": "^2.0.3",
+    "@japa/plugin-adonisjs": "^5.0.0-next.0",
     "edge.js": "^6.0.2"
   },
   "peerDependenciesMeta": {
@@ -107,6 +108,9 @@
       "optional": true
     },
     "@japa/browser-client": {
+      "optional": true
+    },
+    "@japa/plugin-adonisjs": {
       "optional": true
     }
   },

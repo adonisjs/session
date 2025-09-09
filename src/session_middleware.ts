@@ -38,15 +38,39 @@ ExceptionHandler.macro('renderValidationErrorAsHTML', async function (error, ctx
 
 /**
  * Session middleware is used to initiate the session store
- * and commit its values during an HTTP request
+ * and commit its values during an HTTP request.
+ *
+ * @example
+ * // Register middleware in start/kernel.ts
+ * server.use([
+ *   () => import('#middleware/session_middleware')
+ * ])
+ *
+ * // Access session in route handler
+ * Route.get('/', ({ session }) => {
+ *   session.put('visited', true)
+ * })
  */
 export default class SessionMiddleware<KnownStores extends Record<string, SessionStoreFactory>> {
+  /**
+   * Session configuration including store settings
+   */
   #config: SessionConfig & {
     store: keyof KnownStores
     stores: KnownStores
   }
+
+  /**
+   * Event emitter service for session events
+   */
   #emitter: EmitterService
 
+  /**
+   * Creates a new session middleware instance
+   *
+   * @param config - Session configuration with store settings
+   * @param emitter - Event emitter service
+   */
   constructor(
     config: SessionConfig & {
       store: keyof KnownStores
@@ -58,6 +82,12 @@ export default class SessionMiddleware<KnownStores extends Record<string, Sessio
     this.#emitter = emitter
   }
 
+  /**
+   * Handles the HTTP request by initializing session and committing changes
+   *
+   * @param ctx - HTTP context
+   * @param next - Next middleware function
+   */
   async handle(ctx: HttpContext, next: NextFn) {
     if (!this.#config.enabled) {
       return next()

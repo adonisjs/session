@@ -22,16 +22,55 @@ import debug from '../debug.ts'
 import type { SessionStoreContract, SessionData } from '../types.ts'
 
 /**
- * DynamoDB store to read/write session to DynamoDB
+ * DynamoDB store to read/write session data to AWS DynamoDB.
+ * Provides highly scalable, managed session storage with automatic expiry.
+ *
+ * @example
+ * const dynamoStore = new DynamoDBStore(dynamoClient, '2 hours', {
+ *   tableName: 'Sessions',
+ *   keyAttribute: 'sessionId'
+ * })
  */
 export class DynamoDBStore implements SessionStoreContract {
+  /**
+   * DynamoDB client instance
+   */
   #client: DynamoDBClient
+
+  /**
+   * DynamoDB table name
+   */
   #tableName: string
+
+  /**
+   * Attribute name for the session key
+   */
   #keyAttribute: string
+
+  /**
+   * Time-to-live in seconds for session expiry
+   */
   #ttlSeconds: number
+
+  /**
+   * Attribute name for the session value
+   */
   #valueAttribute: string = 'value'
+
+  /**
+   * Attribute name for the expiry timestamp
+   */
   #expiresAtAttribute: string = 'expires_at'
 
+  /**
+   * Creates a new DynamoDB store instance
+   *
+   * @param client - DynamoDB client instance
+   * @param age - Session age in seconds or time expression (e.g. '2 hours')
+   * @param options - Configuration options
+   * @param options.tableName - DynamoDB table name (defaults to "Session")
+   * @param options.keyAttribute - Key attribute name (defaults to "key")
+   */
   constructor(
     client: DynamoDBClient,
     age: string | number,
@@ -55,8 +94,12 @@ export class DynamoDBStore implements SessionStoreContract {
   }
 
   /**
-   * Returns session data. A new item will be created if it's
-   * missing.
+   * Reads session data from DynamoDB
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * const data = await store.read('sess_abc123')
    */
   async read(sessionId: string): Promise<SessionData | null> {
     debug('dynamodb store: reading session data %s', sessionId)
@@ -98,7 +141,13 @@ export class DynamoDBStore implements SessionStoreContract {
   }
 
   /**
-   * Write session values to DynamoDB
+   * Writes session values to DynamoDB with expiry
+   *
+   * @param sessionId - Session identifier
+   * @param values - Session data to store
+   *
+   * @example
+   * await store.write('sess_abc123', { userId: 123 })
    */
   async write(sessionId: string, values: Object): Promise<void> {
     debug('dynamodb store: writing session data %s, %O', sessionId, values)
@@ -117,7 +166,12 @@ export class DynamoDBStore implements SessionStoreContract {
   }
 
   /**
-   * Cleanup session item by removing it
+   * Removes session data from DynamoDB
+   *
+   * @param sessionId - Session identifier to remove
+   *
+   * @example
+   * await store.destroy('sess_abc123')
    */
   async destroy(sessionId: string): Promise<void> {
     debug('dynamodb store: destroying session data %s', sessionId)
@@ -131,7 +185,12 @@ export class DynamoDBStore implements SessionStoreContract {
   }
 
   /**
-   * Updates the value expiry
+   * Updates the session expiry time in DynamoDB
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * await store.touch('sess_abc123')
    */
   async touch(sessionId: string): Promise<void> {
     debug('dynamodb store: touching session data %s', sessionId)

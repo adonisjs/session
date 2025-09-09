@@ -17,17 +17,30 @@ import debug from '../debug.ts'
 import type { FileStoreConfig, SessionData, SessionStoreContract } from '../types.ts'
 
 /**
- * File store writes the session data on the file system as. Each session
- * id gets its own file.
+ * File store writes the session data on the file system. Each session
+ * id gets its own file for storage.
  *
+ * @example
+ * const fileStore = new FileStore({
+ *   location: './tmp/sessions'
+ * }, '2 hours')
  */
 export class FileStore implements SessionStoreContract {
+  /**
+   * File store configuration
+   */
   #config: FileStoreConfig
+
+  /**
+   * Session age/expiry time
+   */
   #age: string | number
 
   /**
-   * @param {FileStoreConfig} config
-   * @param {string|number}   The age must be in seconds or a time expression
+   * Creates a new file store instance
+   *
+   * @param config - File store configuration
+   * @param age - Session age in seconds or time expression (e.g. '2 hours')
    */
   constructor(config: FileStoreConfig, age: string | number) {
     this.#config = config
@@ -37,13 +50,17 @@ export class FileStore implements SessionStoreContract {
 
   /**
    * Returns an absolute path to the session id file
+   *
+   * @param sessionId - Session identifier
    */
   #getFilePath(sessionId: string): string {
     return join(this.#config.location, `${sessionId}.txt`)
   }
 
   /**
-   * Check if a file exists at a given path or not
+   * Checks if a file exists at a given path
+   *
+   * @param path - File path to check
    */
   async #pathExists(path: string) {
     try {
@@ -55,8 +72,9 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Returns stats for a file and ignoring missing
-   * files.
+   * Returns file stats, ignoring missing files
+   *
+   * @param path - File path to get stats for
    */
   async #stats(path: string): Promise<Stats | null> {
     try {
@@ -68,7 +86,10 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Output file with contents to the given path
+   * Outputs file with contents to the given path, creating directories if needed
+   *
+   * @param path - File path to write to
+   * @param contents - File contents to write
    */
   async #outputFile(path: string, contents: string) {
     const pathDirname = dirname(path)
@@ -82,7 +103,12 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Reads the session data from the disk.
+   * Reads the session data from the disk
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * const data = await store.read('sess_abc123')
    */
   async read(sessionId: string): Promise<SessionData | null> {
     const filePath = this.#getFilePath(sessionId)
@@ -128,6 +154,12 @@ export class FileStore implements SessionStoreContract {
 
   /**
    * Writes the session data to the disk as a string
+   *
+   * @param sessionId - Session identifier
+   * @param values - Session data to store
+   *
+   * @example
+   * await store.write('sess_abc123', { userId: 123 })
    */
   async write(sessionId: string, values: SessionData): Promise<void> {
     debug('file store: writing session data %s: %O', sessionId, values)
@@ -140,6 +172,11 @@ export class FileStore implements SessionStoreContract {
 
   /**
    * Removes the session file from the disk
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * await store.destroy('sess_abc123')
    */
   async destroy(sessionId: string): Promise<void> {
     debug('file store: destroying session data %s', sessionId)
@@ -147,8 +184,12 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Updates the session expiry by rewriting it to the
-   * persistence store
+   * Updates the session expiry by updating the file's modification time
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * await store.touch('sess_abc123')
    */
   async touch(sessionId: string): Promise<void> {
     debug('file store: touching session data %s', sessionId)
