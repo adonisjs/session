@@ -9,8 +9,8 @@
 
 import lodash from '@poppinss/utils/lodash'
 import { configProvider } from '@adonisjs/core'
-import { RuntimeException } from '@poppinss/utils'
 import type { PluginFn } from '@japa/runner/types'
+import { RuntimeException } from '@adonisjs/core/exceptions'
 import type { ApplicationService } from '@adonisjs/core/types'
 import { ApiClient, ApiRequest, ApiResponse } from '@japa/api-client'
 

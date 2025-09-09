@@ -9,7 +9,7 @@
 
 import type { Stats } from 'node:fs'
 import { dirname, join } from 'node:path'
-import string from '@poppinss/utils/string'
+import string from '@adonisjs/core/helpers/string'
 import { MessageBuilder } from '@adonisjs/core/helpers'
 import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 

@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import { EmitterService } from '@adonisjs/core/types'
 import type { NextFn } from '@adonisjs/core/types/http'
-import { ExceptionHandler, HttpContext } from '@adonisjs/core/http'
+import { type EmitterService } from '@adonisjs/core/types'
+import { ExceptionHandler, type HttpContext } from '@adonisjs/core/http'
 
 import { Session } from './session.js'
 import type { SessionConfig, SessionStoreFactory } from './types.js'

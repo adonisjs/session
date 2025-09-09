@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { cuid } from '@adonisjs/core/helpers'
+import { randomUUID } from 'node:crypto'
 
 import debug from './debug.js'
 import { ValuesStore } from './values_store.js'
@@ -41,7 +41,7 @@ export class SessionClient {
    * Session to use when no explicit session id is
    * defined
    */
-  sessionId = cuid()
+  sessionId = randomUUID()
 
   constructor(store: SessionStoreContract) {
     this.#store = store

@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { createError } from '@poppinss/utils'
+import { createError } from '@adonisjs/core/exceptions'
 
 /**
  * Raised when session store is not mutable

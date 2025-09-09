@@ -12,15 +12,15 @@ import type { Test } from '@japa/runner/core'
 import { browserClient } from '@japa/browser-client'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'
-import { NamedReporterContract } from '@japa/runner/types'
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { runner, syncReporter } from '@japa/runner/factories'
 import type { ApplicationService } from '@adonisjs/core/types'
+import { type NamedReporterContract } from '@japa/runner/types'
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb'
-import { IncomingMessage, ServerResponse, createServer } from 'node:http'
+import { type IncomingMessage, type ServerResponse, createServer } from 'node:http'
 
 import { sessionApiClient } from '../src/plugins/japa/api_client.js'
 import { sessionBrowserClient } from '../src/plugins/japa/browser_client.js'
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 
 export const httpServer = {
   create(callback: (req: IncomingMessage, res: ServerResponse) => any) {

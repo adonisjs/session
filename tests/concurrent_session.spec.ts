@@ -9,16 +9,16 @@
 
 import supertest from 'supertest'
 import { test } from '@japa/runner'
-import { cuid } from '@adonisjs/core/helpers'
+import { randomUUID } from 'node:crypto'
 import { defineConfig } from '@adonisjs/redis'
 import setCookieParser from 'set-cookie-parser'
 import { Emitter } from '@adonisjs/core/events'
 import { setTimeout } from 'node:timers/promises'
-import { EventsList } from '@adonisjs/core/types'
+import { type EventsList } from '@adonisjs/core/types'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { IncomingMessage, ServerResponse } from 'node:http'
+import { type IncomingMessage, type ServerResponse } from 'node:http'
 import { RedisManagerFactory } from '@adonisjs/redis/factories'
-import { CookieClient, HttpContext } from '@adonisjs/core/http'
+import { CookieClient, type HttpContext } from '@adonisjs/core/http'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
@@ -111,7 +111,7 @@ async function requestHandler(
 
 test.group('Concurrency | cookie driver', () => {
   test('concurrently read and read slowly', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create((req, res) =>
       requestHandler(req, res, (ctx) => new CookieStore(sessionConfig.cookie, ctx))
@@ -144,7 +144,7 @@ test.group('Concurrency | cookie driver', () => {
   }).timeout(6000)
 
   test('HAS RACE CONDITION: concurrently write and read slowly', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create((req, res) =>
       requestHandler(req, res, (ctx) => new CookieStore(sessionConfig.cookie, ctx))
@@ -181,7 +181,7 @@ test.group('Concurrency | cookie driver', () => {
   }).timeout(6000)
 
   test('HAS RACE CONDITION: concurrently write and write slowly', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create((req, res) =>
       requestHandler(req, res, (ctx) => new CookieStore(sessionConfig.cookie, ctx))
@@ -225,7 +225,7 @@ test.group('Concurrency | cookie driver', () => {
 
 test.group('Concurrency | file driver', () => {
   test('concurrently read and read slowly', async ({ fs, assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const fileDriver = new FileStore({ location: fs.basePath }, sessionConfig.age)
     await fileDriver.write(sessionId, { age: 22 })
@@ -251,7 +251,7 @@ test.group('Concurrency | file driver', () => {
   }).timeout(6000)
 
   test('concurrently write and read slowly', async ({ fs, assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const fileDriver = new FileStore({ location: fs.basePath }, sessionConfig.age)
     await fileDriver.write(sessionId, { age: 22 })
@@ -274,7 +274,7 @@ test.group('Concurrency | file driver', () => {
   }).timeout(6000)
 
   test('HAS RACE CONDITON: concurrently write and write slowly', async ({ fs, assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const fileDriver = new FileStore({ location: fs.basePath }, sessionConfig.age)
     await fileDriver.write(sessionId, { age: 22 })
@@ -304,7 +304,7 @@ test.group('Concurrency | redis driver', (group) => {
   })
 
   test('concurrently read and read slowly', async ({ assert, cleanup }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
     cleanup(async () => {
       await redisDriver.destroy(sessionId)
     })
@@ -329,7 +329,7 @@ test.group('Concurrency | redis driver', (group) => {
   }).timeout(6000)
 
   test('concurrently write and read slowly', async ({ assert, cleanup }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
     cleanup(async () => {
       await redisDriver.destroy(sessionId)
     })
@@ -349,7 +349,7 @@ test.group('Concurrency | redis driver', (group) => {
   }).timeout(6000)
 
   test('HAS RACE CONDITON: concurrently write and write slowly', async ({ assert, cleanup }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
     cleanup(async () => {
       await redisDriver.destroy(sessionId)
     })

@@ -9,11 +9,11 @@
 
 /// <reference types="@adonisjs/redis/redis_provider" />
 
-import string from '@poppinss/utils/string'
 import { configProvider } from '@adonisjs/core'
+import string from '@adonisjs/core/helpers/string'
 import type { ConfigProvider } from '@adonisjs/core/types'
-import { InvalidArgumentsException } from '@poppinss/utils'
 import type { CookieOptions } from '@adonisjs/core/types/http'
+import { InvalidArgumentsException } from '@adonisjs/core/exceptions'
 
 import debug from './debug.js'
 import { MemoryStore } from './stores/memory.js'

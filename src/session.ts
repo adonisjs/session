@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
+import { randomUUID } from 'node:crypto'
 import type { I18n } from '@adonisjs/i18n'
 import Macroable from '@poppinss/macroable'
 import lodash from '@poppinss/utils/lodash'
-import { cuid } from '@adonisjs/core/helpers'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { EmitterService } from '@adonisjs/core/types'
 import type { HttpError } from '@adonisjs/core/types/http'
@@ -141,7 +141,7 @@ export class Session extends Macroable {
     this.#emitter = emitter
     this.#store = storeFactory(ctx, config)
     this.#sessionIdFromCookie = ctx.request.cookie(config.cookieName, undefined)
-    this.#sessionId = this.#sessionIdFromCookie || cuid()
+    this.#sessionId = this.#sessionIdFromCookie || randomUUID()
   }
 
   /**
@@ -418,7 +418,7 @@ export class Session extends Macroable {
    * Re-generate the session id and migrate data to it.
    */
   regenerate() {
-    this.#sessionId = cuid()
+    this.#sessionId = randomUUID()
   }
 
   /**

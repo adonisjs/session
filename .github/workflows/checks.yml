@@ -5,16 +5,16 @@ on:
   - workflow_call
 jobs:
   lint:
-    uses: adonisjs/.github/.github/workflows/lint.yml@main
+    uses: adonisjs/.github/.github/workflows/lint.yml@next
 
   typecheck:
-    uses: adonisjs/.github/.github/workflows/typecheck.yml@main
+    uses: adonisjs/.github/.github/workflows/typecheck.yml@next
 
   test_linux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.10.0, 21.x]
+        node-version: [latest]
     services:
       redis:
         image: redis
@@ -30,7 +30,7 @@ jobs:
         ports:
           - 8000:8000
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Create DynamoDB Table
         env:
           AWS_ACCESS_KEY_ID: accessKeyId
@@ -49,7 +49,7 @@ jobs:
             --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install
@@ -66,11 +66,11 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        node-version: [20.10.0, 21.x]
+        node-version: [latest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install

@@ -8,9 +8,9 @@
  */
 
 import { configProvider } from '@adonisjs/core'
-import { RuntimeException } from '@poppinss/utils'
 import type { PluginFn } from '@japa/runner/types'
 import { decoratorsCollection } from '@japa/browser-client'
+import { RuntimeException } from '@adonisjs/core/exceptions'
 import type { ApplicationService } from '@adonisjs/core/types'
 import type { CookieOptions as AdonisCookieOptions } from '@adonisjs/core/types/http'
 

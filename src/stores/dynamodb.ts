@@ -7,11 +7,11 @@
  * file that was distributed with this source code.
  */
 
-import string from '@poppinss/utils/string'
+import string from '@adonisjs/core/helpers/string'
 import { MessageBuilder } from '@adonisjs/core/helpers'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import {
-  DynamoDBClient,
+  type DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
   DeleteItemCommand,

@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { HttpContext } from '@adonisjs/core/http'
-import { RedisConnections } from '@adonisjs/redis/types'
+import { type HttpContext } from '@adonisjs/core/http'
+import { type RedisConnections } from '@adonisjs/redis/types'
 import type { CookieOptions } from '@adonisjs/core/types/http'
 import type { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb'
 

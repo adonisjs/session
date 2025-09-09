@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import string from '@poppinss/utils/string'
+import string from '@adonisjs/core/helpers/string'
 import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { Connection } from '@adonisjs/redis/types'
 

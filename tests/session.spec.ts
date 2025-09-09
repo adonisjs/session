@@ -10,7 +10,7 @@
 import edge from 'edge.js'
 import supertest from 'supertest'
 import { test } from '@japa/runner'
-import { cuid } from '@adonisjs/core/helpers'
+import { randomUUID } from 'node:crypto'
 import setCookieParser from 'set-cookie-parser'
 import { Emitter } from '@adonisjs/core/events'
 import { SimpleErrorReporter } from '@vinejs/vine'
@@ -19,8 +19,8 @@ import { fieldContext } from '@vinejs/vine/factories'
 import { IgnitorFactory } from '@adonisjs/core/factories'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { I18nManagerFactory } from '@adonisjs/i18n/factories'
-import { ApplicationService, EventsList } from '@adonisjs/core/types'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
+import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
 import { RequestFactory, ResponseFactory, HttpContextFactory } from '@adonisjs/core/factories/http'
 
 import { defineConfig } from '../index.js'
@@ -166,7 +166,7 @@ test.group('Session', (group) => {
   })
 
   test('append to existing store', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -204,7 +204,7 @@ test.group('Session', (group) => {
   })
 
   test('delete store when session store is empty', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -234,7 +234,7 @@ test.group('Session', (group) => {
   })
 
   test('pull value from the session store', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -264,7 +264,7 @@ test.group('Session', (group) => {
   })
 
   test('initiate value with 1 on increment', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -291,7 +291,7 @@ test.group('Session', (group) => {
   })
 
   test('initiate value with -1 on decrement', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -318,7 +318,7 @@ test.group('Session', (group) => {
   })
 
   test('touch session store when not modified', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -350,7 +350,7 @@ test.group('Session', (group) => {
   })
 
   test('clear session store', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -398,7 +398,7 @@ test.group('Session', (group) => {
   }).throws('Session store is in readonly mode and cannot be mutated')
 
   test('share session data with templates', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
 
     edge.registerTemplate('welcome', {
       template: `The user age is {{ session.get('age') }}`,
@@ -518,7 +518,7 @@ test.group('Session | Regenerate', () => {
   })
 
   test('append to existing store', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
     let newSessionId: string | undefined
 
     const server = httpServer.create(async (req, res) => {
@@ -560,7 +560,7 @@ test.group('Session | Regenerate', () => {
   })
 
   test('delete store when session store is empty', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
     let newSessionId: string | undefined
 
     const server = httpServer.create(async (req, res) => {
@@ -598,7 +598,7 @@ test.group('Session | Regenerate', () => {
   })
 
   test('touch session store when not modified', async ({ assert }) => {
-    let sessionId = cuid()
+    let sessionId = randomUUID()
     let newSessionId: string | undefined
 
     const server = httpServer.create(async (req, res) => {
