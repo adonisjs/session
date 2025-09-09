@@ -14,8 +14,8 @@ import { RuntimeException } from '@adonisjs/core/exceptions'
 import type { ApplicationService } from '@adonisjs/core/types'
 import { ApiClient, ApiRequest, ApiResponse } from '@japa/api-client'
 
-import { SessionClient } from '../../client.js'
-import type { SessionData } from '../../types.js'
+import { SessionClient } from '../../client.ts'
+import type { SessionData } from '../../types.ts'
 
 declare module '@japa/api-client' {
   export interface ApiRequest {

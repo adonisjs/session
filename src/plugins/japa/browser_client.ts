@@ -14,8 +14,8 @@ import { RuntimeException } from '@adonisjs/core/exceptions'
 import type { ApplicationService } from '@adonisjs/core/types'
 import type { CookieOptions as AdonisCookieOptions } from '@adonisjs/core/types/http'
 
-import { SessionClient } from '../../client.js'
-import type { SessionConfig, SessionData } from '../../types.js'
+import { SessionClient } from '../../client.ts'
+import type { SessionConfig, SessionData } from '../../types.ts'
 
 declare module 'playwright' {
   export interface BrowserContext {

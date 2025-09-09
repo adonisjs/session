@@ -15,8 +15,8 @@ import type { CookieOptions } from '@adonisjs/core/types/http'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import { httpServer } from '../../tests_helpers/index.js'
-import { CookieStore } from '../../src/stores/cookie.js'
+import { httpServer } from '../../tests_helpers/index.ts'
+import { CookieStore } from '../../src/stores/cookie.ts'
 
 const encryption = new EncryptionFactory().create()
 const cookieClient = new CookieClient(encryption)

@@ -12,7 +12,7 @@ import { test } from '@japa/runner'
 import { stat } from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
 
-import { FileStore } from '../../src/stores/file.js'
+import { FileStore } from '../../src/stores/file.ts'
 
 test.group('File store', () => {
   test('do not create file for a new session', async ({ fs, assert }) => {

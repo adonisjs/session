@@ -11,8 +11,8 @@ import string from '@adonisjs/core/helpers/string'
 import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { Connection } from '@adonisjs/redis/types'
 
-import debug from '../debug.js'
-import type { SessionStoreContract, SessionData } from '../types.js'
+import debug from '../debug.ts'
+import type { SessionStoreContract, SessionData } from '../types.ts'
 
 /**
  * File store to read/write session to filesystem

@@ -15,15 +15,15 @@ import type { ConfigProvider } from '@adonisjs/core/types'
 import type { CookieOptions } from '@adonisjs/core/types/http'
 import { InvalidArgumentsException } from '@adonisjs/core/exceptions'
 
-import debug from './debug.js'
-import { MemoryStore } from './stores/memory.js'
+import debug from './debug.ts'
+import { MemoryStore } from './stores/memory.ts'
 import type {
   SessionConfig,
   FileStoreConfig,
   RedisStoreConfig,
   SessionStoreFactory,
   DynamoDBStoreConfig,
-} from './types.js'
+} from './types.ts'
 
 /**
  * Resolved config with stores

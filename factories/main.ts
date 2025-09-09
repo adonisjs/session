@@ -7,4 +7,4 @@
  * file that was distributed with this source code.
  */
 
-export { SessionMiddlewareFactory } from './session_middleware_factory.js'
+export { SessionMiddlewareFactory } from './session_middleware_factory.ts'

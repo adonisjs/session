@@ -11,8 +11,8 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { type EmitterService } from '@adonisjs/core/types'
 import { ExceptionHandler, type HttpContext } from '@adonisjs/core/http'
 
-import { Session } from './session.js'
-import type { SessionConfig, SessionStoreFactory } from './types.js'
+import { Session } from './session.ts'
+import type { SessionConfig, SessionStoreFactory } from './types.ts'
 
 /**
  * HttpContext augmentations

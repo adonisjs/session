@@ -10,8 +10,8 @@
 import { test } from '@japa/runner'
 import { IgnitorFactory } from '@adonisjs/core/factories'
 
-import { defineConfig } from '../index.js'
-import SessionMiddleware from '../src/session_middleware.js'
+import { defineConfig } from '../index.ts'
+import SessionMiddleware from '../src/session_middleware.ts'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
 

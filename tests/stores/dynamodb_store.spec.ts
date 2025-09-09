@@ -12,8 +12,8 @@ import { setTimeout } from 'node:timers/promises'
 import { marshall } from '@aws-sdk/util-dynamodb'
 import { PutItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb'
 
-import { DynamoDBStore } from '../../src/stores/dynamodb.js'
-import { dynamodbClient, getExpiry, getSession } from '../../tests_helpers/index.js'
+import { DynamoDBStore } from '../../src/stores/dynamodb.ts'
+import { dynamodbClient, getExpiry, getSession } from '../../tests_helpers/index.ts'
 
 const sessionId = '1234'
 const defaultTableName = 'Session'

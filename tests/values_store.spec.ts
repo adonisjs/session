@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { ValuesStore } from '../src/values_store.js'
+import { ValuesStore } from '../src/values_store.ts'
 
 test.group('Store', () => {
   test('return empty object for empty store', ({ assert }) => {

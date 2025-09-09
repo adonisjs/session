@@ -8,8 +8,8 @@
  */
 
 import { test } from '@japa/runner'
-import { SessionClient } from '../src/client.js'
-import { MemoryStore } from '../src/stores/memory.js'
+import { SessionClient } from '../src/client.ts'
+import { MemoryStore } from '../src/stores/memory.ts'
 
 test.group('Session Client', (group) => {
   group.each.teardown(async () => {

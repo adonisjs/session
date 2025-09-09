@@ -15,16 +15,16 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { EmitterService } from '@adonisjs/core/types'
 import type { HttpError } from '@adonisjs/core/types/http'
 
-import debug from './debug.js'
-import * as errors from './errors.js'
-import { ReadOnlyValuesStore, ValuesStore } from './values_store.js'
+import debug from './debug.ts'
+import * as errors from './errors.ts'
+import { ReadOnlyValuesStore, ValuesStore } from './values_store.ts'
 import type {
   SessionData,
   SessionConfig,
   SessionStoreFactory,
   AllowedSessionValues,
   SessionStoreContract,
-} from './types.js'
+} from './types.ts'
 
 /**
  * The session class exposes the API to read and write values to

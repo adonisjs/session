@@ -22,12 +22,12 @@ import { CookieClient, type HttpContext } from '@adonisjs/core/http'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import { Session } from '../src/session.js'
-import { FileStore } from '../src/stores/file.js'
-import { RedisStore } from '../src/stores/redis.js'
-import { httpServer } from '../tests_helpers/index.js'
-import { CookieStore } from '../src/stores/cookie.js'
-import type { SessionConfig, SessionStoreContract } from '../src/types.js'
+import { Session } from '../src/session.ts'
+import { FileStore } from '../src/stores/file.ts'
+import { RedisStore } from '../src/stores/redis.ts'
+import { httpServer } from '../tests_helpers/index.ts'
+import { CookieStore } from '../src/stores/cookie.ts'
+import type { SessionConfig, SessionStoreContract } from '../src/types.ts'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {})
 const emitter = new Emitter<EventsList>(app)

@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { MemoryStore } from '../../src/stores/memory.js'
+import { MemoryStore } from '../../src/stores/memory.ts'
 
 test.group('Memory store', (group) => {
   group.each.setup(() => {

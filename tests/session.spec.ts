@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import edge from 'edge.js'
+import edge from 'edge.ts'
 import supertest from 'supertest'
 import { test } from '@japa/runner'
 import { randomUUID } from 'node:crypto'
@@ -23,11 +23,11 @@ import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
 import { RequestFactory, ResponseFactory, HttpContextFactory } from '@adonisjs/core/factories/http'
 
-import { defineConfig } from '../index.js'
-import { Session } from '../src/session.js'
-import { httpServer } from '../tests_helpers/index.js'
-import { CookieStore } from '../src/stores/cookie.js'
-import type { SessionConfig, SessionStoreFactory } from '../src/types.js'
+import { defineConfig } from '../index.ts'
+import { Session } from '../src/session.ts'
+import { httpServer } from '../tests_helpers/index.ts'
+import { CookieStore } from '../src/stores/cookie.ts'
+import type { SessionConfig, SessionStoreFactory } from '../src/types.ts'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 const emitter = new Emitter<EventsList>(app)

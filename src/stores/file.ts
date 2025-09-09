@@ -13,8 +13,8 @@ import string from '@adonisjs/core/helpers/string'
 import { MessageBuilder } from '@adonisjs/core/helpers'
 import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 
-import debug from '../debug.js'
-import type { FileStoreConfig, SessionData, SessionStoreContract } from '../types.js'
+import debug from '../debug.ts'
+import type { FileStoreConfig, SessionData, SessionStoreContract } from '../types.ts'
 
 /**
  * File store writes the session data on the file system as. Each session

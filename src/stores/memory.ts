@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { SessionData, SessionStoreContract } from '../types.js'
+import type { SessionData, SessionStoreContract } from '../types.ts'
 
 /**
  * Memory store is meant to be used for writing tests.

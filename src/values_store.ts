@@ -9,7 +9,7 @@
 
 import lodash from '@poppinss/utils/lodash'
 import { RuntimeException } from '@adonisjs/core/exceptions'
-import type { AllowedSessionValues, SessionData } from './types.js'
+import type { AllowedSessionValues, SessionData } from './types.ts'
 
 /**
  * Readonly session store

@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-export * as errors from './src/errors.js'
-export { configure } from './configure.js'
-export { Session } from './src/session.js'
-export { stubsRoot } from './stubs/main.js'
-export { defineConfig, stores } from './src/define_config.js'
-export { ReadOnlyValuesStore, ValuesStore } from './src/values_store.js'
+export * as errors from './src/errors.ts'
+export { configure } from './configure.ts'
+export { Session } from './src/session.ts'
+export { stubsRoot } from './stubs/main.ts'
+export { defineConfig, stores } from './src/define_config.ts'
+export { ReadOnlyValuesStore, ValuesStore } from './src/values_store.ts'

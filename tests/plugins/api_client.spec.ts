@@ -15,11 +15,11 @@ import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import { Session } from '../../src/session.js'
-import { type SessionConfig } from '../../src/types.js'
-import { defineConfig } from '../../src/define_config.js'
-import { MemoryStore } from '../../src/stores/memory.js'
-import { httpServer, runJapaTest } from '../../tests_helpers/index.js'
+import { Session } from '../../src/session.ts'
+import { type SessionConfig } from '../../src/types.ts'
+import { defineConfig } from '../../src/define_config.ts'
+import { MemoryStore } from '../../src/stores/memory.ts'
+import { httpServer, runJapaTest } from '../../tests_helpers/index.ts'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 

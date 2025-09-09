@@ -12,7 +12,7 @@ import { defineConfig } from '@adonisjs/redis'
 import { setTimeout } from 'node:timers/promises'
 import { RedisManagerFactory } from '@adonisjs/redis/factories'
 
-import { RedisStore } from '../../src/stores/redis.js'
+import { RedisStore } from '../../src/stores/redis.ts'
 
 const sessionId = '1234'
 const redisConfig = defineConfig({

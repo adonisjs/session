@@ -14,10 +14,10 @@ import { CookieClient } from '@adonisjs/core/http'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import { httpServer } from '../tests_helpers/index.js'
-import { CookieStore } from '../src/stores/cookie.js'
-import type { SessionConfig } from '../src/types.js'
-import { SessionMiddlewareFactory } from '../factories/session_middleware_factory.js'
+import { httpServer } from '../tests_helpers/index.ts'
+import { CookieStore } from '../src/stores/cookie.ts'
+import type { SessionConfig } from '../src/types.ts'
+import { SessionMiddlewareFactory } from '../factories/session_middleware_factory.ts'
 
 const encryption = new EncryptionFactory().create()
 const cookieClient = new CookieClient(encryption)

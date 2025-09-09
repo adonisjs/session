@@ -11,9 +11,9 @@ import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import type { ApplicationService, EventsList } from '@adonisjs/core/types'
 
-import { defineConfig } from '../index.js'
-import SessionMiddleware from '../src/session_middleware.js'
-import type { SessionConfig, SessionStoreFactory } from '../src/types.js'
+import { defineConfig } from '../index.ts'
+import SessionMiddleware from '../src/session_middleware.ts'
+import type { SessionConfig, SessionStoreFactory } from '../src/types.ts'
 
 /**
  * Exposes the API to create an instance of the session middleware

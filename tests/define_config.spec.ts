@@ -14,10 +14,10 @@ import { defineConfig as redisConfig } from '@adonisjs/redis'
 import type { ApplicationService } from '@adonisjs/core/types'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
 
-import { FileStore } from '../src/stores/file.js'
-import { RedisStore } from '../src/stores/redis.js'
-import { CookieStore } from '../src/stores/cookie.js'
-import { defineConfig, stores } from '../src/define_config.js'
+import { FileStore } from '../src/stores/file.ts'
+import { RedisStore } from '../src/stores/redis.ts'
+import { CookieStore } from '../src/stores/cookie.ts'
+import { defineConfig, stores } from '../src/define_config.ts'
 
 const BASE_URL = new URL('./', import.meta.url)
 const app = new AppFactory().create(BASE_URL, () => {}) as ApplicationService

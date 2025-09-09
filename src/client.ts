@@ -9,9 +9,9 @@
 
 import { randomUUID } from 'node:crypto'
 
-import debug from './debug.js'
-import { ValuesStore } from './values_store.js'
-import type { SessionData, SessionStoreContract } from './types.js'
+import debug from './debug.ts'
+import { ValuesStore } from './values_store.ts'
+import type { SessionData, SessionStoreContract } from './types.ts'
 
 /**
  * Session client exposes the API to set session data as a client

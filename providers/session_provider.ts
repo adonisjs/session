@@ -11,8 +11,8 @@ import { configProvider } from '@adonisjs/core'
 import { RuntimeException } from '@adonisjs/core/exceptions'
 import type { ApplicationService } from '@adonisjs/core/types'
 
-import type { Session } from '../src/session.js'
-import SessionMiddleware from '../src/session_middleware.js'
+import type { Session } from '../src/session.ts'
+import SessionMiddleware from '../src/session_middleware.ts'
 
 /**
  * Events emitted by the session class

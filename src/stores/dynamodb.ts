@@ -18,8 +18,8 @@ import {
   UpdateItemCommand,
 } from '@aws-sdk/client-dynamodb'
 
-import debug from '../debug.js'
-import type { SessionStoreContract, SessionData } from '../types.js'
+import debug from '../debug.ts'
+import type { SessionStoreContract, SessionData } from '../types.ts'
 
 /**
  * DynamoDB store to read/write session to DynamoDB
