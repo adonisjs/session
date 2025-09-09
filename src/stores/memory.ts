@@ -65,5 +65,5 @@ export class MemoryStore implements SessionStoreContract {
    *
    * @param sessionId - Session identifier (unused)
    */
-  touch(sessionId?: string): void {}
+  touch(_?: string): void {}
 }
