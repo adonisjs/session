@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import edge from 'edge.ts'
+import edge from 'edge.js'
 import supertest from 'supertest'
 import { test } from '@japa/runner'
 import { randomUUID } from 'node:crypto'
@@ -1000,10 +1000,6 @@ test.group('Session | Flash', (group) => {
 
     assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
       __flash__: {
-        errors: {
-          email: ['Invalid email'],
-          username: ['Invalid username', 'Username is required'],
-        },
         errorsBag: {
           E_VALIDATION_ERROR: 'The form could not be saved. Please check the errors below.',
         },
@@ -1071,10 +1067,6 @@ test.group('Session | Flash', (group) => {
 
     assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
       __flash__: {
-        errors: {
-          email: ['Invalid email'],
-          username: ['Invalid username', 'Username is required'],
-        },
         errorsBag: {
           E_VALIDATION_ERROR: '3 errors prohibited form submission',
         },
@@ -1123,9 +1115,6 @@ test.group('Session | Flash', (group) => {
 
     assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
       __flash__: {
-        errors: {
-          name: ['Invalid name'],
-        },
         errorsBag: {
           E_VALIDATION_ERROR: 'The form could not be saved. Please check the errors below.',
         },

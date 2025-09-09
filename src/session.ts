@@ -407,7 +407,7 @@ export class Session extends Macroable {
    *   session.flashValidationErrors(error)
    * }
    */
-  flashValidationErrors(error: HttpError) {
+  flashValidationErrors(error: HttpError, withInput: boolean = true) {
     const errorsBag = error.messages.reduce((result: Record<string, string[]>, message: any) => {
       if (result[message.field]) {
         result[message.field].push(message.message)
@@ -417,7 +417,9 @@ export class Session extends Macroable {
       return result
     }, {})
 
-    this.flashExcept(['_csrf', '_method', 'password', 'password_confirmation'])
+    if (withInput) {
+      this.flashExcept(['_csrf', '_method', 'password', 'password_confirmation'])
+    }
 
     /**
      * Adding the error summary to the "errorsBag" so that
@@ -444,12 +446,6 @@ export class Session extends Macroable {
      * to read validation errors
      */
     this.flash('inputErrorsBag', errorsBag)
-
-    /**
-     * For legacy support and not to break apps using
-     * the older version of @adonisjs/session package
-     */
-    this.flash('errors', errorsBag)
   }
 
   /**

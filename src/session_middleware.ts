@@ -29,7 +29,8 @@ declare module '@adonisjs/core/http' {
 const originalErrorHandler = ExceptionHandler.prototype.renderValidationErrorAsHTML
 ExceptionHandler.macro('renderValidationErrorAsHTML', async function (error, ctx) {
   if (ctx.session) {
-    ctx.session.flashValidationErrors(error)
+    const withInput = ctx.request.header('X-Inertia') ? false : true
+    ctx.session.flashValidationErrors(error, withInput)
     ctx.response.redirect('back', true)
   } else {
     return originalErrorHandler(error, ctx)

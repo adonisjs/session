@@ -10,7 +10,7 @@
 import { getActiveTest } from '@japa/runner'
 import type { Test } from '@japa/runner/core'
 import { browserClient } from '@japa/browser-client'
-import { pluginAdonisJS } from '@japa/plugin-adoni.ts'
+import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import { runner, syncReporter } from '@japa/runner/factories'
