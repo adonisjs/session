@@ -36,7 +36,6 @@ const cookieClient = new CookieClient(encryption)
 const sessionConfig: SessionConfig = {
   enabled: true,
   age: '2 hours',
-  clearWithBrowser: false,
   cookieName: 'adonis_session',
   cookie: {},
 }

@@ -12,17 +12,21 @@ import debug from '../debug.ts'
 
 /**
  * The edge plugin for AdonisJS Session adds template tags to read flash messages.
- * Provides @flashMessage, @inputError, @error, and @errors tags for templates.
+ * Provides @flashMessage, @inputError, @error, and \@errors tags for templates.
  *
  * @example
+ * ```ts
  * // Register the plugin with Edge
  * import { edgePluginSession } from '@adonisjs/session/plugins/edge'
  * edge.use(edgePluginSession)
+ * ```
  *
+ * ```edge
  * // Use in templates
  * @flashMessage('success')
  *   <div class="alert alert-success">{{ $message }}</div>
  * @end
+ * ```
  */
 export const edgePluginSession: PluginFn<undefined> = (edge) => {
   debug('registering session tags with edge')

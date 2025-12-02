@@ -29,7 +29,6 @@ const encryption = new EncryptionFactory().create()
 const sessionConfig: SessionConfig = {
   enabled: true,
   age: '2 hours',
-  clearWithBrowser: false,
   cookieName: 'adonis_session',
   cookie: {},
 }

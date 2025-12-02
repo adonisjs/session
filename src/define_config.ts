@@ -25,13 +25,26 @@ import type {
   DynamoDBStoreConfig,
 } from './types.ts'
 
+type ConfigInput<
+  KnownStores extends Record<string, SessionStoreFactory | ConfigProvider<SessionStoreFactory>>,
+> = Partial<SessionConfig> & {
+  store: keyof KnownStores | 'memory'
+  stores: KnownStores
+  /**
+   * Whether to clear the session cookie when the browser is closed.
+   * When true, creates a session cookie that expires on browser close.
+   * Note: Persisted session data continues to exist until it expires.
+   */
+  clearWithBrowser?: boolean
+  cookie?: Omit<Partial<CookieOptions>, 'maxAge' | 'expires'>
+}
+
 /**
  * Resolved session configuration with all stores resolved
  */
 type ResolvedConfig<KnownStores extends Record<string, SessionStoreFactory>> = SessionConfig & {
   store: keyof KnownStores
   stores: KnownStores
-  cookie: Partial<CookieOptions>
 }
 
 /**
@@ -57,10 +70,7 @@ type ResolvedConfig<KnownStores extends Record<string, SessionStoreFactory>> = S
 export function defineConfig<
   KnownStores extends Record<string, SessionStoreFactory | ConfigProvider<SessionStoreFactory>>,
 >(
-  config: Partial<SessionConfig> & {
-    store: keyof KnownStores | 'memory'
-    stores: KnownStores
-  }
+  config: ConfigInput<KnownStores>
 ): ConfigProvider<
   ResolvedConfig<{
     [K in keyof KnownStores]: SessionStoreFactory
@@ -92,11 +102,15 @@ export function defineConfig<
 
   /**
    * Define maxAge property when session id cookie is
-   * not a session cookie.
+   * persistent cookie.
+   * "clearWithBrowser = non-persistent cookie"
    */
   if (!rest.clearWithBrowser) {
     cookieOptions.maxAge = string.seconds.parse(rest.age)
     debug('computing maxAge "%s" for session id cookie', cookieOptions.maxAge)
+  } else {
+    cookieOptions.maxAge = undefined
+    cookieOptions.expires = undefined
   }
 
   return configProvider.create(async (app) => {

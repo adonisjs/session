@@ -14,9 +14,9 @@ import { CookieClient } from '@adonisjs/core/http'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import { httpServer } from '../tests_helpers/index.ts'
 import { CookieStore } from '../src/stores/cookie.ts'
-import type { SessionConfig } from '../src/types.ts'
+import { httpServer } from '../tests_helpers/index.ts'
+import type { SessionConfig, SessionStoreFactory } from '../src/types.ts'
 import { SessionMiddlewareFactory } from '../factories/session_middleware_factory.ts'
 
 const encryption = new EncryptionFactory().create()
@@ -24,7 +24,6 @@ const cookieClient = new CookieClient(encryption)
 const sessionConfig: SessionConfig = {
   enabled: true,
   age: '2 hours',
-  clearWithBrowser: false,
   cookieName: 'adonis_session',
   cookie: {},
 }
@@ -104,5 +103,46 @@ test.group('Session middleware', () => {
 
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
     assert.deepEqual(cookies, {})
+  })
+
+  test('do not set max-age for non-persistent cookies', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const middleware = await new SessionMiddlewareFactory()
+        .merge({
+          config: Object.assign(
+            {
+              store: 'cookie',
+              stores: {
+                cookie: (_, config) => new CookieStore(config.cookie, ctx),
+              } satisfies Record<string, SessionStoreFactory>,
+            },
+            { ...sessionConfig, clearWithBrowser: true }
+          ),
+        })
+        .create()
+
+      await middleware.handle(ctx, () => {
+        sessionId = ctx.session.sessionId
+        ctx.session.put('username', 'virk')
+        ctx.session.flash({ status: 'Completed' })
+      })
+
+      ctx.response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+    assert.notProperty(cookies.adonis_session, 'maxAge')
+    assert.notProperty(cookies.adonis_session, 'expires')
+
+    assert.notProperty(cookies[sessionId!], 'maxAge')
+    assert.notProperty(cookies[sessionId!], 'expires')
   })
 })

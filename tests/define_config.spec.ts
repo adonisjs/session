@@ -41,14 +41,19 @@ test.group('Define config', () => {
     assert.equal(config.cookie.maxAge, 7200)
   })
 
-  test('define maxAge when clearWithBrowser is enabled', async ({ assert }) => {
+  test('explicitly set maxAge to undefined when clearWithBrowser is enabled', async ({
+    assert,
+  }) => {
     const config = await defineConfig({
       clearWithBrowser: true,
       store: 'memory',
+      cookie: {},
       stores: {},
     }).resolver(app)
 
+    assert.properties(config.cookie, ['maxAge', 'expires'])
     assert.isUndefined(config.cookie.maxAge)
+    assert.isUndefined(config.cookie.expires)
   })
 
   test('transform config with no stores', async ({ assert }) => {

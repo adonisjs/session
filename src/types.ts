@@ -108,7 +108,6 @@ export interface SessionStoreContract {
  * const config: SessionConfig = {
  *   enabled: true,
  *   cookieName: 'my_app_session',
- *   clearWithBrowser: false,
  *   age: '2 hours',
  *   cookie: {
  *     httpOnly: true,
@@ -129,13 +128,6 @@ export interface SessionConfig {
   cookieName: string
 
   /**
-   * Whether to clear the session cookie when the browser is closed.
-   * When true, creates a session cookie that expires on browser close.
-   * Note: Persisted session data continues to exist until it expires.
-   */
-  clearWithBrowser: boolean
-
-  /**
    * Maximum age of the session data and session ID cookie.
    * Session data is automatically cleaned up after this duration of inactivity.
    * Value can be a time expression (e.g. '2 hours') or number of seconds.
@@ -147,7 +139,7 @@ export interface SessionConfig {
    * Additional cookie options for the session ID cookie.
    * Excludes maxAge and expires as they're controlled by age and clearWithBrowser.
    */
-  cookie: Omit<Partial<CookieOptions>, 'maxAge' | 'expires'>
+  cookie: Partial<CookieOptions>
 }
 
 /**
