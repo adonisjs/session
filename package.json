@@ -22,7 +22,8 @@
     "./plugins/api_client": "./build/src/plugins/japa/api_client.js",
     "./plugins/browser_client": "./build/src/plugins/japa/browser_client.js",
     "./client": "./build/src/client.js",
-    "./types": "./build/src/types.js"
+    "./types": "./build/src/types.js",
+    "./commands": "./build/commands/main.js"
   },
   "scripts": {
     "pretest": "npm run lint",
@@ -33,7 +34,8 @@
     "copy:templates": "copyfiles \"stubs/**/*.stub\" --up=\"1\" build",
     "precompile": "npm run lint",
     "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
-    "postcompile": "npm run copy:templates",
+    "postcompile": "npm run copy:templates && npm run index:commands",
+    "index:commands": "adonis-kit index build/commands",
     "build": "npm run compile",
     "version": "npm run build",
     "prepublishOnly": "npm run build",
@@ -45,6 +47,10 @@
     "@adonisjs/core": "^6.18.0",
     "@adonisjs/eslint-config": "^2.1.0",
     "@adonisjs/i18n": "^2.2.0",
+    "@adonisjs/lucid": "^21.6.0",
+    "better-sqlite3": "^12.5.0",
+    "mysql2": "^3.15.3",
+    "pg": "^8.16.3",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/redis": "^9.2.0",
     "@adonisjs/tsconfig": "^1.4.1",
@@ -84,6 +90,7 @@
   },
   "peerDependencies": {
     "@adonisjs/core": "^6.6.0",
+    "@adonisjs/lucid": "^21.0.0",
     "@adonisjs/redis": "^8.0.1 || ^9.0.0",
     "@aws-sdk/client-dynamodb": "^3.658.0",
     "@aws-sdk/util-dynamodb": "^3.658.0",
@@ -92,6 +99,9 @@
     "edge.js": "^6.0.2"
   },
   "peerDependenciesMeta": {
+    "@adonisjs/lucid": {
+      "optional": true
+    },
     "@adonisjs/redis": {
       "optional": true
     },
@@ -139,7 +149,8 @@
       "./src/plugins/edge.ts",
       "./src/plugins/japa/api_client.ts",
       "./src/plugins/japa/browser_client.ts",
-      "./src/client.ts"
+      "./src/client.ts",
+      "./commands/make_session_table.ts",
     ],
     "outDir": "./build",
     "clean": true,

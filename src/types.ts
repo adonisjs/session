@@ -119,6 +119,25 @@ export type DynamoDBStoreConfig = (
 }
 
 /**
+ * Configuration used by the database store.
+ */
+export interface DatabaseStoreConfig {
+  connectionName?: string
+  tableName?: string
+
+  /**
+   * The probability (in percent) that garbage collection of expired
+   * sessions will be triggered on any given request.
+   *
+   * For example, 2 means 2% chance.
+   * Set to 0 to disable garbage collection.
+   *
+   * Defaults to 2 (2% chance)
+   */
+  gcProbability?: number
+}
+
+/**
  * Factory function to instantiate session store
  */
 export type SessionStoreFactory = (

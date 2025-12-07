@@ -13,8 +13,10 @@ jobs:
   test_linux:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [20.10.0, 21.x]
+        db: [sqlite, postgres, mysql]
     services:
       redis:
         image: redis
@@ -29,8 +31,33 @@ jobs:
         image: amazon/dynamodb-local
         ports:
           - 8000:8000
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: session_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: session_test
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Create DynamoDB Table
         env:
           AWS_ACCESS_KEY_ID: accessKeyId
@@ -49,7 +76,7 @@ jobs:
             --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install
@@ -61,6 +88,17 @@ jobs:
         env:
           REDIS_HOST: 0.0.0.0
           REDIS_PORT: 6379
+          DB_CONNECTION: ${{ matrix.db }}
+          PG_HOST: 0.0.0.0
+          PG_PORT: 5432
+          PG_USER: postgres
+          PG_PASSWORD: postgres
+          PG_DATABASE: session_test
+          MYSQL_HOST: 0.0.0.0
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: session_test
 
   test_windows:
     runs-on: windows-latest
@@ -68,9 +106,9 @@ jobs:
       matrix:
         node-version: [20.10.0, 21.x]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install
@@ -82,3 +120,4 @@ jobs:
         env:
           NO_REDIS: true
           NO_DYNAMODB: true
+          NO_DATABASE: true
