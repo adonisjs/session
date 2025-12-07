@@ -150,7 +150,7 @@
       "./src/plugins/japa/api_client.ts",
       "./src/plugins/japa/browser_client.ts",
       "./src/client.ts",
-      "./commands/make_session_table.ts",
+      "./commands/make_session_table.ts"
     ],
     "outDir": "./build",
     "clean": true,
