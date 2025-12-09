@@ -46,9 +46,10 @@ export async function configure(command: Configure) {
   ])
 
   /**
-   * Register provider
+   * Register provider and commands
    */
   await codemods.updateRcFile((rcFile) => {
     rcFile.addProvider('@adonisjs/session/session_provider')
+    rcFile.addCommand('@adonisjs/session/commands')
   })
 }

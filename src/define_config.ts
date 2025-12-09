@@ -8,11 +8,12 @@
  */
 
 /// <reference types="@adonisjs/redis/redis_provider" />
+/// <reference types="@adonisjs/lucid/database_provider" />
 
 import string from '@poppinss/utils/string'
 import { configProvider } from '@adonisjs/core'
 import type { ConfigProvider } from '@adonisjs/core/types'
-import { InvalidArgumentsException } from '@poppinss/utils'
+import { InvalidArgumentsException, RuntimeException } from '@poppinss/utils'
 import type { CookieOptions } from '@adonisjs/core/types/http'
 
 import debug from './debug.js'
@@ -23,6 +24,7 @@ import type {
   RedisStoreConfig,
   SessionStoreFactory,
   DynamoDBStoreConfig,
+  DatabaseStoreConfig,
 } from './types.js'
 
 /**
@@ -123,6 +125,7 @@ export const stores: {
   redis: (config: RedisStoreConfig) => ConfigProvider<SessionStoreFactory>
   cookie: () => ConfigProvider<SessionStoreFactory>
   dynamodb: (config: DynamoDBStoreConfig) => ConfigProvider<SessionStoreFactory>
+  database: (config?: DatabaseStoreConfig) => ConfigProvider<SessionStoreFactory>
 } = {
   file: (config) => {
     return configProvider.create(async () => {
@@ -162,6 +165,26 @@ export const stores: {
         return new DynamoDBStore(client, sessionConfig.age, {
           tableName: config.tableName,
           keyAttribute: config.keyAttribute,
+        })
+      }
+    })
+  },
+  database: (config) => {
+    return configProvider.create(async (app) => {
+      const { DatabaseStore } = await import('./stores/database.js')
+      const db = await app.container.make('lucid.db')
+      const connectionName = config?.connectionName || db.primaryConnectionName
+
+      if (!db.manager.has(connectionName)) {
+        throw new RuntimeException(
+          `Invalid database connection "${connectionName}" referenced in session config`
+        )
+      }
+
+      return (_, sessionConfig: SessionConfig) => {
+        return new DatabaseStore(db.connection(connectionName), sessionConfig.age, {
+          tableName: config?.tableName,
+          gcProbability: config?.gcProbability,
         })
       }
     })
