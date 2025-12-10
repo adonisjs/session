@@ -12,12 +12,12 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { QueryClientContract } from '@adonisjs/lucid/types/database'
 
 import debug from '../debug.js'
-import type { SessionStoreContract, SessionData } from '../types.js'
+import type { SessionStoreWithTaggingContract, SessionData } from '../types.js'
 
 /**
  * Database store to read/write session to SQL databases using Lucid
  */
-export class DatabaseStore implements SessionStoreContract {
+export class DatabaseStore implements SessionStoreWithTaggingContract {
   #client: QueryClientContract
   #tableName: string
   #ttlSeconds: number
@@ -142,5 +142,29 @@ export class DatabaseStore implements SessionStoreContract {
       .from(this.#tableName)
       .where('id', sessionId)
       .update({ expires_at: expiresAt })
+  }
+
+  /**
+   * Tag a session with a user ID
+   */
+  async tag(sessionId: string, userId: string): Promise<void> {
+    debug('database store: tagging session %s with user %s', sessionId, userId)
+
+    await this.#client.from(this.#tableName).where('id', sessionId).update({ user_id: userId })
+  }
+
+  /**
+   * Get all session IDs for a given user ID (tag)
+   */
+  async tagged(userId: string): Promise<string[]> {
+    debug('database store: getting sessions tagged with user %s', userId)
+
+    const rows = await this.#client
+      .from(this.#tableName)
+      .select('id')
+      .where('user_id', userId)
+      .where('expires_at', '>', new Date())
+
+    return rows.map((row: { id: string }) => row.id)
   }
 }

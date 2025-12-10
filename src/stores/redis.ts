@@ -12,12 +12,12 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { Connection } from '@adonisjs/redis/types'
 
 import debug from '../debug.js'
-import type { SessionStoreContract, SessionData } from '../types.js'
+import type { SessionStoreWithTaggingContract, SessionData } from '../types.js'
 
 /**
- * File store to read/write session to filesystem
+ * Redis store to read/write session to Redis
  */
-export class RedisStore implements SessionStoreContract {
+export class RedisStore implements SessionStoreWithTaggingContract {
   #connection: Connection
   #ttlSeconds: number
 
@@ -28,8 +28,14 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Returns file contents. A new file will be created if it's
-   * missing.
+   * Returns the key for a user's tag set (stores session IDs for a user)
+   */
+  #getTagKey(userId: string): string {
+    return `session_tag:${userId}`
+  }
+
+  /**
+   * Returns session data
    */
   async read(sessionId: string): Promise<SessionData | null> {
     debug('redis store: reading session data %s', sessionId)
@@ -51,9 +57,9 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Write session values to a file
+   * Write session values to redis
    */
-  async write(sessionId: string, values: Object): Promise<void> {
+  async write(sessionId: string, values: Record<string, any>): Promise<void> {
     debug('redis store: writing session data %s, %O', sessionId, values)
 
     const message = new MessageBuilder().build(values, undefined, sessionId)
@@ -61,7 +67,7 @@ export class RedisStore implements SessionStoreContract {
   }
 
   /**
-   * Cleanup session file by removing it
+   * Cleanup session by removing it
    */
   async destroy(sessionId: string): Promise<void> {
     debug('redis store: destroying session data %s', sessionId)
@@ -74,5 +80,47 @@ export class RedisStore implements SessionStoreContract {
   async touch(sessionId: string): Promise<void> {
     debug('redis store: touching session data %s', sessionId)
     await this.#connection.expire(sessionId, this.#ttlSeconds)
+  }
+
+  /**
+   * Tag a session with a user ID
+   */
+  async tag(sessionId: string, userId: string): Promise<void> {
+    debug('redis store: tagging session %s with user %s', sessionId, userId)
+    await this.#connection.sadd(this.#getTagKey(userId), sessionId)
+  }
+
+  /**
+   * Get all session IDs for a given user ID (tag)
+   */
+  async tagged(userId: string): Promise<string[]> {
+    debug('redis store: getting sessions tagged with user %s', userId)
+
+    const sessionIds = await this.#connection.smembers(this.#getTagKey(userId))
+    if (sessionIds.length === 0) return []
+
+    // Check all sessions existence in a single pipeline
+    const pipeline = this.#connection.pipeline()
+    for (const sessionId of sessionIds) pipeline.exists(sessionId)
+    const results = await pipeline.exec()
+
+    // Filter out expired/deleted sessions
+    const validSessionIds: string[] = []
+    const invalidSessionIds: string[] = []
+
+    for (const [index, sessionId] of sessionIds.entries()) {
+      const exists = results?.[index]?.[1] === 1
+      if (exists) {
+        validSessionIds.push(sessionId)
+      } else {
+        invalidSessionIds.push(sessionId)
+      }
+    }
+
+    if (invalidSessionIds.length > 0) {
+      await this.#connection.srem(this.#getTagKey(userId), ...invalidSessionIds)
+    }
+
+    return validSessionIds
   }
 }

@@ -13,6 +13,7 @@ import type { ApplicationService } from '@adonisjs/core/types'
 
 import type { Session } from '../src/session.js'
 import SessionMiddleware from '../src/session_middleware.js'
+import { SessionCollection } from '../src/session_collection.js'
 
 /**
  * Events emitted by the session class
@@ -45,24 +46,34 @@ export default class SessionProvider {
   }
 
   /**
-   * Registering muddleware
+   * Resolves the session config from the config provider
+   */
+  async #resolveConfig() {
+    const sessionConfigProvider = this.app.config.get('session', {})
+    const config = await configProvider.resolve<any>(this.app, sessionConfigProvider)
+
+    if (!config) {
+      throw new RuntimeException(
+        'Invalid "config/session.ts" file. Make sure you are using the "defineConfig" method'
+      )
+    }
+
+    return config
+  }
+
+  /**
+   * Registering bindings
    */
   register() {
     this.app.container.singleton(SessionMiddleware, async (resolver) => {
-      const sessionConfigProvider = this.app.config.get('session', {})
-
-      /**
-       * Resolve config from the provider
-       */
-      const config = await configProvider.resolve<any>(this.app, sessionConfigProvider)
-      if (!config) {
-        throw new RuntimeException(
-          'Invalid "config/session.ts" file. Make sure you are using the "defineConfig" method'
-        )
-      }
-
+      const config = await this.#resolveConfig()
       const emitter = await resolver.make('emitter')
       return new SessionMiddleware(config, emitter)
+    })
+
+    this.app.container.singleton(SessionCollection, async () => {
+      const config = await this.#resolveConfig()
+      return new SessionCollection(config)
     })
   }
 

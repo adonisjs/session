@@ -69,6 +69,7 @@ test.group('Database store', (group) => {
     await db.connection().schema.createTable('sessions', (table) => {
       table.string('id').primary()
       table.text('data').notNullable()
+      table.string('user_id').nullable().index()
       table.timestamp('expires_at').notNullable()
     })
   })
@@ -214,5 +215,69 @@ test.group('Database store', (group) => {
 
     const expiredRow = await db.from('sessions').where('id', 'expired-session').first()
     assert.exists(expiredRow)
+  }).disableTimeout()
+
+  test('tag a session with a user id', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 'user-123')
+
+    const row = await db.from('sessions').where('id', 'session-1').first()
+    assert.equal(row.user_id, 'user-123')
+  })
+
+  test('get sessions tagged with a user id', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.write('session-2', { message: 'world' })
+    await store.write('session-3', { message: 'foo' })
+
+    await store.tag('session-1', 'user-1')
+    await store.tag('session-2', 'user-1')
+    await store.tag('session-3', 'user-2')
+
+    const user1Sessions = await store.tagged('user-1')
+    assert.sameMembers(user1Sessions, ['session-1', 'session-2'])
+
+    const user2Sessions = await store.tagged('user-2')
+    assert.deepEqual(user2Sessions, ['session-3'])
+  })
+
+  test('return empty array when user has no tagged sessions', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    const sessions = await store.tagged('unknown-user')
+    assert.deepEqual(sessions, [])
+  })
+
+  test('re-tagging updates user id', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 'user-1')
+    await store.tag('session-1', 'user-2')
+
+    const row = await db.from('sessions').where('id', 'session-1').first()
+    assert.equal(row.user_id, 'user-2')
+
+    const user1Sessions = await store.tagged('user-1')
+    assert.deepEqual(user1Sessions, [])
+
+    const user2Sessions = await store.tagged('user-2')
+    assert.deepEqual(user2Sessions, ['session-1'])
+  })
+
+  test('tagged excludes expired sessions', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), 1, { gcProbability: 0 })
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 'user-1')
+
+    await setTimeout(2000)
+
+    const sessions = await store.tagged('user-1')
+    assert.deepEqual(sessions, [])
   }).disableTimeout()
 })

@@ -48,6 +48,22 @@ export interface SessionStoreContract {
 }
 
 /**
+ * Extended interface for stores that support tagging sessions
+ * (linking sessions to user IDs for example)
+ */
+export interface SessionStoreWithTaggingContract extends SessionStoreContract {
+  /**
+   * Tag a session with a user ID
+   */
+  tag(sessionId: string, userId: string): Promise<void>
+
+  /**
+   * Get all session IDs for a given user ID (tag)
+   */
+  tagged(userId: string): Promise<string[]>
+}
+
+/**
  * Base configuration for managing sessions without
  * stores.
  */
@@ -144,3 +160,11 @@ export type SessionStoreFactory = (
   ctx: HttpContext,
   sessionConfig: SessionConfig
 ) => SessionStoreContract
+
+/**
+ * Resolved session config after processing by defineConfig
+ */
+export interface ResolvedSessionConfig extends SessionConfig {
+  store: string
+  stores: Record<string, SessionStoreFactory>
+}

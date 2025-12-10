@@ -26,3 +26,13 @@ export const E_SESSION_NOT_READY = createError(
   'E_SESSION_NOT_READY',
   500
 )
+
+/**
+ * Raised when trying to use tagging with a store that
+ * doesn't support tagging operations
+ */
+export const E_SESSION_TAGGING_NOT_SUPPORTED = createError(
+  'Session store does not support tagging operations. Only Redis, Database and Memory stores support tagging.',
+  'E_SESSION_TAGGING_NOT_SUPPORTED',
+  500
+)
