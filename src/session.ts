@@ -424,7 +424,7 @@ export class Session extends Macroable {
 
   /**
    * Tag the current session with a user ID. This allows you to
-   * later retrieve all sessions for a given user.
+   * later retrieve all sessions for a given user via SessionCollection.
    *
    * Only Memory, Redis and Database stores support tagging. Other stores
    * will throw an error.
@@ -432,39 +432,6 @@ export class Session extends Macroable {
   async tag(userId: string): Promise<void> {
     if (!('tag' in this.#store)) throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
     await this.#store.tag(this.#sessionId, userId)
-  }
-
-  /**
-   * Get all session IDs for a given user ID (tag).
-   *
-   * Only Redis and Database stores support tagging. Other stores
-   * will throw an error.
-   */
-  async tagged(userId: string): Promise<string[]> {
-    if (!('tagged' in this.#store)) throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
-    return this.#store.tagged(userId)
-  }
-
-  /**
-   * Destroys a session by its ID. Use this to terminate
-   * another session (e.g., logout from another device).
-   *
-   * Only Redis and Database stores support tagging. Other stores
-   * will throw an error.
-   */
-  async destroySession(sessionId: string): Promise<void> {
-    await this.#store.destroy(sessionId)
-  }
-
-  /**
-   * Returns the session data for the given session ID,
-   * or null if the session does not exist.
-   *
-   * Only Redis and Database stores support tagging. Other stores
-   * will throw an error.
-   */
-  async getSession(sessionId: string): Promise<SessionData | null> {
-    return this.#store.read(sessionId)
   }
 
   /**
