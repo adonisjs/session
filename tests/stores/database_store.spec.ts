@@ -239,10 +239,13 @@ test.group('Database store', (group) => {
     await store.tag('session-3', 'user-2')
 
     const user1Sessions = await store.tagged('user-1')
-    assert.sameMembers(user1Sessions, ['session-1', 'session-2'])
+    assert.sameDeepMembers(user1Sessions, [
+      { id: 'session-1', data: { message: 'hello' } },
+      { id: 'session-2', data: { message: 'world' } },
+    ])
 
     const user2Sessions = await store.tagged('user-2')
-    assert.deepEqual(user2Sessions, ['session-3'])
+    assert.deepEqual(user2Sessions, [{ id: 'session-3', data: { message: 'foo' } }])
   })
 
   test('return empty array when user has no tagged sessions', async ({ assert }) => {
@@ -266,7 +269,7 @@ test.group('Database store', (group) => {
     assert.deepEqual(user1Sessions, [])
 
     const user2Sessions = await store.tagged('user-2')
-    assert.deepEqual(user2Sessions, ['session-1'])
+    assert.deepEqual(user2Sessions, [{ id: 'session-1', data: { message: 'hello' } }])
   })
 
   test('tagged excludes expired sessions', async ({ assert }) => {

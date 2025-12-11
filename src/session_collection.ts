@@ -13,6 +13,7 @@ import type {
   ResolvedSessionConfig,
   SessionData,
   SessionStoreWithTaggingContract,
+  TaggedSession,
 } from './types.js'
 
 /**
@@ -78,10 +79,10 @@ export class SessionCollection {
   }
 
   /**
-   * Get all session IDs for a given user ID (tag).
+   * Get all sessions for a given user ID (tag).
    * Only supported by Memory, Redis and Database stores.
    */
-  async tagged(userId: string): Promise<string[]> {
+  async tagged(userId: string): Promise<TaggedSession[]> {
     debug('session collection: getting sessions tagged with user %s', userId)
     if (!this.supportsTagging()) throw new E_SESSION_TAGGING_NOT_SUPPORTED()
 

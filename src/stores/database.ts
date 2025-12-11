@@ -12,7 +12,7 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { QueryClientContract } from '@adonisjs/lucid/types/database'
 
 import debug from '../debug.js'
-import type { SessionStoreWithTaggingContract, SessionData } from '../types.js'
+import type { SessionStoreWithTaggingContract, SessionData, TaggedSession } from '../types.js'
 
 /**
  * Database store to read/write session to SQL databases using Lucid
@@ -68,6 +68,17 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
+   * Parses and verifies session data using MessageBuilder
+   */
+  #parseSessionData(contents: string, sessionId: string): SessionData | null {
+    try {
+      return new MessageBuilder().verify<SessionData>(contents, sessionId)
+    } catch {
+      return null
+    }
+  }
+
+  /**
    * Returns session data
    */
   async read(sessionId: string): Promise<SessionData | null> {
@@ -88,14 +99,7 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
       return null
     }
 
-    /**
-     * Verify contents with the session id and return them as an object
-     */
-    try {
-      return new MessageBuilder().verify<SessionData>(row.data, sessionId)
-    } catch {
-      return null
-    }
+    return this.#parseSessionData(row.data, sessionId)
   }
 
   /**
@@ -154,17 +158,27 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Get all session IDs for a given user ID (tag)
+   * Converts a database row to a TaggedSession object
    */
-  async tagged(userId: string): Promise<string[]> {
+  #rowToTaggedSession(row: { id: string; data: string }): TaggedSession | null {
+    const data = this.#parseSessionData(row.data, row.id)
+    if (!data) return null
+
+    return { id: row.id, data }
+  }
+
+  /**
+   * Get all sessions for a given user ID (tag)
+   */
+  async tagged(userId: string): Promise<TaggedSession[]> {
     debug('database store: getting sessions tagged with user %s', userId)
 
     const rows = await this.#client
       .from(this.#tableName)
-      .select('id')
+      .select('id', 'data')
       .where('user_id', userId)
       .where('expires_at', '>', new Date())
 
-    return rows.map((row: { id: string }) => row.id)
+    return rows.map((row) => this.#rowToTaggedSession(row)).filter((session) => session !== null)
   }
 }

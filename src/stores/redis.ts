@@ -12,7 +12,7 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { Connection } from '@adonisjs/redis/types'
 
 import debug from '../debug.js'
-import type { SessionStoreWithTaggingContract, SessionData } from '../types.js'
+import type { SessionStoreWithTaggingContract, SessionData, TaggedSession } from '../types.js'
 
 /**
  * Redis store to read/write session to Redis
@@ -35,6 +35,18 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
+   * Verify contents with the session id and return them as an object. The verify
+   * method can fail when the contents is not JSON
+   */
+  #parseSessionData(contents: string, sessionId: string): SessionData | null {
+    try {
+      return new MessageBuilder().verify<SessionData>(contents, sessionId)
+    } catch {
+      return null
+    }
+  }
+
+  /**
    * Returns session data
    */
   async read(sessionId: string): Promise<SessionData | null> {
@@ -45,15 +57,7 @@ export class RedisStore implements SessionStoreWithTaggingContract {
       return null
     }
 
-    /**
-     * Verify contents with the session id and return them as an object. The verify
-     * method can fail when the contents is not JSON>
-     */
-    try {
-      return new MessageBuilder().verify<SessionData>(contents, sessionId)
-    } catch {
-      return null
-    }
+    return this.#parseSessionData(contents, sessionId)
   }
 
   /**
@@ -91,36 +95,62 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Get all session IDs for a given user ID (tag)
+   * Processes a single session result from the pipeline
    */
-  async tagged(userId: string): Promise<string[]> {
+  #processSessionResult(options: { sessionId: string; contents: string | null }): {
+    session: TaggedSession | null
+    isInvalid: boolean
+  } {
+    if (!options.contents) return { session: null, isInvalid: true }
+
+    const data = this.#parseSessionData(options.contents, options.sessionId)
+    if (!data) return { session: null, isInvalid: true }
+
+    return { session: { id: options.sessionId, data }, isInvalid: false }
+  }
+
+  /**
+   * Fetches session contents for multiple session IDs using a pipeline
+   */
+  async #fetchSessionContents(sessionIds: string[]): Promise<Array<string | null>> {
+    const pipeline = this.#connection.pipeline()
+    sessionIds.forEach((sessionId) => pipeline.get(sessionId))
+    const results = await pipeline.exec()
+
+    return results?.map((result) => result[1] as string | null) ?? []
+  }
+
+  /**
+   * Removes invalid session IDs from the user's tag set
+   */
+  async #cleanupInvalidSessions(userId: string, invalidSessionIds: string[]): Promise<void> {
+    if (invalidSessionIds.length === 0) return
+
+    await this.#connection.srem(this.#getTagKey(userId), ...invalidSessionIds)
+  }
+
+  /**
+   * Get all sessions for a given user ID (tag)
+   */
+  async tagged(userId: string): Promise<TaggedSession[]> {
     debug('redis store: getting sessions tagged with user %s', userId)
 
     const sessionIds = await this.#connection.smembers(this.#getTagKey(userId))
     if (sessionIds.length === 0) return []
 
-    // Check all sessions existence in a single pipeline
-    const pipeline = this.#connection.pipeline()
-    for (const sessionId of sessionIds) pipeline.exists(sessionId)
-    const results = await pipeline.exec()
+    const contents = await this.#fetchSessionContents(sessionIds)
 
-    // Filter out expired/deleted sessions
-    const validSessionIds: string[] = []
-    const invalidSessionIds: string[] = []
+    const results = sessionIds.map((sessionId, index) =>
+      this.#processSessionResult({ sessionId, contents: contents[index] })
+    )
 
-    for (const [index, sessionId] of sessionIds.entries()) {
-      const exists = results?.[index]?.[1] === 1
-      if (exists) {
-        validSessionIds.push(sessionId)
-      } else {
-        invalidSessionIds.push(sessionId)
-      }
-    }
+    const validSessions = results.filter((r) => r.session !== null).map((r) => r.session!)
+    const invalidSessionIds = results
+      .map((result, index) => (result.isInvalid ? sessionIds[index] : null))
+      .filter((id) => id !== null)
 
-    if (invalidSessionIds.length > 0) {
-      await this.#connection.srem(this.#getTagKey(userId), ...invalidSessionIds)
-    }
+    await this.#cleanupInvalidSessions(userId, invalidSessionIds)
 
-    return validSessionIds
+    return validSessions
   }
 }

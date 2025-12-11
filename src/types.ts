@@ -19,6 +19,14 @@ export type AllowedSessionValues = string | boolean | number | object | Date | A
 export type SessionData = Record<string, AllowedSessionValues>
 
 /**
+ * Represents a tagged session with its ID and data
+ */
+export interface TaggedSession {
+  id: string
+  data: SessionData
+}
+
+/**
  * Session stores must implement the session store contract.
  */
 export interface SessionStoreContract {
@@ -58,9 +66,9 @@ export interface SessionStoreWithTaggingContract extends SessionStoreContract {
   tag(sessionId: string, userId: string): Promise<void>
 
   /**
-   * Get all session IDs for a given user ID (tag)
+   * Get all sessions for a given user ID (tag)
    */
-  tagged(userId: string): Promise<string[]>
+  tagged(userId: string): Promise<TaggedSession[]>
 }
 
 /**

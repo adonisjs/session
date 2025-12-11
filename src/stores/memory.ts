@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { SessionData, SessionStoreWithTaggingContract } from '../types.js'
+import type { SessionData, SessionStoreWithTaggingContract, TaggedSession } from '../types.js'
 
 /**
  * Memory store is meant to be used for writing tests.
@@ -52,17 +52,16 @@ export class MemoryStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Get all session IDs for a given user ID (tag)
+   * Get all sessions for a given user ID (tag)
    */
-  async tagged(userId: string): Promise<string[]> {
-    const sessionIds: string[] = []
+  async tagged(userId: string): Promise<TaggedSession[]> {
+    const sessions: TaggedSession[] = []
 
     for (const [sessionId, taggedUserId] of MemoryStore.tags) {
-      if (taggedUserId === userId && MemoryStore.sessions.has(sessionId)) {
-        sessionIds.push(sessionId)
-      }
+      const data = MemoryStore.sessions.get(sessionId)
+      if (taggedUserId === userId && data) sessions.push({ id: sessionId, data })
     }
 
-    return sessionIds
+    return sessions
   }
 }
