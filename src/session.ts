@@ -24,6 +24,7 @@ import type {
   SessionStoreFactory,
   AllowedSessionValues,
   SessionStoreContract,
+  SessionStoreWithTaggingContract,
 } from './types.js'
 
 /**
@@ -34,7 +35,7 @@ import type {
  * uses a centralized persistence store and
  */
 export class Session extends Macroable {
-  #store: SessionStoreContract
+  #store: SessionStoreContract | SessionStoreWithTaggingContract
   #emitter: EmitterService
   #ctx: HttpContext
   #readonly: boolean = false
@@ -419,6 +420,18 @@ export class Session extends Macroable {
    */
   regenerate() {
     this.#sessionId = cuid()
+  }
+
+  /**
+   * Tag the current session with a user ID. This allows you to
+   * later retrieve all sessions for a given user via SessionCollection.
+   *
+   * Only Memory, Redis and Database stores support tagging. Other stores
+   * will throw an error.
+   */
+  async tag(userId: string): Promise<void> {
+    if (!('tag' in this.#store)) throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
+    await this.#store.tag(this.#sessionId, userId)
   }
 
   /**

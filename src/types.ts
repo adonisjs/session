@@ -19,6 +19,14 @@ export type AllowedSessionValues = string | boolean | number | object | Date | A
 export type SessionData = Record<string, AllowedSessionValues>
 
 /**
+ * Represents a tagged session with its ID and data
+ */
+export interface TaggedSession {
+  id: string
+  data: SessionData
+}
+
+/**
  * Session stores must implement the session store contract.
  */
 export interface SessionStoreContract {
@@ -45,6 +53,22 @@ export interface SessionStoreContract {
    * making changes to the session data.
    */
   touch(sessionId: string): Promise<void> | void
+}
+
+/**
+ * Extended interface for stores that support tagging sessions
+ * (linking sessions to user IDs for example)
+ */
+export interface SessionStoreWithTaggingContract extends SessionStoreContract {
+  /**
+   * Tag a session with a user ID
+   */
+  tag(sessionId: string, userId: string): Promise<void>
+
+  /**
+   * Get all sessions for a given user ID (tag)
+   */
+  tagged(userId: string): Promise<TaggedSession[]>
 }
 
 /**
@@ -144,3 +168,11 @@ export type SessionStoreFactory = (
   ctx: HttpContext,
   sessionConfig: SessionConfig
 ) => SessionStoreContract
+
+/**
+ * Resolved session config after processing by defineConfig
+ */
+export interface ResolvedSessionConfig extends SessionConfig {
+  store: string
+  stores: Record<string, SessionStoreFactory>
+}
