@@ -11,7 +11,7 @@ import getPort from 'get-port'
 import { test } from '@japa/runner'
 import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { EncryptionManager } from '@adonisjs/core/encryption'
+import { Encryption, EncryptionManager } from '@adonisjs/core/encryption'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { AES256GCM } from '@adonisjs/core/encryption/drivers/aes_256_gcm'
 import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
@@ -45,6 +45,7 @@ test.group('Browser client', (group) => {
     })
     await app.init()
     await app.boot()
+    app.container.singleton(Encryption, () => encryption)
     app.container.singleton(
       'encryption',
       () =>
