@@ -84,16 +84,20 @@
     "@poppinss/utils": "^7.0.0-next.4"
   },
   "peerDependencies": {
-    "@adonisjs/core": "^7.0.0-next.0",
-    "@adonisjs/redis": "^10.0.0-next.1",
-    "@aws-sdk/client-dynamodb": "^3.883.0",
-    "@aws-sdk/util-dynamodb": "^3.883.0",
+    "@adonisjs/assembler": "^8.0.0-next.26",
+    "@adonisjs/core": "^7.0.0-next.16",
+    "@adonisjs/redis": "^10.0.0-next.2",
+    "@aws-sdk/client-dynamodb": "^3.955.0",
+    "@aws-sdk/util-dynamodb": "^3.955.0",
     "@japa/api-client": "^3.1.0",
     "@japa/browser-client": "^2.0.3",
-    "@japa/plugin-adonisjs": "^5.0.0-next.0",
-    "edge.js": "^6.0.2"
+    "@japa/plugin-adonisjs": "^5.1.0-next.0",
+    "edge.js": "^6.4.0"
   },
   "peerDependenciesMeta": {
+    "@adonisjs/assembler": {
+      "optional": true
+    },
     "@adonisjs/redis": {
       "optional": true
     },
