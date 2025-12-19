@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit",
     "copy:templates": "copyfiles \"stubs/**/*.stub\" --up=\"1\" build",
     "precompile": "npm run lint",
-    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "compile": "tsdown && tsc --emitDeclarationOnly --declaration",
     "postcompile": "npm run copy:templates",
     "build": "npm run compile",
     "docs": "typedoc",
@@ -75,7 +75,7 @@
     "release-it": "^19.1.0",
     "set-cookie-parser": "^2.7.2",
     "supertest": "^7.1.4",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.18.1",
     "typedoc": "^0.28.15",
     "typescript": "^5.9.3"
   },
@@ -134,7 +134,7 @@
     "access": "public",
     "provenance": true
   },
-  "tsup": {
+  "tsdown": {
     "entry": [
       "./index.ts",
       "./factories/main.ts",
@@ -149,8 +149,11 @@
     "outDir": "./build",
     "clean": true,
     "format": "esm",
+    "minify": "dce-only",
+    "fixedExtension": false,
     "dts": false,
-    "sourcemap": false,
+    "treeshake": false,
+    "sourcemaps": false,
     "target": "esnext"
   },
   "release-it": {
