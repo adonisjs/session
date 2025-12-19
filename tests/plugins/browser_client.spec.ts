@@ -11,8 +11,10 @@ import getPort from 'get-port'
 import { test } from '@japa/runner'
 import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
+import { EncryptionManager } from '@adonisjs/core/encryption'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
+import { AES256GCM } from '@adonisjs/core/encryption/drivers/aes_256_gcm'
+import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { Session } from '../../src/session.ts'
@@ -43,7 +45,24 @@ test.group('Browser client', (group) => {
     })
     await app.init()
     await app.boot()
-    app.container.singleton('encryption', () => encryption)
+    app.container.singleton(
+      'encryption',
+      () =>
+        new EncryptionManager({
+          default: 'gcm',
+          list: {
+            gcm: {
+              driver(key) {
+                return new AES256GCM({
+                  key,
+                  id: 'gcm',
+                })
+              },
+              keys: ['averystrongrandomsecretkey'],
+            },
+          },
+        })
+    )
   })
 
   test('set session from the client', async ({ assert }) => {
