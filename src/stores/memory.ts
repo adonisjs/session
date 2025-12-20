@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { SessionData, SessionStoreContract } from '../types.ts'
+import type { SessionData, SessionStoreWithTaggingContract, TaggedSession } from '../types.ts'
 
 /**
  * Memory store is meant to be used for writing tests.
@@ -17,11 +17,16 @@ import type { SessionData, SessionStoreContract } from '../types.ts'
  * const memoryStore = new MemoryStore()
  * memoryStore.write('sess_abc123', { userId: 123 })
  */
-export class MemoryStore implements SessionStoreContract {
+export class MemoryStore implements SessionStoreWithTaggingContract {
   /**
    * Static map to store all session data in memory
    */
   static sessions: Map<string, SessionData> = new Map()
+
+  /**
+   * Static map to store session tags (sessionId -> userId)
+   */
+  static tags: Map<string, string> = new Map()
 
   /**
    * Reads session value from memory
@@ -58,6 +63,7 @@ export class MemoryStore implements SessionStoreContract {
    */
   destroy(sessionId: string): void {
     MemoryStore.sessions.delete(sessionId)
+    MemoryStore.tags.delete(sessionId)
   }
 
   /**
@@ -66,4 +72,27 @@ export class MemoryStore implements SessionStoreContract {
    * @param sessionId - Session identifier (unused)
    */
   touch(_?: string): void {}
+
+  /**
+   * Tag a session with a user ID
+   */
+  tag(sessionId: string, userId: string): void {
+    MemoryStore.tags.set(sessionId, userId)
+  }
+
+  /**
+   * Get all sessions for a given user ID (tag)
+   */
+  tagged(userId: string): TaggedSession[] {
+    const sessions: TaggedSession[] = []
+
+    for (const [sessionId, tagUserId] of MemoryStore.tags) {
+      if (tagUserId !== userId) continue
+
+      const data = MemoryStore.sessions.get(sessionId)
+      if (data) sessions.push({ id: sessionId, data })
+    }
+
+    return sessions
+  }
 }

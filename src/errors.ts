@@ -42,3 +42,17 @@ export const E_SESSION_NOT_READY = createError(
   'E_SESSION_NOT_READY',
   500
 )
+
+/**
+ * Error thrown when attempting to use tagging features with a store that doesn't support it.
+ * Only Memory, Redis, and Database stores support session tagging.
+ *
+ * @example
+ * // This will throw E_SESSION_TAGGING_NOT_SUPPORTED when using cookie store
+ * const sessions = await sessionCollection.tagged(userId)
+ */
+export const E_SESSION_TAGGING_NOT_SUPPORTED = createError(
+  'Session store does not support tagging. Use memory, redis, or database store instead',
+  'E_SESSION_TAGGING_NOT_SUPPORTED',
+  500
+)

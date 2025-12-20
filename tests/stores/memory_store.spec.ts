@@ -12,7 +12,10 @@ import { MemoryStore } from '../../src/stores/memory.ts'
 
 test.group('Memory store', (group) => {
   group.each.setup(() => {
-    return () => MemoryStore.sessions.clear()
+    return () => {
+      MemoryStore.sessions.clear()
+      MemoryStore.tags.clear()
+    }
   })
 
   test('return null when session does not exists', async ({ assert }) => {
@@ -71,5 +74,70 @@ test.group('Memory store', (group) => {
     session.touch()
 
     assert.deepEqual(MemoryStore.sessions.get(sessionId), { message: 'hello-world' })
+  })
+
+  test('tag a session with a user id', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    await session.tag('session-1', 'user-123')
+
+    assert.equal(MemoryStore.tags.get('session-1'), 'user-123')
+  })
+
+  test('get sessions tagged with a user id', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.write('session-2', { message: 'world' })
+    session.write('session-3', { message: 'foo' })
+
+    await session.tag('session-1', 'user-1')
+    await session.tag('session-2', 'user-1')
+    await session.tag('session-3', 'user-2')
+
+    const user1Sessions = await session.tagged('user-1')
+    assert.sameDeepMembers(user1Sessions, [
+      { id: 'session-1', data: { message: 'hello' } },
+      { id: 'session-2', data: { message: 'world' } },
+    ])
+
+    const user2Sessions = await session.tagged('user-2')
+    assert.deepEqual(user2Sessions, [{ id: 'session-3', data: { message: 'foo' } }])
+  })
+
+  test('return empty array when user has no tagged sessions', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    const sessions = await session.tagged('unknown-user')
+    assert.deepEqual(sessions, [])
+  })
+
+  test('destroy cleans up tag reference', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.tag('session-1', 'user-1')
+
+    session.destroy('session-1')
+
+    assert.isFalse(MemoryStore.tags.has('session-1'))
+
+    const sessions = session.tagged('user-1')
+    assert.deepEqual(sessions, [])
+  })
+
+  test('tagged filters out destroyed sessions', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.write('session-2', { message: 'world' })
+    session.tag('session-1', 'user-1')
+    session.tag('session-2', 'user-1')
+
+    MemoryStore.sessions.delete('session-1')
+
+    const sessions = session.tagged('user-1')
+    assert.deepEqual(sessions, [{ id: 'session-2', data: { message: 'world' } }])
   })
 })
