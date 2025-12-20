@@ -169,6 +169,9 @@ export class RedisStore implements SessionStoreWithTaggingContract {
 
   /**
    * Tag a session with a user ID
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier to tag the session with
    */
   async tag(sessionId: string, userId: string): Promise<void> {
     debug('redis store: tagging session %s with user %s', sessionId, userId)
@@ -177,6 +180,8 @@ export class RedisStore implements SessionStoreWithTaggingContract {
 
   /**
    * Get all sessions for a given user ID (tag)
+   *
+   * @param userId - User identifier to get sessions for
    */
   async tagged(userId: string): Promise<TaggedSession[]> {
     debug('redis store: getting sessions tagged with user %s', userId)

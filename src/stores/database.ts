@@ -80,6 +80,8 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
   /**
    * Returns session data
+   *
+   * @param sessionId - Session identifier
    */
   async read(sessionId: string): Promise<SessionData | null> {
     debug('database store: reading session data %s', sessionId)
@@ -104,6 +106,9 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
   /**
    * Write session values to the database
+   *
+   * @param sessionId - Session identifier
+   * @param values - Session data to store
    */
   async write(sessionId: string, values: Object): Promise<void> {
     debug('database store: writing session data %s, %O', sessionId, values)
@@ -123,6 +128,8 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
   /**
    * Cleanup session by removing it
+   *
+   * @param sessionId - Session identifier
    */
   async destroy(sessionId: string): Promise<void> {
     debug('database store: destroying session data %s', sessionId)
@@ -132,6 +139,8 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
   /**
    * Updates the session expiry
+   *
+   * @param sessionId - Session identifier
    */
   async touch(sessionId: string): Promise<void> {
     debug('database store: touching session data %s', sessionId)
@@ -147,6 +156,9 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   /**
    * Tag a session with a user ID.
    * Uses UPSERT to handle both existing and new sessions.
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier to tag the session with
    */
   async tag(sessionId: string, userId: string): Promise<void> {
     debug('database store: tagging session %s with user %s', sessionId, userId)
@@ -174,6 +186,8 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
   /**
    * Get all sessions for a given user ID (tag)
+   *
+   * @param userId - User identifier to get sessions for
    */
   async tagged(userId: string): Promise<TaggedSession[]> {
     debug('database store: getting sessions tagged with user %s', userId)
