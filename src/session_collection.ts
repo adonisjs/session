@@ -38,6 +38,11 @@ import type {
 export class SessionCollection {
   #store: SessionStoreWithTaggingContract
 
+  /**
+   * Creates a new SessionCollection instance
+   *
+   * @param config - Resolved session configuration
+   */
   constructor(config: ResolvedSessionConfig) {
     const storeFactory = config.stores[config.store]
     this.#store = storeFactory(null as any, config) as SessionStoreWithTaggingContract
@@ -53,6 +58,11 @@ export class SessionCollection {
   /**
    * Returns the session data for the given session ID,
    * or null if the session does not exist
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * const data = await sessionCollection.get('sess_abc123')
    */
   async get(sessionId: string): Promise<SessionData | null> {
     debug('session collection: getting session data %s', sessionId)
@@ -61,6 +71,11 @@ export class SessionCollection {
 
   /**
    * Destroys a session by its ID
+   *
+   * @param sessionId - Session identifier
+   *
+   * @example
+   * await sessionCollection.destroy('sess_abc123')
    */
   async destroy(sessionId: string): Promise<void> {
     debug('session collection: destroying session %s', sessionId)
@@ -70,6 +85,12 @@ export class SessionCollection {
   /**
    * Tag a session with a user ID.
    * Only supported by Memory, Redis and Database stores.
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier to tag the session with
+   *
+   * @example
+   * await sessionCollection.tag('sess_abc123', 'user_456')
    */
   async tag(sessionId: string, userId: string): Promise<void> {
     debug('session collection: tagging session %s with user %s', sessionId, userId)
@@ -81,6 +102,11 @@ export class SessionCollection {
   /**
    * Get all sessions for a given user ID (tag).
    * Only supported by Memory, Redis and Database stores.
+   *
+   * @param userId - User identifier to get sessions for
+   *
+   * @example
+   * const sessions = await sessionCollection.tagged('user_456')
    */
   async tagged(userId: string): Promise<TaggedSession[]> {
     debug('session collection: getting sessions tagged with user %s', userId)

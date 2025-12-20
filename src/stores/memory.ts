@@ -75,6 +75,9 @@ export class MemoryStore implements SessionStoreWithTaggingContract {
 
   /**
    * Tag a session with a user ID
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier to tag the session with
    */
   tag(sessionId: string, userId: string): void {
     MemoryStore.tags.set(sessionId, userId)
@@ -82,6 +85,8 @@ export class MemoryStore implements SessionStoreWithTaggingContract {
 
   /**
    * Get all sessions for a given user ID (tag)
+   *
+   * @param userId - User identifier to get sessions for
    */
   tagged(userId: string): TaggedSession[] {
     const sessions: TaggedSession[] = []
