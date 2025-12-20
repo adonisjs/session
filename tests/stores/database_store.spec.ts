@@ -69,6 +69,7 @@ test.group('Database store', (group) => {
     await db.connection().schema.createTable('sessions', (table) => {
       table.string('id').primary()
       table.text('data').notNullable()
+      table.string('user_id').nullable().index()
       table.timestamp('expires_at').notNullable()
     })
   })
@@ -283,7 +284,7 @@ test.group('Database store', (group) => {
     assert.deepEqual(sessions, [])
   }).disableTimeout()
 
-  /*
+  /**
    * Simulate what happens during login lifecycle:
    * - Session is new (doesnt exist in DB yet)
    * - User calls session.tag => create session in database
