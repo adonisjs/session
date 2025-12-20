@@ -114,11 +114,7 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
     await this.#client
       .insertQuery()
       .table(this.#tableName)
-      .insert({
-        id: sessionId,
-        data: message,
-        expires_at: expiresAt,
-      })
+      .insert({ id: sessionId, data: message, expires_at: expiresAt })
       .knexQuery.onConflict('id')
       .merge(['data', 'expires_at'])
 
@@ -149,12 +145,21 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Tag a session with a user ID
+   * Tag a session with a user ID.
+   * Uses UPSERT to handle both existing and new sessions.
    */
   async tag(sessionId: string, userId: string): Promise<void> {
     debug('database store: tagging session %s with user %s', sessionId, userId)
 
-    await this.#client.from(this.#tableName).where('id', sessionId).update({ user_id: userId })
+    const data = new MessageBuilder().build({}, undefined, sessionId)
+    const expiresAt = new Date(Date.now() + this.#ttlSeconds * 1000)
+
+    await this.#client
+      .insertQuery()
+      .table(this.#tableName)
+      .insert({ id: sessionId, user_id: userId, data, expires_at: expiresAt })
+      .knexQuery.onConflict('id')
+      .merge(['user_id'])
   }
 
   /**

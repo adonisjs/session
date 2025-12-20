@@ -283,4 +283,35 @@ test.group('Database store', (group) => {
     const sessions = await store.tagged('user-1')
     assert.deepEqual(sessions, [])
   }).disableTimeout()
+
+  /**
+   * Simulate what happens during login lifecycle:
+   * - Session is new (doesnt exist in DB yet)
+   * - User calls session.tag => create session in database
+   * - Then commit() calls write() => update data and preserves the rest
+   */
+  test('tag before write creates session and preserves tag', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.tag('new-session', 'user-123')
+    await store.write('new-session', { message: 'hello' })
+
+    const row = await db.from('sessions').where('id', 'new-session').first()
+    assert.equal(row.user_id, 'user-123')
+
+    const data = await store.read('new-session')
+    assert.deepEqual(data, { message: 'hello' })
+  })
+
+  test('tag is preserved after write updates session data', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 'user-123')
+
+    await store.write('session-1', { message: 'updated' })
+
+    const row = await db.from('sessions').where('id', 'session-1').first()
+    assert.equal(row.user_id, 'user-123')
+  })
 })
