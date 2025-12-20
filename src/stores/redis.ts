@@ -12,7 +12,7 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { Connection } from '@adonisjs/redis/types'
 
 import debug from '../debug.ts'
-import type { SessionStoreContract, SessionData } from '../types.ts'
+import type { SessionData, TaggedSession, SessionStoreWithTaggingContract } from '../types.ts'
 
 /**
  * Redis store to read/write session data to Redis server.
@@ -21,7 +21,7 @@ import type { SessionStoreContract, SessionData } from '../types.ts'
  * @example
  * const redisStore = new RedisStore(redisConnection, '2 hours')
  */
-export class RedisStore implements SessionStoreContract {
+export class RedisStore implements SessionStoreWithTaggingContract {
   /**
    * Redis connection instance
    */
@@ -42,6 +42,60 @@ export class RedisStore implements SessionStoreContract {
     this.#connection = connection
     this.#ttlSeconds = string.seconds.parse(age)
     debug('initiating redis store')
+  }
+
+  /**
+   * Processes a single session result from the pipeline
+   */
+  #processSessionResult(options: { sessionId: string; contents: string | null }): {
+    session: TaggedSession | null
+    isInvalid: boolean
+  } {
+    if (!options.contents) return { session: null, isInvalid: true }
+
+    const data = this.#parseSessionData(options.contents, options.sessionId)
+    if (!data) return { session: null, isInvalid: true }
+
+    return { session: { id: options.sessionId, data }, isInvalid: false }
+  }
+
+  /**
+   * Fetches session contents for multiple session IDs using a pipeline
+   */
+  async #fetchSessionContents(sessionIds: string[]): Promise<Array<string | null>> {
+    const pipeline = this.#connection.pipeline()
+    sessionIds.forEach((sessionId) => pipeline.get(sessionId))
+    const results = await pipeline.exec()
+
+    return results?.map((result) => result[1] as string | null) ?? []
+  }
+
+  /**
+   * Removes invalid session IDs from the user's tag set
+   */
+  async #cleanupInvalidSessions(userId: string, invalidSessionIds: string[]): Promise<void> {
+    if (invalidSessionIds.length === 0) return
+
+    await this.#connection.srem(this.#getTagKey(userId), ...invalidSessionIds)
+  }
+
+  /*
+   * Returns the key for a user's tag set (stores session IDs for a user)
+   */
+  #getTagKey(userId: string): string {
+    return `session_tag:${userId}`
+  }
+
+  /**
+   * Verify contents with the session id and return them as an object. The verify
+   * method can fail when the contents is not JSON
+   */
+  #parseSessionData(contents: string, sessionId: string): SessionData | null {
+    try {
+      return new MessageBuilder().verify<SessionData>(contents, sessionId)
+    } catch {
+      return null
+    }
   }
 
   /**
@@ -111,5 +165,38 @@ export class RedisStore implements SessionStoreContract {
   async touch(sessionId: string): Promise<void> {
     debug('redis store: touching session data %s', sessionId)
     await this.#connection.expire(sessionId, this.#ttlSeconds)
+  }
+
+  /**
+   * Tag a session with a user ID
+   */
+  async tag(sessionId: string, userId: string): Promise<void> {
+    debug('redis store: tagging session %s with user %s', sessionId, userId)
+    await this.#connection.sadd(this.#getTagKey(userId), sessionId)
+  }
+
+  /**
+   * Get all sessions for a given user ID (tag)
+   */
+  async tagged(userId: string): Promise<TaggedSession[]> {
+    debug('redis store: getting sessions tagged with user %s', userId)
+
+    const sessionIds = await this.#connection.smembers(this.#getTagKey(userId))
+    if (sessionIds.length === 0) return []
+
+    const contents = await this.#fetchSessionContents(sessionIds)
+
+    const results = sessionIds.map((sessionId, index) =>
+      this.#processSessionResult({ sessionId, contents: contents[index] })
+    )
+
+    const validSessions = results.filter((r) => r.session !== null).map((r) => r.session!)
+    const invalidSessionIds = results
+      .map((result, index) => (result.isInvalid ? sessionIds[index] : null))
+      .filter((id) => id !== null)
+
+    await this.#cleanupInvalidSessions(userId, invalidSessionIds)
+
+    return validSessions
   }
 }

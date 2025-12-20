@@ -24,6 +24,7 @@ import type {
   SessionStoreFactory,
   AllowedSessionValues,
   SessionStoreContract,
+  SessionStoreWithTaggingContract,
 } from './types.ts'
 
 /**
@@ -44,7 +45,7 @@ import type {
  * await session.commit()
  */
 export class Session extends Macroable {
-  #store: SessionStoreContract
+  #store: SessionStoreContract | SessionStoreWithTaggingContract
   #emitter: EmitterService
   #ctx: HttpContext
   #readonly: boolean = false
@@ -514,6 +515,22 @@ export class Session extends Macroable {
    */
   reflashExcept(keys: string[]) {
     this.#getFlashStore('write').set('reflashed', lodash.omit(this.flashMessages.all(), keys))
+  }
+
+  /**
+   * Tag the current session with a user ID.
+   * Only supported by Memory, Redis, and Database stores.
+   * This enables features like "logout from all devices".
+   *
+   * @param userId - The user ID to tag this session with
+   *
+   * @example
+   * // During login, tag the session with the user's ID
+   * await session.tag(String(user.id))
+   */
+  async tag(userId: string): Promise<void> {
+    if (!('tag' in this.#store)) throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
+    await this.#store.tag(this.#sessionId, userId)
   }
 
   /**

@@ -15,6 +15,7 @@ jobs:
     strategy:
       matrix:
         node-version: [latest]
+        db: [sqlite, postgres, mysql]
     services:
       redis:
         image: redis
@@ -25,6 +26,31 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: session_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: session_test
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
       dynamodb-local:
         image: amazon/dynamodb-local
         ports:
@@ -61,6 +87,17 @@ jobs:
         env:
           REDIS_HOST: 0.0.0.0
           REDIS_PORT: 6379
+          DB_CONNECTION: ${{ matrix.db }}
+          PG_HOST: 0.0.0.0
+          PG_PORT: 5432
+          PG_USER: postgres
+          PG_PASSWORD: postgres
+          PG_DATABASE: session_test
+          MYSQL_HOST: 0.0.0.0
+          MYSQL_PORT: 3306
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: session_test
 
   test_windows:
     runs-on: windows-latest
@@ -82,3 +119,4 @@ jobs:
         env:
           NO_REDIS: true
           NO_DYNAMODB: true
+          NO_DATABASE: true

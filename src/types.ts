@@ -239,3 +239,70 @@ export type SessionStoreFactory = (
   ctx: HttpContext,
   sessionConfig: SessionConfig
 ) => SessionStoreContract
+
+/**
+ * Extended session store contract that supports tagging sessions with user IDs.
+ * This enables querying all sessions for a specific user, useful for features
+ * like "logout from all devices" or "view active sessions".
+ *
+ * @example
+ * class MyStore implements SessionStoreWithTaggingContract {
+ *   // ... base SessionStoreContract methods ...
+ *
+ *   async tag(sessionId: string, userId: string) {
+ *     await this.storage.tag(sessionId, userId)
+ *   }
+ *
+ *   async tagged(userId: string) {
+ *     return await this.storage.getSessionsByUser(userId)
+ *   }
+ * }
+ */
+export interface SessionStoreWithTaggingContract extends SessionStoreContract {
+  /**
+   * Associates a session with a user ID (tag).
+   * This allows querying all sessions for a specific user.
+   */
+  tag(sessionId: string, userId: string): Promise<void> | void
+
+  /**
+   * Returns all sessions associated with a given user ID (tag).
+   * Only returns non-expired sessions.
+   */
+  tagged(userId: string): Promise<TaggedSession[]> | TaggedSession[]
+}
+
+/**
+ * Represents a tagged session with its ID and data
+ */
+export interface TaggedSession {
+  id: string
+  data: SessionData
+}
+
+/**
+ * Configuration used by the database store.
+ */
+export interface DatabaseStoreConfig {
+  connectionName?: string
+  tableName?: string
+
+  /**
+   * The probability (in percent) that garbage collection of expired
+   * sessions will be triggered on any given request.
+   *
+   * For example, 2 means 2% chance.
+   * Set to 0 to disable garbage collection.
+   *
+   * Defaults to 2 (2% chance)
+   */
+  gcProbability?: number
+}
+
+/**
+ * Resolved session config after processing by defineConfig
+ */
+export interface ResolvedSessionConfig extends SessionConfig {
+  store: string
+  stores: Record<string, SessionStoreFactory>
+}

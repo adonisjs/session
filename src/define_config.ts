@@ -8,12 +8,13 @@
  */
 
 /// <reference types="@adonisjs/redis/redis_provider" />
+/// <reference types="@adonisjs/lucid/database_provider" />
 
 import { configProvider } from '@adonisjs/core'
 import string from '@adonisjs/core/helpers/string'
 import type { ConfigProvider } from '@adonisjs/core/types'
 import type { CookieOptions } from '@adonisjs/core/types/http'
-import { InvalidArgumentsException } from '@adonisjs/core/exceptions'
+import { InvalidArgumentsException, RuntimeException } from '@adonisjs/core/exceptions'
 
 import debug from './debug.ts'
 import { MemoryStore } from './stores/memory.ts'
@@ -23,6 +24,7 @@ import type {
   RedisStoreConfig,
   SessionStoreFactory,
   DynamoDBStoreConfig,
+  DatabaseStoreConfig,
 } from './types.ts'
 
 type ConfigInput<
@@ -170,6 +172,7 @@ export const stores: {
   redis: (config: RedisStoreConfig) => ConfigProvider<SessionStoreFactory>
   cookie: () => ConfigProvider<SessionStoreFactory>
   dynamodb: (config: DynamoDBStoreConfig) => ConfigProvider<SessionStoreFactory>
+  database: (config?: DatabaseStoreConfig) => ConfigProvider<SessionStoreFactory>
 } = {
   /**
    * Creates a file-based session store
@@ -227,6 +230,31 @@ export const stores: {
         return new DynamoDBStore(client, sessionConfig.age, {
           tableName: config.tableName,
           keyAttribute: config.keyAttribute,
+        })
+      }
+    })
+  },
+  /**
+   * Creates a database-based session store using Lucid
+   *
+   * @param config - Database store configuration
+   */
+  database: (config) => {
+    return configProvider.create(async (app) => {
+      const { DatabaseStore } = await import('./stores/database.js')
+      const db = await app.container.make('lucid.db')
+      const connectionName = config?.connectionName || db.primaryConnectionName
+
+      if (!db.manager.has(connectionName)) {
+        throw new RuntimeException(
+          `Invalid database connection "${connectionName}" referenced in session config`
+        )
+      }
+
+      return (_, sessionConfig: SessionConfig) => {
+        return new DatabaseStore(db.connection(connectionName), sessionConfig.age, {
+          tableName: config?.tableName,
+          gcProbability: config?.gcProbability,
         })
       }
     })
