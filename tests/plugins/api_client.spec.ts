@@ -9,13 +9,19 @@
 
 import getPort from 'get-port'
 import { test } from '@japa/runner'
+import { Router } from '@adonisjs/core/http'
 import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { Encryption, EncryptionManager } from '@adonisjs/core/encryption'
 import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { AES256GCM } from '@adonisjs/core/encryption/drivers/aes_256_gcm'
 import { type ApplicationService, type EventsList } from '@adonisjs/core/types'
-import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
+import {
+  RouterFactory,
+  RequestFactory,
+  ResponseFactory,
+  HttpContextFactory,
+} from '@adonisjs/core/factories/http'
 
 import { Session } from '../../src/session.ts'
 import { type SessionConfig } from '../../src/types.ts'
@@ -45,6 +51,8 @@ test.group('Api client', (group) => {
     })
     await app.init()
     await app.boot()
+    app.container.singleton(Router, () => new RouterFactory().create())
+    app.container.alias('router', Router)
     app.container.singleton(Encryption, () => encryption)
     app.container.singleton(
       'encryption',
