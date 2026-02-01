@@ -25,8 +25,8 @@ import { RequestFactory, ResponseFactory, HttpContextFactory } from '@adonisjs/c
 
 import { defineConfig } from '../index.ts'
 import { Session } from '../src/session.ts'
-import { httpServer } from '../tests_helpers/index.ts'
 import { CookieStore } from '../src/stores/cookie.ts'
+import { httpServer } from '../tests_helpers/index.ts'
 import type { SessionConfig, SessionStoreFactory } from '../src/types.ts'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
