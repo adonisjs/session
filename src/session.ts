@@ -26,6 +26,8 @@ import type {
   SessionStoreContract,
   SessionStoreWithTaggingContract,
 } from './types.ts'
+import is from '@adonisjs/core/helpers/is'
+const STORE_IN_FLASH = Symbol.for('store_in_flash')
 
 /**
  * The session class exposes the API to read and write values to
@@ -167,6 +169,26 @@ export class Session extends Macroable {
     }
 
     return this.responseFlashMessages
+  }
+
+  protected shouldFlashValue(value: unknown) {
+    if (value && typeof value === 'object') {
+      return STORE_IN_FLASH in value ? value[STORE_IN_FLASH] : true
+    }
+    return true
+  }
+
+  protected cleanupFlashData<T>(data: T): T | Record<string, any> {
+    if (is.plainObject(data)) {
+      return Object.keys(data).reduce<Record<string, any>>((result, key) => {
+        const value = data[key]
+        if (this.shouldFlashValue(value)) {
+          result[key] = value
+        }
+        return result
+      }, {})
+    }
+    return data
   }
 
   /**
@@ -371,11 +393,11 @@ export class Session extends Macroable {
   flash(keyValue: SessionData): void
   flash(key: string | SessionData, value?: AllowedSessionValues): void {
     if (typeof key === 'string') {
-      if (value) {
+      if (value && this.shouldFlashValue(value)) {
         this.#getFlashStore('write').set(key, value)
       }
     } else {
-      this.#getFlashStore('write').merge(key)
+      this.#getFlashStore('write').merge(this.cleanupFlashData(key))
     }
   }
 
@@ -456,7 +478,8 @@ export class Session extends Macroable {
    * session.flashAll() // Flashes all request input for next request
    */
   flashAll() {
-    return this.#getFlashStore('write').set('input', this.#ctx.request.original())
+    let requestInput = this.#ctx.request.original()
+    return this.#getFlashStore('write').set('input', this.cleanupFlashData(requestInput))
   }
 
   /**
@@ -468,7 +491,15 @@ export class Session extends Macroable {
    * session.flashExcept(['password', '_csrf'])
    */
   flashExcept(keys: string[]): void {
-    this.#getFlashStore('write').set('input', lodash.omit(this.#ctx.request.original(), keys))
+    this.#getFlashStore('write').set(
+      'input',
+      lodash.omitBy(this.#ctx.request.original(), (value, key) => {
+        if (keys.includes(key)) {
+          return true
+        }
+        return !this.shouldFlashValue(value)
+      })
+    )
   }
 
   /**
@@ -480,7 +511,15 @@ export class Session extends Macroable {
    * session.flashOnly(['name', 'email'])
    */
   flashOnly(keys: string[]): void {
-    this.#getFlashStore('write').set('input', lodash.pick(this.#ctx.request.original(), keys))
+    this.#getFlashStore('write').set(
+      'input',
+      lodash.pickBy(this.#ctx.request.original(), (value, key) => {
+        if (keys.includes(key)) {
+          return this.shouldFlashValue(value)
+        }
+        return false
+      })
+    )
   }
 
   /**
@@ -529,7 +568,9 @@ export class Session extends Macroable {
    * await session.tag(String(user.id))
    */
   async tag(userId: string): Promise<void> {
-    if (!('tag' in this.#store)) throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
+    if (!('tag' in this.#store)) {
+      throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
+    }
     await this.#store.tag(this.#sessionId, userId)
   }
 

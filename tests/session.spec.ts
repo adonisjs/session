@@ -28,6 +28,7 @@ import { Session } from '../src/session.ts'
 import { CookieStore } from '../src/stores/cookie.ts'
 import { httpServer } from '../tests_helpers/index.ts'
 import type { SessionConfig, SessionStoreFactory } from '../src/types.ts'
+import { MultipartFile } from '@adonisjs/core/bodyparser'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 const emitter = new Emitter<EventsList>(app)
@@ -727,6 +728,37 @@ test.group('Session | Flash', (group) => {
     })
   })
 
+  test('do not flash multipart file', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+
+      session.flash({
+        status: 'Task created successfully',
+        file: new MultipartFile({ fieldName: 'file', clientName: 'file', headers: {} }, {}),
+      })
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
+        status: 'Task created successfully',
+      },
+    })
+  })
+
   test('flash input values', async ({ assert }) => {
     let sessionId: string | undefined
 
@@ -736,6 +768,40 @@ test.group('Session | Flash', (group) => {
       const ctx = new HttpContextFactory().merge({ request, response }).create()
       ctx.request.setInitialBody({
         username: 'virk',
+      })
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+
+      session.flash({ status: 'Task created successfully' })
+      session.flashAll()
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
+        username: 'virk',
+        status: 'Task created successfully',
+      },
+    })
+  })
+
+  test('do not store multipart files in flash messages', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.request.setInitialBody({
+        username: 'virk',
+        file: new MultipartFile({ fieldName: 'file', clientName: 'file', headers: {} }, {}),
       })
 
       const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
@@ -796,6 +862,72 @@ test.group('Session | Flash', (group) => {
     assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
       __flash__: {
         username: 'virk',
+        status: 'Task created successfully',
+      },
+    })
+  })
+
+  test('do not store multipart files via flashExcept', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.request.setInitialBody({
+        username: 'virk',
+        file: new MultipartFile({ fieldName: 'file', clientName: 'file', headers: {} }, {}),
+      })
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+
+      session.flash({ status: 'Task created successfully' })
+      session.flashExcept(['username'])
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
+        status: 'Task created successfully',
+      },
+    })
+  })
+
+  test('do not store multipart files via flashOnly', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.request.setInitialBody({
+        username: 'virk',
+        file: new MultipartFile({ fieldName: 'file', clientName: 'file', headers: {} }, {}),
+      })
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+
+      session.flash({ status: 'Task created successfully' })
+      session.flashOnly(['file'])
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
         status: 'Task created successfully',
       },
     })

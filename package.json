@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.0.0-next.31",
-    "@adonisjs/core": "^7.0.0-next.26",
+    "@adonisjs/core": "^7.0.0-next.27",
     "@adonisjs/eslint-config": "^3.0.0-next.9",
     "@adonisjs/i18n": "^3.0.0-next.2",
     "@adonisjs/lucid": "^22.0.0-next.7",
