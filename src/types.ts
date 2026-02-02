@@ -101,6 +101,43 @@ export interface SessionStoreContract {
 }
 
 /**
+ * Extended session store contract that supports tagging sessions with user IDs.
+ * This enables querying all sessions for a specific user, useful for features
+ * like "logout from all devices" or "view active sessions".
+ *
+ * @example
+ * class MyStore implements SessionStoreWithTaggingContract {
+ *   // ... base SessionStoreContract methods ...
+ *
+ *   async tag(sessionId: string, userId: string) {
+ *     await this.storage.tag(sessionId, userId)
+ *   }
+ *
+ *   async tagged(userId: string) {
+ *     return await this.storage.getSessionsByUser(userId)
+ *   }
+ * }
+ */
+export interface SessionStoreWithTaggingContract extends SessionStoreContract {
+  /**
+   * Associates a session with a user ID (tag).
+   * This allows querying all sessions for a specific user.
+   */
+  tag(sessionId: string, userId: string | number): Promise<void> | void
+
+  /**
+   * Dissociate a session from the user ID (tag).
+   */
+  untag(sessionId: string, userId: string | number): Promise<void> | void
+
+  /**
+   * Returns all sessions associated with a given user ID (tag).
+   * Only returns non-expired sessions.
+   */
+  tagged(userId: string | number): Promise<TaggedSession[]> | TaggedSession[]
+}
+
+/**
  * Base configuration interface for session management.
  * Used by the session manager and middleware to control session behavior.
  *
@@ -239,38 +276,6 @@ export type SessionStoreFactory = (
   ctx: HttpContext,
   sessionConfig: SessionConfig
 ) => SessionStoreContract
-
-/**
- * Extended session store contract that supports tagging sessions with user IDs.
- * This enables querying all sessions for a specific user, useful for features
- * like "logout from all devices" or "view active sessions".
- *
- * @example
- * class MyStore implements SessionStoreWithTaggingContract {
- *   // ... base SessionStoreContract methods ...
- *
- *   async tag(sessionId: string, userId: string) {
- *     await this.storage.tag(sessionId, userId)
- *   }
- *
- *   async tagged(userId: string) {
- *     return await this.storage.getSessionsByUser(userId)
- *   }
- * }
- */
-export interface SessionStoreWithTaggingContract extends SessionStoreContract {
-  /**
-   * Associates a session with a user ID (tag).
-   * This allows querying all sessions for a specific user.
-   */
-  tag(sessionId: string, userId: string): Promise<void> | void
-
-  /**
-   * Returns all sessions associated with a given user ID (tag).
-   * Only returns non-expired sessions.
-   */
-  tagged(userId: string): Promise<TaggedSession[]> | TaggedSession[]
-}
 
 /**
  * Represents a tagged session with its ID and data

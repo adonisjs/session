@@ -86,6 +86,13 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     return `session_tag:${userId}`
   }
 
+  /*
+   * Returns the key for a session's user mapping (stores userId for a session)
+   */
+  #getSessionUserKey(sessionId: string): string {
+    return `session_user:${sessionId}`
+  }
+
   /**
    * Verify contents with the session id and return them as an object. The verify
    * method can fail when the contents is not JSON
@@ -173,9 +180,20 @@ export class RedisStore implements SessionStoreWithTaggingContract {
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
    */
-  async tag(sessionId: string, userId: string): Promise<void> {
+  async tag(sessionId: string, userId: string | number): Promise<void> {
     debug('redis store: tagging session %s with user %s', sessionId, userId)
-    await this.#connection.sadd(this.#getTagKey(userId), sessionId)
+    await this.#connection.sadd(this.#getTagKey(userId.toString()), sessionId)
+  }
+
+  /**
+   * Untag a session from a user ID
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier to untag the session from
+   */
+  async untag(sessionId: string, userId: string | number): Promise<void> {
+    debug('redis store: untagging session %s from user %s', sessionId, userId)
+    await this.#connection.srem(this.#getTagKey(userId.toString()), sessionId)
   }
 
   /**

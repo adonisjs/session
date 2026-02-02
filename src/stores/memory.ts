@@ -79,8 +79,18 @@ export class MemoryStore implements SessionStoreWithTaggingContract {
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
    */
-  tag(sessionId: string, userId: string): void {
-    MemoryStore.tags.set(sessionId, userId)
+  tag(sessionId: string, userId: string | number): void {
+    MemoryStore.tags.set(sessionId, String(userId))
+  }
+
+  /**
+   * Untag a session from a user ID
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier (unused in memory store, as sessionId uniquely identifies the tag)
+   */
+  untag(sessionId: string, _userId: string | number): void {
+    MemoryStore.tags.delete(sessionId)
   }
 
   /**

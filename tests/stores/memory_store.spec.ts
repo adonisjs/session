@@ -85,6 +85,18 @@ test.group('Memory store', (group) => {
     assert.equal(MemoryStore.tags.get('session-1'), 'user-123')
   })
 
+  test('tag works with numeric user IDs', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    await session.tag('session-1', 123)
+
+    assert.equal(MemoryStore.tags.get('session-1'), '123')
+
+    const sessions = await session.tagged('123')
+    assert.deepEqual(sessions, [{ id: 'session-1', data: { message: 'hello' } }])
+  })
+
   test('get sessions tagged with a user id', async ({ assert }) => {
     const session = new MemoryStore()
 
@@ -139,5 +151,78 @@ test.group('Memory store', (group) => {
 
     const sessions = session.tagged('user-1')
     assert.deepEqual(sessions, [{ id: 'session-2', data: { message: 'world' } }])
+  })
+
+  test('untag removes tag from a session', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.tag('session-1', 'user-1')
+
+    assert.isTrue(MemoryStore.tags.has('session-1'))
+
+    session.untag('session-1', 'user-1')
+
+    assert.isFalse(MemoryStore.tags.has('session-1'))
+  })
+
+  test('untag does not affect session data', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.tag('session-1', 'user-1')
+    session.untag('session-1', 'user-1')
+
+    assert.deepEqual(session.read('session-1'), { message: 'hello' })
+  })
+
+  test('untag removes session from tagged results', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.write('session-2', { message: 'world' })
+    session.tag('session-1', 'user-1')
+    session.tag('session-2', 'user-1')
+
+    session.untag('session-1', 'user-1')
+
+    const sessions = session.tagged('user-1')
+    assert.deepEqual(sessions, [{ id: 'session-2', data: { message: 'world' } }])
+  })
+
+  test('untag on non-tagged session does not error', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+
+    assert.doesNotThrow(() => {
+      session.untag('session-1', 'user-1')
+    })
+  })
+
+  test('tag before write preserves tag when session is written', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.tag('new-session', 'user-123')
+    session.write('new-session', { message: 'hello' })
+
+    assert.equal(MemoryStore.tags.get('new-session'), 'user-123')
+
+    const data = session.read('new-session')
+    assert.deepEqual(data, { message: 'hello' })
+
+    const sessions = session.tagged('user-123')
+    assert.deepEqual(sessions, [{ id: 'new-session', data: { message: 'hello' } }])
+  })
+
+  test('tag is preserved after write updates session data', async ({ assert }) => {
+    const session = new MemoryStore()
+
+    session.write('session-1', { message: 'hello' })
+    session.tag('session-1', 'user-123')
+
+    session.write('session-1', { message: 'updated' })
+
+    assert.equal(MemoryStore.tags.get('session-1'), 'user-123')
   })
 })

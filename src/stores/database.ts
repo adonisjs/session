@@ -79,6 +79,18 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
+   * Converts a database row to a TaggedSession object
+   */
+  #rowToTaggedSession(row: { id: string; data: string }): TaggedSession | null {
+    const data = this.#parseSessionData(row.data, row.id)
+    if (!data) {
+      return null
+    }
+
+    return { id: row.id, data }
+  }
+
+  /**
    * Returns session data
    *
    * @param sessionId - Session identifier
@@ -160,8 +172,8 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
    */
-  async tag(sessionId: string, userId: string): Promise<void> {
-    debug('database store: tagging session %s with user %s', sessionId, userId)
+  async tag(sessionId: string, userId: string | number): Promise<void> {
+    debug('database store: associating user %s with session %s', userId, sessionId)
 
     const data = new MessageBuilder().build({}, undefined, sessionId)
     const expiresAt = new Date(Date.now() + this.#ttlSeconds * 1000)
@@ -169,19 +181,19 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
     await this.#client
       .insertQuery()
       .table(this.#tableName)
-      .insert({ id: sessionId, user_id: userId, data, expires_at: expiresAt })
+      .insert({ id: sessionId, user_id: String(userId), data, expires_at: expiresAt })
       .knexQuery.onConflict('id')
       .merge(['user_id'])
   }
 
-  /**
-   * Converts a database row to a TaggedSession object
-   */
-  #rowToTaggedSession(row: { id: string; data: string }): TaggedSession | null {
-    const data = this.#parseSessionData(row.data, row.id)
-    if (!data) return null
+  async untag(sessionId: string, userId: string | number): Promise<void> {
+    debug('database store: dissociating user %s from session %s', userId, sessionId)
 
-    return { id: row.id, data }
+    await this.#client
+      .query()
+      .from(this.#tableName)
+      .update({ user_id: null })
+      .where({ id: sessionId })
   }
 
   /**

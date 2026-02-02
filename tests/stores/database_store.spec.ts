@@ -227,6 +227,19 @@ test.group('Database store', (group) => {
     assert.equal(row.user_id, 'user-123')
   })
 
+  test('tag works with numeric user IDs', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 123)
+
+    const row = await db.from('sessions').where('id', 'session-1').first()
+    assert.equal(row.user_id, '123')
+
+    const sessions = await store.tagged('123')
+    assert.deepEqual(sessions, [{ id: 'session-1', data: { message: 'hello' } }])
+  })
+
   test('get sessions tagged with a user id', async ({ assert }) => {
     const store = new DatabaseStore(db.connection(), '2 hours')
 
@@ -313,5 +326,70 @@ test.group('Database store', (group) => {
 
     const row = await db.from('sessions').where('id', 'session-1').first()
     assert.equal(row.user_id, 'user-123')
+  })
+
+  test('untag removes tag from a session', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 'user-1')
+
+    let row = await db.from('sessions').where('id', 'session-1').first()
+    assert.equal(row.user_id, 'user-1')
+
+    await store.untag('session-1', 'user-1')
+
+    row = await db.from('sessions').where('id', 'session-1').first()
+    assert.isNull(row.user_id)
+  })
+
+  test('untag does not affect session data', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 'user-1')
+    await store.untag('session-1', 'user-1')
+
+    const data = await store.read('session-1')
+    assert.deepEqual(data, { message: 'hello' })
+  })
+
+  test('untag removes session from tagged results', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.write('session-2', { message: 'world' })
+    await store.tag('session-1', 'user-1')
+    await store.tag('session-2', 'user-1')
+
+    await store.untag('session-1', 'user-1')
+
+    const sessions = await store.tagged('user-1')
+    assert.deepEqual(sessions, [{ id: 'session-2', data: { message: 'world' } }])
+  })
+
+  test('untag on non-tagged session does not error', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+
+    await assert.doesNotReject(async () => {
+      await store.untag('session-1', 'user-1')
+    })
+  })
+
+  test('untag works with numeric user IDs', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write('session-1', { message: 'hello' })
+    await store.tag('session-1', 123)
+
+    await store.untag('session-1', 123)
+
+    const row = await db.from('sessions').where('id', 'session-1').first()
+    assert.isNull(row.user_id)
+
+    const sessions = await store.tagged('123')
+    assert.deepEqual(sessions, [])
   })
 })
