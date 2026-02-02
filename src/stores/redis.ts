@@ -86,13 +86,6 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     return `session_tag:${userId}`
   }
 
-  /*
-   * Returns the key for a session's user mapping (stores userId for a session)
-   */
-  #getSessionUserKey(sessionId: string): string {
-    return `session_user:${sessionId}`
-  }
-
   /**
    * Verify contents with the session id and return them as an object. The verify
    * method can fail when the contents is not JSON
