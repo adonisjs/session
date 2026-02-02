@@ -557,6 +557,13 @@ export class Session extends Macroable {
   }
 
   /**
+   * Check if the current store supports tagging
+   */
+  supportsTagging(): boolean {
+    return 'tag' in this.#store && 'tagged' in this.#store
+  }
+
+  /**
    * Tag the current session with a user ID.
    * Only supported by Memory, Redis, and Database stores.
    * This enables features like "logout from all devices".
@@ -572,6 +579,13 @@ export class Session extends Macroable {
       throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
     }
     await this.#store.tag(this.#sessionId, userId)
+  }
+
+  async untag(userId: string): Promise<void> {
+    if (!('tag' in this.#store)) {
+      throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
+    }
+    await this.#store.untag(this.#sessionId, userId)
   }
 
   /**

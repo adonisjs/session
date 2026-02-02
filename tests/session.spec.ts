@@ -26,6 +26,7 @@ import { RequestFactory, ResponseFactory, HttpContextFactory } from '@adonisjs/c
 import { defineConfig } from '../index.ts'
 import { Session } from '../src/session.ts'
 import { CookieStore } from '../src/stores/cookie.ts'
+import { MemoryStore } from '../src/stores/memory.ts'
 import { httpServer } from '../tests_helpers/index.ts'
 import type { SessionConfig, SessionStoreFactory } from '../src/types.ts'
 import { MultipartFile } from '@adonisjs/core/bodyparser'
@@ -1706,5 +1707,87 @@ test.group('Session | Flash', (group) => {
       text.split('\n').map((line) => line.trim()),
       ['<div>', '<p> Access denied </p>', '</div>', '']
     )
+  })
+})
+
+test.group('Session | Tagging', (group) => {
+  let memoryDriver: SessionStoreFactory
+
+  group.setup(() => {
+    memoryDriver = () => new MemoryStore()
+    // Clear memory store before tests
+    MemoryStore.sessions.clear()
+    MemoryStore.tags.clear()
+  })
+
+  group.each.teardown(() => {
+    // Clear memory store after each test
+    MemoryStore.sessions.clear()
+    MemoryStore.tags.clear()
+  })
+
+  test('tag a session with a user ID', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, memoryDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.put('username', 'virk')
+    await session.tag('user-123')
+
+    assert.equal(MemoryStore.tags.get(session.sessionId), 'user-123')
+  })
+
+  test('convert numeric user ID to string when tagging', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, memoryDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.put('username', 'virk')
+    await session.tag('123')
+
+    assert.equal(MemoryStore.tags.get(session.sessionId), '123')
+  })
+
+  test('throw error when tagging with a store that does not support tagging', async () => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    await session.tag('user-123')
+  }).throws('Session store does not support tagging. Use memory, redis, or database store instead')
+
+  test('untag a session from a user ID', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, memoryDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.put('username', 'virk')
+    await session.tag('user-123')
+
+    assert.isTrue(MemoryStore.tags.has(session.sessionId))
+
+    await session.untag('user-123')
+
+    assert.isFalse(MemoryStore.tags.has(session.sessionId))
+  })
+
+  test('throw error when untagging with a store that does not support tagging', async () => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    await session.untag('user-123')
+  }).throws('Session store does not support tagging. Use memory, redis, or database store instead')
+
+  test('check if store supports tagging', async ({ assert }) => {
+    const ctxWithMemory = new HttpContextFactory().create()
+    const sessionWithMemory = new Session(sessionConfig, memoryDriver, emitter, ctxWithMemory)
+
+    assert.isTrue(sessionWithMemory.supportsTagging())
+
+    const ctxWithCookie = new HttpContextFactory().create()
+    const sessionWithCookie = new Session(sessionConfig, cookieDriver, emitter, ctxWithCookie)
+
+    assert.isFalse(sessionWithCookie.supportsTagging())
   })
 })

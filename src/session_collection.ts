@@ -10,10 +10,10 @@
 import debug from './debug.ts'
 import { E_SESSION_TAGGING_NOT_SUPPORTED } from './errors.ts'
 import type {
-  ResolvedSessionConfig,
   SessionData,
-  SessionStoreWithTaggingContract,
   TaggedSession,
+  ResolvedSessionConfig,
+  SessionStoreWithTaggingContract,
 } from './types.ts'
 
 /**
