@@ -49,7 +49,14 @@ export class SessionCollection {
   }
 
   /**
-   * Check if the current store supports tagging
+   * Checks if the current store supports session tagging.
+   * Only Memory, Redis, and Database stores support tagging.
+   *
+   * @example
+   * const collection = await app.container.make(SessionCollection)
+   * if (collection.supportsTagging()) {
+   *   await collection.tag(sessionId, userId)
+   * }
    */
   supportsTagging(): boolean {
     return 'tag' in this.#store && 'tagged' in this.#store

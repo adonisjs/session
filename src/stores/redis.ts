@@ -45,7 +45,12 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Processes a single session result from the pipeline
+   * Processes a single session result from the pipeline.
+   * Parses session data and determines validity.
+   *
+   * @param options - Session ID and contents to process
+   * @param options.sessionId - Session identifier
+   * @param options.contents - Session data as string
    */
   #processSessionResult(options: { sessionId: string; contents: string | null }): {
     session: TaggedSession | null
@@ -60,7 +65,10 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Fetches session contents for multiple session IDs using a pipeline
+   * Fetches session contents for multiple session IDs using a Redis pipeline.
+   * Optimizes performance by batching multiple GET commands into a single round trip.
+   *
+   * @param sessionIds - Array of session identifiers to fetch
    */
   async #fetchSessionContents(sessionIds: string[]): Promise<Array<string | null>> {
     const pipeline = this.#connection.pipeline()
@@ -71,7 +79,11 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Removes invalid session IDs from the user's tag set
+   * Removes invalid session IDs from the user's tag set.
+   * Cleans up expired or corrupted session references.
+   *
+   * @param userId - User identifier whose sessions to clean up
+   * @param invalidSessionIds - Array of invalid session IDs to remove
    */
   async #cleanupInvalidSessions(userId: string, invalidSessionIds: string[]): Promise<void> {
     if (invalidSessionIds.length === 0) return
@@ -79,16 +91,22 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     await this.#connection.srem(this.#getTagKey(userId), ...invalidSessionIds)
   }
 
-  /*
-   * Returns the key for a user's tag set (stores session IDs for a user)
+  /**
+   * Returns the Redis key for a user's tag set.
+   * The tag set stores all session IDs associated with a user.
+   *
+   * @param userId - User identifier
    */
   #getTagKey(userId: string): string {
     return `session_tag:${userId}`
   }
 
   /**
-   * Verify contents with the session id and return them as an object. The verify
-   * method can fail when the contents is not JSON
+   * Verifies and parses session data from string format.
+   * Returns null if the contents is not valid JSON or verification fails.
+   *
+   * @param contents - Session data as string
+   * @param sessionId - Session identifier used for verification
    */
   #parseSessionData(contents: string, sessionId: string): SessionData | null {
     try {

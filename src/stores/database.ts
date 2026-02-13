@@ -15,7 +15,15 @@ import debug from '../debug.ts'
 import type { SessionStoreWithTaggingContract, SessionData, TaggedSession } from '../types.ts'
 
 /**
- * Database store to read/write session to SQL databases using Lucid
+ * Database store to read/write session data to SQL databases using Lucid.
+ * Supports PostgreSQL, MySQL, SQLite, and other Lucid-compatible databases.
+ * Includes automatic garbage collection of expired sessions.
+ *
+ * @example
+ * const dbStore = new DatabaseStore(db.connection(), '2 hours', {
+ *   tableName: 'sessions',
+ *   gcProbability: 2
+ * })
  */
 export class DatabaseStore implements SessionStoreWithTaggingContract {
   #client: QueryClientContract
@@ -23,6 +31,15 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   #ttlSeconds: number
   #gcProbability: number
 
+  /**
+   * Creates a new database store instance
+   *
+   * @param client - Lucid query client instance
+   * @param age - Session age in seconds or time expression (e.g. '2 hours')
+   * @param options - Configuration options
+   * @param options.tableName - Database table name (defaults to "sessions")
+   * @param options.gcProbability - Garbage collection probability in percent (defaults to 2)
+   */
   constructor(
     client: QueryClientContract,
     age: string | number,
@@ -51,8 +68,9 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Run garbage collection to delete expired sessions.
-   * This is called based on gcProbability after writing session data.
+   * Runs garbage collection to delete expired sessions from the database.
+   * Executes probabilistically based on gcProbability setting after writing session data.
+   * Helps maintain database performance by removing stale session records.
    */
   async #collectGarbage(): Promise<void> {
     if (this.#gcProbability <= 0) {
@@ -68,7 +86,11 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Parses and verifies session data using MessageBuilder
+   * Parses and verifies session data from string format.
+   * Returns null if the data is corrupted or verification fails.
+   *
+   * @param contents - Session data as string
+   * @param sessionId - Session identifier for verification
    */
   #parseSessionData(contents: string, sessionId: string): SessionData | null {
     try {
@@ -79,7 +101,12 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Converts a database row to a TaggedSession object
+   * Converts a database row to a TaggedSession object.
+   * Parses the session data and returns null if parsing fails.
+   *
+   * @param row - Database row containing session ID and data
+   * @param row.id - Session identifier
+   * @param row.data - Session data as string
    */
   #rowToTaggedSession(row: { id: string; data: string }): TaggedSession | null {
     const data = this.#parseSessionData(row.data, row.id)
@@ -91,9 +118,12 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Returns session data
+   * Reads session data from the database
    *
    * @param sessionId - Session identifier
+   *
+   * @example
+   * const data = await store.read('sess_abc123')
    */
   async read(sessionId: string): Promise<SessionData | null> {
     debug('database store: reading session data %s', sessionId)
@@ -117,10 +147,14 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Write session values to the database
+   * Writes session values to the database with expiry.
+   * Uses UPSERT to handle both new and existing sessions.
    *
    * @param sessionId - Session identifier
    * @param values - Session data to store
+   *
+   * @example
+   * await store.write('sess_abc123', { userId: 123 })
    */
   async write(sessionId: string, values: Object): Promise<void> {
     debug('database store: writing session data %s, %O', sessionId, values)
@@ -139,9 +173,12 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Cleanup session by removing it
+   * Removes session data from the database
    *
-   * @param sessionId - Session identifier
+   * @param sessionId - Session identifier to remove
+   *
+   * @example
+   * await store.destroy('sess_abc123')
    */
   async destroy(sessionId: string): Promise<void> {
     debug('database store: destroying session data %s', sessionId)
@@ -150,9 +187,12 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Updates the session expiry
+   * Updates the session expiry time in the database
    *
    * @param sessionId - Session identifier
+   *
+   * @example
+   * await store.touch('sess_abc123')
    */
   async touch(sessionId: string): Promise<void> {
     debug('database store: touching session data %s', sessionId)
@@ -166,11 +206,14 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Tag a session with a user ID.
+   * Tags a session with a user ID for tracking user sessions.
    * Uses UPSERT to handle both existing and new sessions.
    *
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
+   *
+   * @example
+   * await store.tag('sess_abc123', 'user_456')
    */
   async tag(sessionId: string, userId: string | number): Promise<void> {
     debug('database store: associating user %s with session %s', userId, sessionId)
@@ -186,6 +229,16 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
       .merge(['user_id'])
   }
 
+  /**
+   * Removes the tag association between a session and a user ID.
+   * Sets the user_id column to null for the given session.
+   *
+   * @param sessionId - Session identifier
+   * @param userId - User identifier (for logging purposes)
+   *
+   * @example
+   * await store.untag('sess_abc123', 'user_456')
+   */
   async untag(sessionId: string, userId: string | number): Promise<void> {
     debug('database store: dissociating user %s from session %s', userId, sessionId)
 
@@ -197,9 +250,13 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Get all sessions for a given user ID (tag)
+   * Returns all active sessions for a given user ID (tag).
+   * Only returns non-expired sessions.
    *
    * @param userId - User identifier to get sessions for
+   *
+   * @example
+   * const sessions = await store.tagged('user_456')
    */
   async tagged(userId: string): Promise<TaggedSession[]> {
     debug('database store: getting sessions tagged with user %s', userId)

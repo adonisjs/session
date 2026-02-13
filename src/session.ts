@@ -171,6 +171,12 @@ export class Session extends Macroable {
     return this.responseFlashMessages
   }
 
+  /**
+   * Determines whether a value should be stored in flash messages.
+   * Objects can opt out by setting a STORE_IN_FLASH symbol property to false.
+   *
+   * @param value - Value to check for flash storage eligibility
+   */
   protected shouldFlashValue(value: unknown) {
     if (value && typeof value === 'object') {
       return STORE_IN_FLASH in value ? value[STORE_IN_FLASH] : true
@@ -178,6 +184,12 @@ export class Session extends Macroable {
     return true
   }
 
+  /**
+   * Filters flash data to only include values that should be flashed.
+   * Removes values that have opted out of flash storage.
+   *
+   * @param data - Flash data to filter
+   */
   protected cleanupFlashData<T>(data: T): T | Record<string, any> {
     if (is.plainObject(data)) {
       return Object.keys(data).reduce<Record<string, any>>((result, key) => {
@@ -557,7 +569,13 @@ export class Session extends Macroable {
   }
 
   /**
-   * Check if the current store supports tagging
+   * Checks if the current store supports session tagging.
+   * Only Memory, Redis, and Database stores support tagging.
+   *
+   * @example
+   * if (session.supportsTagging()) {
+   *   await session.tag(String(user.id))
+   * }
    */
   supportsTagging(): boolean {
     return 'tag' in this.#store && 'tagged' in this.#store
@@ -581,6 +599,16 @@ export class Session extends Macroable {
     await this.#store.tag(this.#sessionId, userId)
   }
 
+  /**
+   * Removes the tag association between this session and a user ID.
+   * Only supported by Memory, Redis, and Database stores.
+   *
+   * @param userId - The user ID to untag this session from
+   *
+   * @example
+   * // During logout, untag the session
+   * await session.untag(String(user.id))
+   */
   async untag(userId: string): Promise<void> {
     if (!('tag' in this.#store)) {
       throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()

@@ -49,7 +49,8 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Returns an absolute path to the session id file
+   * Returns the absolute file path for a session ID.
+   * Session files are stored with .txt extension in the configured location.
    *
    * @param sessionId - Session identifier
    */
@@ -58,9 +59,10 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Checks if a file exists at a given path
+   * Checks if a file or directory exists at the given path.
+   * Returns true if accessible, false otherwise.
    *
-   * @param path - File path to check
+   * @param path - File or directory path to check
    */
   async #pathExists(path: string) {
     try {
@@ -72,7 +74,8 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Returns file stats, ignoring missing files
+   * Returns file statistics for the given path.
+   * Returns null if the file doesn't exist or is inaccessible.
    *
    * @param path - File path to get stats for
    */
@@ -86,7 +89,8 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Outputs file with contents to the given path, creating directories if needed
+   * Writes file contents to the given path.
+   * Creates parent directories recursively if they don't exist.
    *
    * @param path - File path to write to
    * @param contents - File contents to write
