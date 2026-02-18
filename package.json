@@ -44,16 +44,16 @@
     "quick:test": "node --import=@poppinss/ts-exec --enable-source-maps bin/test.ts"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.31",
-    "@adonisjs/core": "^7.0.0-next.27",
+    "@adonisjs/assembler": "^8.0.0-next.33",
+    "@adonisjs/core": "^7.0.0-next.29",
     "@adonisjs/eslint-config": "^3.0.0-next.9",
     "@adonisjs/i18n": "^3.0.0-next.2",
-    "@adonisjs/lucid": "^22.0.0-next.7",
+    "@adonisjs/lucid": "^22.0.0-next.9",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/redis": "^10.0.0-next.2",
     "@adonisjs/tsconfig": "^2.0.0-next.3",
-    "@aws-sdk/client-dynamodb": "^3.988.0",
-    "@aws-sdk/util-dynamodb": "^3.988.0",
+    "@aws-sdk/client-dynamodb": "^3.992.0",
+    "@aws-sdk/util-dynamodb": "^3.992.0",
     "@japa/api-client": "^3.2.1",
     "@japa/assert": "^4.2.0",
     "@japa/browser-client": "^2.3.0",
@@ -74,7 +74,7 @@
     "edge.js": "^6.4.0",
     "eslint": "^9.39.2",
     "get-port": "^7.1.0",
-    "mysql2": "^3.17.0",
+    "mysql2": "^3.17.2",
     "pg": "^8.18.0",
     "playwright": "^1.58.2",
     "prettier": "^3.8.1",
@@ -82,12 +82,12 @@
     "set-cookie-parser": "^3.0.1",
     "supertest": "^7.2.2",
     "tsdown": "^0.20.3",
-    "typedoc": "^0.28.16",
+    "typedoc": "^0.28.17",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@poppinss/macroable": "^1.1.0",
-    "@poppinss/utils": "^7.0.0-next.6"
+    "@poppinss/utils": "^7.0.0-next.7"
   },
   "peerDependencies": {
     "@adonisjs/assembler": "^8.0.0-next.26",
