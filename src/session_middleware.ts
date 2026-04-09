@@ -25,6 +25,7 @@ declare module '@adonisjs/core/http' {
   export interface Redirect {
     withIntendedUrl(): Redirect
     toIntended(fallback?: string): void
+    toIntendedRoute(...args: Parameters<Redirect['toRoute']>): void
   }
 }
 
@@ -65,11 +66,24 @@ Redirect.macro('withIntendedUrl', function (this: Redirect) {
 
 /**
  * Redirect to the intended URL stored in session. Consumes
- * the URL (read + delete). Falls back to the provided default.
+ * the URL (read + delete). Falls back to the provided default path.
  */
 Redirect.macro('toIntended', function (this: Redirect, fallback: string = '/') {
   const intended = this.ctx?.session?.pullIntendedUrl() ?? fallback
   return this.toPath(intended)
+})
+
+/**
+ * Redirect to the intended URL stored in session. Consumes
+ * the URL (read + delete). Falls back to a route computed
+ * from the provided arguments (same as toRoute).
+ */
+Redirect.macro('toIntendedRoute', function (this: Redirect, ...args: any[]) {
+  const intended = this.ctx?.session?.pullIntendedUrl()
+  if (intended) {
+    return this.toPath(intended)
+  }
+  return (this.toRoute as any)(...args)
 })
 
 /**

@@ -262,3 +262,46 @@ test.group('Redirect | toIntended', () => {
     await supertest(server).get('/')
   })
 })
+
+test.group('Redirect | toIntendedRoute', () => {
+  test('redirect to the intended URL when one is stored', async ({ assert }) => {
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+      ctx.session = session
+
+      session.setIntendedUrl('/billing')
+      ;(response.redirect() as any).toIntendedRoute('home' as never)
+
+      assert.isNull(session.getIntendedUrl())
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    assert.include(headers.location, '/billing')
+  })
+
+  test('consume the intended URL after redirecting via toIntendedRoute', async ({ assert }) => {
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+      ctx.session = session
+
+      session.setIntendedUrl('/settings')
+      ;(response.redirect() as any).toIntendedRoute('home' as never)
+
+      assert.isNull(session.getIntendedUrl())
+      response.finish()
+    })
+
+    await supertest(server).get('/')
+  })
+})
