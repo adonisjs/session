@@ -101,7 +101,7 @@ async function requestHandler(
       response.json(session.all())
       return response.finish()
     }
-  } catch (error) {
+  } catch (error: any) {
     res.writeHead(500)
     res.write(error.stack)
     res.end()

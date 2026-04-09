@@ -15,6 +15,8 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { EmitterService } from '@adonisjs/core/types'
 import type { HttpError } from '@adonisjs/core/types/http'
 
+import { isValidRedirectUrl } from '@adonisjs/core/http/helpers'
+
 import debug from './debug.ts'
 import * as errors from './errors.ts'
 import { ReadOnlyValuesStore, ValuesStore } from './values_store.ts'
@@ -614,6 +616,43 @@ export class Session extends Macroable {
       throw new errors.E_SESSION_TAGGING_NOT_SUPPORTED()
     }
     await this.#store.untag(this.#sessionId, userId)
+  }
+
+  /**
+   * Store a URL as the intended redirect destination. The URL is
+   * validated using `isValidRedirectUrl` before storing. Invalid
+   * URLs are silently ignored.
+   *
+   * @param url - The URL to store as the intended destination
+   */
+  setIntendedUrl(url: string): void {
+    if (!isValidRedirectUrl(url)) {
+      return
+    }
+    this.put('redirect.intendedUrl', url)
+  }
+
+  /**
+   * Returns the intended URL without consuming it, or `null`
+   * if no intended URL is stored.
+   */
+  getIntendedUrl(): string | null {
+    return this.get('redirect.intendedUrl', null)
+  }
+
+  /**
+   * Returns the intended URL and removes it from the session,
+   * or `null` if no intended URL is stored.
+   */
+  pullIntendedUrl(): string | null {
+    return this.pull('redirect.intendedUrl', null)
+  }
+
+  /**
+   * Removes the intended URL from the session.
+   */
+  clearIntendedUrl(): void {
+    this.forget('redirect.intendedUrl')
   }
 
   /**

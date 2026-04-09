@@ -1790,4 +1790,79 @@ test.group('Session | Tagging', (group) => {
 
     assert.isFalse(sessionWithCookie.supportsTagging())
   })
+
+  test('setIntendedUrl stores a valid relative URL', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.setIntendedUrl('/dashboard')
+    assert.equal(session.getIntendedUrl(), '/dashboard')
+  })
+
+  test('setIntendedUrl stores a valid absolute URL', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.setIntendedUrl('https://example.com/callback')
+    assert.equal(session.getIntendedUrl(), 'https://example.com/callback')
+  })
+
+  test('setIntendedUrl silently ignores invalid URLs', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.setIntendedUrl('//evil.com')
+    assert.isNull(session.getIntendedUrl())
+
+    session.setIntendedUrl('')
+    assert.isNull(session.getIntendedUrl())
+  })
+
+  test('setIntendedUrl rejects protocol-relative URLs', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.setIntendedUrl('//evil.com/path')
+    assert.isNull(session.getIntendedUrl())
+  })
+
+  test('getIntendedUrl returns null when no intended URL is stored', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    assert.isNull(session.getIntendedUrl())
+  })
+
+  test('pullIntendedUrl returns and removes the intended URL', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.setIntendedUrl('/checkout')
+    assert.equal(session.pullIntendedUrl(), '/checkout')
+    assert.isNull(session.getIntendedUrl())
+  })
+
+  test('pullIntendedUrl returns null when no intended URL is stored', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    assert.isNull(session.pullIntendedUrl())
+  })
+
+  test('clearIntendedUrl removes the intended URL', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+    const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+    await session.initiate(false)
+
+    session.setIntendedUrl('/settings')
+    session.clearIntendedUrl()
+    assert.isNull(session.getIntendedUrl())
+  })
 })

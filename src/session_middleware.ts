@@ -9,19 +9,68 @@
 
 import type { NextFn } from '@adonisjs/core/types/http'
 import { type EmitterService } from '@adonisjs/core/types'
-import { ExceptionHandler, type HttpContext } from '@adonisjs/core/http'
+import { ExceptionHandler, Redirect, type HttpContext } from '@adonisjs/core/http'
 
 import { Session } from './session.ts'
 import type { SessionConfig, SessionStoreFactory } from './types.ts'
 
 /**
- * HttpContext augmentations
+ * HttpContext and Redirect augmentations
  */
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
     session: Session
   }
+
+  export interface Redirect {
+    withIntendedUrl(): Redirect
+    toIntended(fallback?: string): void
+  }
 }
+
+/**
+ * Override getPreviousUrl to check the session for a stored
+ * previous URL before falling back to the Referer header.
+ */
+const originalGetPreviousUrl = Redirect.prototype.getPreviousUrl
+Redirect.macro('getPreviousUrl', function (this: Redirect, fallback: string) {
+  if (this.ctx?.session) {
+    const sessionUrl = this.ctx.session.pull('redirect.previousUrl')
+    if (sessionUrl) {
+      return sessionUrl
+    }
+  }
+  return originalGetPreviousUrl.call(this, fallback)
+})
+
+/**
+ * Store the current request URL as the intended destination,
+ * then continue the redirect chain. Only stores for GET,
+ * navigational, route-matched requests.
+ */
+Redirect.macro('withIntendedUrl', function (this: Redirect) {
+  const ctx = this.ctx
+  if (ctx?.session) {
+    const isGet = ctx.request.method() === 'GET'
+    const isNavigational = !ctx.request.ajax()
+    const hasRoute = !!ctx.route
+
+    if (isGet && isNavigational && hasRoute) {
+      ctx.session.setIntendedUrl(ctx.request.url(true))
+    }
+  }
+
+  return this
+})
+
+/**
+ * Redirect to the intended URL stored in session. Consumes
+ * the URL (read + delete). Falls back to the provided default.
+ */
+Redirect.macro('toIntended', function (this: Redirect, fallback: string = '/') {
+  const intended = this.ctx?.session?.pullIntendedUrl() ?? fallback
+  return this.toPath(intended)
+})
 
 /**
  * Overwriting validation exception renderer
