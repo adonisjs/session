@@ -152,7 +152,7 @@ test.group('Cookie store', () => {
       .set('Cookie', `${sessionId}=${cookieClient.encrypt(sessionId, { visits: 1 })}`)
 
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
-    assert.equal(cookies[sessionId].maxAge, -1)
+    assert.equal(cookies[sessionId].maxAge, 0)
     assert.equal(cookies[sessionId].expires, new Date('1970-01-01').toString())
     assert.deepEqual(body, { visits: 1 })
   })

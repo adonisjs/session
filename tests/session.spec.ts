@@ -230,7 +230,7 @@ test.group('Session', (group) => {
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
 
     assert.property(cookies, 'adonis_session')
-    assert.equal(cookies[sessionId].maxAge, -1)
+    assert.equal(cookies[sessionId].maxAge, 0)
     assert.lengthOf(Object.keys(cookies), 2)
   })
 
@@ -260,7 +260,7 @@ test.group('Session', (group) => {
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
 
     assert.property(cookies, 'adonis_session')
-    assert.equal(cookies[sessionId].maxAge, -1)
+    assert.equal(cookies[sessionId].maxAge, 0)
     assert.lengthOf(Object.keys(cookies), 2)
   })
 
@@ -376,7 +376,7 @@ test.group('Session', (group) => {
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
 
     assert.property(cookies, 'adonis_session')
-    assert.equal(cookies[sessionId].maxAge, -1)
+    assert.equal(cookies[sessionId].maxAge, 0)
     assert.lengthOf(Object.keys(cookies), 2)
   })
 
@@ -552,7 +552,7 @@ test.group('Session | Regenerate', () => {
     assert.property(cookies, 'adonis_session')
     assert.notEqual(newSessionId, sessionId)
     assert.property(cookies, newSessionId!)
-    assert.equal(cookies[sessionId!].maxAge, -1)
+    assert.equal(cookies[sessionId!].maxAge, 0)
     assert.equal(cookies[newSessionId!].maxAge, 90)
     assert.deepEqual(cookieClient.decrypt(newSessionId!, cookies[newSessionId!].value), {
       username: 'virk',
@@ -594,7 +594,7 @@ test.group('Session | Regenerate', () => {
     assert.notEqual(newSessionId, sessionId)
     assert.property(cookies, 'adonis_session')
     assert.notProperty(cookies, newSessionId!)
-    assert.equal(cookies[sessionId].maxAge, -1)
+    assert.equal(cookies[sessionId].maxAge, 0)
     assert.lengthOf(Object.keys(cookies), 2)
   })
 
@@ -629,7 +629,7 @@ test.group('Session | Regenerate', () => {
 
     assert.property(cookies, 'adonis_session')
     assert.property(cookies, sessionId!)
-    assert.equal(cookies[sessionId!].maxAge, -1)
+    assert.equal(cookies[sessionId!].maxAge, 0)
     assert.property(cookies, newSessionId!)
     assert.equal(cookies[newSessionId!].maxAge, 90)
     assert.deepEqual(cookieClient.decrypt(newSessionId!, cookies[newSessionId!].value), {
@@ -971,7 +971,7 @@ test.group('Session | Flash', (group) => {
     const newCookies = setCookieParser.parse(newHeaders['set-cookie'], { map: true })
 
     assert.deepEqual(body, { status: 'Task created successfully' })
-    assert.equal(newCookies[sessionId!].maxAge, -1)
+    assert.equal(newCookies[sessionId!].maxAge, 0)
   })
 
   test('reflash flash messages', async ({ assert }) => {
@@ -1024,7 +1024,7 @@ test.group('Session | Flash', (group) => {
     const newCookies = setCookieParser.parse(newHeaders['set-cookie'], { map: true })
 
     assert.deepEqual(body, { status: 'Task created successfully' })
-    assert.equal(newCookies[sessionId!].maxAge, -1)
+    assert.equal(newCookies[sessionId!].maxAge, 0)
   })
 
   test('reflash and flash together', async ({ assert }) => {
@@ -1080,7 +1080,7 @@ test.group('Session | Flash', (group) => {
     const newCookies = setCookieParser.parse(newHeaders['set-cookie'], { map: true })
 
     assert.deepEqual(body, { id: 1, state: 'success' })
-    assert.equal(newCookies[sessionId!].maxAge, -1)
+    assert.equal(newCookies[sessionId!].maxAge, 0)
   })
 
   test('throw error when trying to write to flash messages without initialization', async () => {
