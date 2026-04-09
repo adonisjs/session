@@ -21,7 +21,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: session_test
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: session_test
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,12 +43,12 @@ services:
     image: amazon/dynamodb-local
     ports:
       - 8000:8000
-    command: "-jar DynamoDBLocal.jar -inMemory -sharedDb"
+    command: '-jar DynamoDBLocal.jar -inMemory -sharedDb'
     working_dir: /home/dynamodblocal
     healthcheck:
       test:
         [
-          "CMD-SHELL",
+          'CMD-SHELL',
           '[ "$(curl -s -o /dev/null -I -w ''%{http_code}'' http://localhost:8000)" == "400" ]',
         ]
       interval: 10s
@@ -61,11 +61,11 @@ services:
         condition: service_healthy
     image: amazon/aws-cli
     volumes:
-      - "./tests_helpers/dynamodb_schemas:/tmp/dynamo"
+      - './tests_helpers/dynamodb_schemas:/tmp/dynamo'
     environment:
-      AWS_ACCESS_KEY_ID: "accessKeyId"
-      AWS_SECRET_ACCESS_KEY: "secretAccessKey"
-      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: 'accessKeyId'
+      AWS_SECRET_ACCESS_KEY: 'secretAccessKey'
+      AWS_REGION: 'us-east-1'
     entrypoint:
       - bash
     command: '-c "for f in /tmp/dynamo/*.json; do aws dynamodb create-table --endpoint-url "http://dynamodb-local:8000" --cli-input-json file://"$${f#./}"; done"'
