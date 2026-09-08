@@ -19,6 +19,7 @@ jobs:
       matrix:
         node-version: [latest]
         db: [sqlite, postgres, mysql]
+        redis-version: [10, 11]
     services:
       redis:
         image: redis
@@ -83,6 +84,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install
         run: npm install
+      - name: Install @adonisjs/redis v${{ matrix.redis-version }}
+        run: npm install --no-save @adonisjs/redis@${{ matrix.redis-version }}
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run tests
