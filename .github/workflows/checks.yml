@@ -16,6 +16,7 @@ jobs:
   test_linux:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [latest]
         db: [sqlite, postgres, mysql]
