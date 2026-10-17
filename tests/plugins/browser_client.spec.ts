@@ -8,6 +8,7 @@
  */
 
 import getPort from 'get-port'
+import { readdir } from 'node:fs/promises'
 import { test } from '@japa/runner'
 import { Router } from '@adonisjs/core/http'
 import { Emitter } from '@adonisjs/core/events'
@@ -236,6 +237,7 @@ test.group('Browser client', (group) => {
       await browserContext.setSession({ username: 'virk' })
       await visit(url)
       await browserContext.close()
+      assert.deepEqual(await readdir(fs.basePath), [])
     })
 
     assert.deepEqual(seen, { username: 'virk' })

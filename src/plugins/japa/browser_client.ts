@@ -184,11 +184,15 @@ export const sessionBrowserClient = (app: ApplicationService) => {
         }
 
         /**
-         * Destroy session when context is closed
+         * Destroy session when context is closed. Playwright does not wait
+         * for "close" listeners, so the destroy runs inside close() to
+         * finish before it resolves.
          */
-        context.on('close', async function () {
+        const close = context.close.bind(context)
+        context.close = async function (options) {
           await context.sessionClient.destroy()
-        })
+          return close(options)
+        }
       },
     })
   }
