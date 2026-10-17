@@ -265,7 +265,7 @@ test.group('Session', (group) => {
   })
 
   test('initiate value with 1 on increment', async ({ assert }) => {
-    let sessionId = randomUUID()
+    let sessionId: string | undefined
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -276,13 +276,12 @@ test.group('Session', (group) => {
       await session.initiate(false)
 
       session.increment('visits')
+      sessionId = session.sessionId
       await session.commit()
       response.finish()
     })
 
-    const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
-
-    const { headers } = await supertest(server).get('/').set('cookie', `${sessionIdCookie}`)
+    const { headers } = await supertest(server).get('/')
 
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
     assert.property(cookies, 'adonis_session')
@@ -292,7 +291,7 @@ test.group('Session', (group) => {
   })
 
   test('initiate value with -1 on decrement', async ({ assert }) => {
-    let sessionId = randomUUID()
+    let sessionId: string | undefined
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res, encryption }).create()
@@ -303,19 +302,52 @@ test.group('Session', (group) => {
       await session.initiate(false)
 
       session.decrement('visits')
+      sessionId = session.sessionId
       await session.commit()
       response.finish()
     })
 
-    const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
-
-    const { headers } = await supertest(server).get('/').set('cookie', `${sessionIdCookie}`)
+    const { headers } = await supertest(server).get('/')
 
     const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
     assert.property(cookies, 'adonis_session')
     assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
       visits: -1,
     })
+  })
+
+  test('start a new session when the cookie names a session the store does not have', async ({
+    assert,
+  }) => {
+    const endedSessionId = randomUUID()
+    let sessionId: string | undefined
+    let fresh: boolean | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
+      await session.initiate(false)
+
+      session.put('visits', 1)
+      sessionId = session.sessionId
+      fresh = session.fresh
+
+      await session.commit()
+      response.finish()
+    })
+
+    const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', endedSessionId)}`
+    const { headers } = await supertest(server).get('/').set('cookie', sessionIdCookie)
+
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+    assert.notEqual(sessionId, endedSessionId)
+    assert.isTrue(fresh)
+    assert.equal(cookieClient.unsign('adonis_session', cookies.adonis_session.value), sessionId)
+    assert.isFalse(MemoryStore.sessions.has(endedSessionId))
+    assert.deepEqual(MemoryStore.sessions.get(sessionId!), { visits: 1 })
   })
 
   test('touch session store when not modified', async ({ assert }) => {
