@@ -177,6 +177,21 @@ export interface SessionConfig {
    * Excludes maxAge and expires as they're controlled by age and clearWithBrowser.
    */
   cookie: Partial<CookieOptions>
+
+  /**
+   * Whether to send the session ID cookie on every response, which
+   * refreshes its Max-Age. Defaults to true.
+   *
+   * When false, the cookie is only sent when the session ID changes
+   * (new session, regenerate) or the browser did not send one. A late
+   * response then cannot put back in the browser a session ID it has
+   * left, e.g. the guest ID after a login that regenerated the session.
+   *
+   * The cookie Max-Age is no longer refreshed, so the browser drops the
+   * cookie `age` after the session started. Pair it with
+   * `clearWithBrowser` and let the store expire inactive sessions.
+   */
+  refreshCookie?: boolean
 }
 
 /**
