@@ -265,4 +265,33 @@ test.group('Api client', (group) => {
     assert.deepEqual(seen, { username: 'virk' })
     assert.lengthOf(MemoryStore.sessions, 0)
   })
+
+  test('read the response session when refreshCookie is false', async ({ assert, cleanup }) => {
+    app.config.set('session', defineConfig({ store: 'memory', stores: {}, refreshCookie: false }))
+    cleanup(() => app.config.set('session', defineConfig({ store: 'memory', stores: {} })))
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const config = { ...sessionConfig, refreshCookie: false }
+      const session = new Session(config, () => new MemoryStore(), emitter, ctx)
+
+      await session.initiate(false)
+      session.increment('visits')
+
+      await session.commit()
+      response.finish()
+    })
+
+    const port = await getPort({ port: 3333 })
+    const url = `http://localhost:${port}`
+    server.listen(port)
+
+    await runJapaTest(app, async ({ client }) => {
+      const response = await client.get(url).withSession({ user: 42 })
+      assert.deepEqual(response.session(), { user: 42, visits: 1 })
+    })
+  })
 })
