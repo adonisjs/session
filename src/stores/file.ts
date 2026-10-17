@@ -201,7 +201,7 @@ export class FileStore implements SessionStoreContract {
 
     try {
       await file.truncate(0)
-      await file.write(message, 0, 'utf-8')
+      await file.writeFile(message, 'utf-8')
     } finally {
       await file.close()
     }
