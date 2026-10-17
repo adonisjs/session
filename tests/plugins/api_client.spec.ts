@@ -25,7 +25,8 @@ import {
 
 import { Session } from '../../src/session.ts'
 import { type SessionConfig } from '../../src/types.ts'
-import { defineConfig } from '../../src/define_config.ts'
+import { FileStore } from '../../src/stores/file.ts'
+import { defineConfig, stores } from '../../src/define_config.ts'
 import { MemoryStore } from '../../src/stores/memory.ts'
 import { httpServer, runJapaTest } from '../../tests_helpers/index.ts'
 
@@ -228,5 +229,40 @@ test.group('Api client', (group) => {
       assert.throws(() => response.assertDoesNotHaveValidationError('username'))
       assert.throws(() => response.assertValidationError('username', 'field is missing'))
     })
+  })
+
+  test('write the session to the configured store', async ({ assert, fs, cleanup }) => {
+    app.config.set(
+      'session',
+      defineConfig({ store: 'file', stores: { file: stores.file({ location: fs.basePath }) } })
+    )
+    cleanup(() => app.config.set('session', defineConfig({ store: 'memory', stores: {} })))
+
+    let seen: unknown
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const fileStore = () => new FileStore({ location: fs.basePath }, '2 hours')
+      const session = new Session(sessionConfig, fileStore, emitter, ctx)
+
+      await session.initiate(false)
+      seen = session.all()
+
+      await session.commit()
+      response.finish()
+    })
+
+    const port = await getPort({ port: 3333 })
+    const url = `http://localhost:${port}`
+    server.listen(port)
+
+    await runJapaTest(app, async ({ client }) => {
+      await client.get(url).withSession({ username: 'virk' })
+    })
+
+    assert.deepEqual(seen, { username: 'virk' })
+    assert.lengthOf(MemoryStore.sessions, 0)
   })
 })

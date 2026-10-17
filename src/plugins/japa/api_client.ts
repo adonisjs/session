@@ -16,7 +16,8 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import { ApiClient, ApiRequest, ApiResponse } from '@japa/api-client'
 
 import { SessionClient } from '../../client.ts'
-import type { SessionData } from '../../types.ts'
+import { createTestStore } from './store.ts'
+import type { ResolvedSessionConfig, SessionData } from '../../types.ts'
 
 declare module '@japa/api-client' {
   export interface ApiRequest {
@@ -127,7 +128,7 @@ export const sessionApiClient = (app: ApplicationService) => {
     /**
      * Resolve config from the provider
      */
-    const config = await configProvider.resolve<any>(app, sessionConfigProvider)
+    const config = await configProvider.resolve<ResolvedSessionConfig>(app, sessionConfigProvider)
     if (!config) {
       throw new RuntimeException(
         'Invalid "config/session.ts" file. Make sure you are using the "defineConfig" method'
@@ -142,7 +143,7 @@ export const sessionApiClient = (app: ApplicationService) => {
     ApiRequest.getter(
       'sessionClient',
       function () {
-        return new SessionClient(config.stores.memory())
+        return new SessionClient(createTestStore(config))
       },
       true
     )
