@@ -354,7 +354,7 @@ test.group('Session', (group) => {
     assert.deepEqual(MemoryStore.sessions.get(newSessionId), { visits: 3 })
   })
 
-  test('start a new session when the cookie names a session the store does not have', async ({
+  test('start a new session when the cookie names a missing session and renewMissingSessionId is true', async ({
     assert,
   }) => {
     const endedSessionId = randomUUID()
@@ -366,7 +366,8 @@ test.group('Session', (group) => {
       const response = new ResponseFactory().merge({ req, res, encryption }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
+      const config = { ...sessionConfig, renewMissingSessionId: true }
+      const session = new Session(config, () => new MemoryStore(), emitter, ctx)
       await session.initiate(false)
 
       session.put('visits', 1)
@@ -386,6 +387,28 @@ test.group('Session', (group) => {
     assert.equal(cookieClient.unsign('adonis_session', cookies.adonis_session.value), sessionId)
     assert.isFalse(MemoryStore.sessions.has(endedSessionId))
     assert.deepEqual(MemoryStore.sessions.get(sessionId!), { visits: 1 })
+  })
+
+  test('keep the cookie session id of a missing session by default', async ({ assert }) => {
+    const sessionId = randomUUID()
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, () => new MemoryStore(), emitter, ctx)
+      await session.initiate(false)
+
+      session.put('visits', 1)
+      await session.commit()
+      response.finish()
+    })
+
+    const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
+    await supertest(server).get('/').set('cookie', sessionIdCookie)
+
+    assert.deepEqual(MemoryStore.sessions.get(sessionId), { visits: 1 })
   })
 
   test('touch session store when not modified', async ({ assert }) => {
