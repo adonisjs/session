@@ -207,7 +207,7 @@ test.group('Define config', () => {
     assert.deepEqual(encryption.decrypt(contents!, 'encrypted-session'), {
       message: 'hello-world',
     })
-  })
+  }).skip(!!process.env.NO_REDIS, 'Redis not available in windows env')
 
   test('transform config with cookie store', async ({ assert }) => {
     const config = await defineConfig({
