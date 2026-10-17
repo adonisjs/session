@@ -360,6 +360,20 @@ test.group('Database store', (group) => {
     assert.deepEqual(await store.tagged('user-123'), [])
   })
 
+  test('do not restore a tag removed while the session was written', async ({ assert }) => {
+    const request = new DatabaseStore(db.connection(), '2 hours')
+    const other = new DatabaseStore(db.connection(), '2 hours')
+
+    await other.write('session-1', { message: 'hello' })
+    await request.read('session-1')
+    await request.tag('session-1', 'user-123')
+
+    await other.untag('session-1', 'user-123')
+    await request.write('session-1', { message: 'updated' })
+
+    assert.deepEqual(await other.tagged('user-123'), [])
+  })
+
   test('tag is preserved after write updates session data', async ({ assert }) => {
     const store = new DatabaseStore(db.connection(), '2 hours')
 

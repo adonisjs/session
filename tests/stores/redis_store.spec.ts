@@ -325,6 +325,20 @@ test.group('Redis store', (group) => {
     ])
   })
 
+  test('do not restore a tag removed while the session was written', async ({ assert }) => {
+    const request = new RedisStore(redis.connection('main'), '2 hours')
+    const other = new RedisStore(redis.connection('main'), '2 hours')
+
+    await other.write('session-1', { message: 'hello' })
+    await request.read('session-1')
+    await request.tag('session-1', 'user-123')
+
+    await other.untag('session-1', 'user-123')
+    await request.write('session-1', { message: 'updated' })
+
+    assert.deepEqual(await other.tagged('user-123'), [])
+  })
+
   test('tag is preserved after write updates session data', async ({ assert }) => {
     const session = new RedisStore(redis.connection('main'), '2 hours')
 
