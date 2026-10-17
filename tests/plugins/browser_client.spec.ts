@@ -241,4 +241,47 @@ test.group('Browser client', (group) => {
     assert.deepEqual(seen, { username: 'virk' })
     assert.lengthOf(MemoryStore.sessions, 0)
   })
+
+  test('set the session again after the application destroyed it', async ({
+    assert,
+    fs,
+    cleanup,
+  }) => {
+    app.config.set(
+      'session',
+      defineConfig({ store: 'file', stores: { file: stores.file({ location: fs.basePath }) } })
+    )
+    cleanup(() => app.config.set('session', defineConfig({ store: 'memory', stores: {} })))
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const fileStore = () => new FileStore({ location: fs.basePath }, '2 hours')
+      const session = new Session(sessionConfig, fileStore, emitter, ctx)
+
+      await session.initiate(false)
+      session.clear()
+
+      await session.commit()
+      response.finish()
+    })
+
+    const port = await getPort({ port: 3333 })
+    const url = `http://localhost:${port}`
+    server.listen(port)
+
+    await runJapaTest(app, async ({ visit, browserContext }) => {
+      await browserContext.initiateSession({ domain: new URL(url).host, path: '/' })
+      await browserContext.setSession({ user: 42 })
+      assert.deepEqual(await browserContext.getSession(), { user: 42 })
+
+      await visit(url)
+
+      await browserContext.setSession({ user: 43 })
+      assert.deepEqual(await browserContext.getSession(), { user: 43 })
+      await browserContext.close()
+    })
+  })
 })
