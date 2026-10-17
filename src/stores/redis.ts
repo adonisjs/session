@@ -197,23 +197,39 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     debug('redis store: writing session data %s, %O', sessionId, values)
 
     const message = this.#serializeSessionData(values, sessionId)
-    const transaction = this.#connection.multi()
-
-    if (this.#found.has(sessionId)) {
-      transaction.set(sessionId, message, 'EX', this.#ttlSeconds, 'XX')
-    } else {
-      transaction.set(sessionId, message, 'EX', this.#ttlSeconds)
-    }
+    const onlyIfExists = this.#found.has(sessionId)
+    const userId = this.#tags.get(sessionId)
 
     /**
      * A concurrent "tagged" call drops ids that have no data yet. Adding
      * the id along with the data keeps it in the set. When "XX" refuses
      * the write, the id has no data and the next "tagged" call drops it.
+     *
+     * Redis Cluster refuses a MULTI over keys of different slots, so the
+     * id is added right after the data there. A "tagged" call that read
+     * the set before the data and removes the id after the SADD can still
+     * drop it.
      */
-    const userId = this.#tags.get(sessionId)
-    if (userId) {
-      transaction.sadd(this.#getTagKey(userId), sessionId)
+    if (!userId || this.#connection.ioConnection.isCluster) {
+      if (onlyIfExists) {
+        await this.#connection.set(sessionId, message, 'EX', this.#ttlSeconds, 'XX')
+      } else {
+        await this.#connection.set(sessionId, message, 'EX', this.#ttlSeconds)
+      }
+
+      if (userId) {
+        await this.#connection.sadd(this.#getTagKey(userId), sessionId)
+      }
+      return
     }
+
+    const transaction = this.#connection.multi()
+    if (onlyIfExists) {
+      transaction.set(sessionId, message, 'EX', this.#ttlSeconds, 'XX')
+    } else {
+      transaction.set(sessionId, message, 'EX', this.#ttlSeconds)
+    }
+    transaction.sadd(this.#getTagKey(userId), sessionId)
 
     const results = await transaction.exec()
     const failure = results?.find(([error]) => error)
