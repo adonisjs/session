@@ -97,7 +97,7 @@ export class SessionClient {
 
     debug('committing session data during api request')
     if (!this.#valuesStore.isEmpty) {
-      this.#store.write(this.sessionId, this.#valuesStore.toJSON())
+      await this.#store.write(this.sessionId, this.#valuesStore.toJSON())
     }
   }
 
@@ -112,7 +112,7 @@ export class SessionClient {
    */
   async destroy(sessionId?: string) {
     debug('destroying session data during api request')
-    this.#store.destroy(sessionId || this.sessionId)
+    await this.#store.destroy(sessionId || this.sessionId)
   }
 
   /**

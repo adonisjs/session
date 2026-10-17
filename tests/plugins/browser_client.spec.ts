@@ -26,7 +26,8 @@ import {
 import { Session } from '../../src/session.ts'
 import { type SessionConfig } from '../../src/types.ts'
 import { MemoryStore } from '../../src/stores/memory.ts'
-import { defineConfig } from '../../src/define_config.ts'
+import { FileStore } from '../../src/stores/file.ts'
+import { defineConfig, stores } from '../../src/define_config.ts'
 import { httpServer, runJapaTest } from '../../tests_helpers/index.ts'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
@@ -201,5 +202,43 @@ test.group('Browser client', (group) => {
       await browserContext.close()
       assert.lengthOf(MemoryStore.sessions, 0)
     })
+  })
+
+  test('write the session to the configured store', async ({ assert, fs, cleanup }) => {
+    app.config.set(
+      'session',
+      defineConfig({ store: 'file', stores: { file: stores.file({ location: fs.basePath }) } })
+    )
+    cleanup(() => app.config.set('session', defineConfig({ store: 'memory', stores: {} })))
+
+    let seen: unknown
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const fileStore = () => new FileStore({ location: fs.basePath }, '2 hours')
+      const session = new Session(sessionConfig, fileStore, emitter, ctx)
+
+      await session.initiate(false)
+      seen = session.all()
+
+      await session.commit()
+      response.finish()
+    })
+
+    const port = await getPort({ port: 3333 })
+    const url = `http://localhost:${port}`
+    server.listen(port)
+
+    await runJapaTest(app, async ({ visit, browserContext }) => {
+      await browserContext.initiateSession({ domain: new URL(url).host, path: '/' })
+      await browserContext.setSession({ username: 'virk' })
+      await visit(url)
+      await browserContext.close()
+    })
+
+    assert.deepEqual(seen, { username: 'virk' })
+    assert.lengthOf(MemoryStore.sessions, 0)
   })
 })

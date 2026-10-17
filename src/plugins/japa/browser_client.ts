@@ -16,7 +16,8 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import type { CookieOptions as AdonisCookieOptions } from '@adonisjs/core/types/http'
 
 import { SessionClient } from '../../client.ts'
-import type { SessionConfig, SessionData } from '../../types.ts'
+import { createTestStore } from './store.ts'
+import type { ResolvedSessionConfig, SessionConfig, SessionData } from '../../types.ts'
 
 declare module 'playwright' {
   export interface BrowserContext {
@@ -115,7 +116,7 @@ export const sessionBrowserClient = (app: ApplicationService) => {
     /**
      * Resolve config from the provider
      */
-    const config = await configProvider.resolve<any>(app, sessionConfigProvider)
+    const config = await configProvider.resolve<ResolvedSessionConfig>(app, sessionConfigProvider)
     if (!config) {
       throw new RuntimeException(
         'Invalid "config/session.ts" file. Make sure you are using the "defineConfig" method'
@@ -127,7 +128,7 @@ export const sessionBrowserClient = (app: ApplicationService) => {
         /**
          * Reference to session client per browser context
          */
-        context.sessionClient = new SessionClient(config.stores.memory())
+        context.sessionClient = new SessionClient(createTestStore(config))
 
         /**
          * Initiating session store
