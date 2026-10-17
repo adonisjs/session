@@ -39,6 +39,12 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   #found = new Set<string>()
 
   /**
+   * User ids the sessions were tagged with by this store. The write of a
+   * tagged session stores the user id in the same query as its data.
+   */
+  #tags = new Map<string, string>()
+
+  /**
    * Creates a new database store instance
    *
    * @param client - Lucid query client instance
@@ -170,19 +176,22 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
     const message = new MessageBuilder().build(values, undefined, sessionId)
     const expiresAt = new Date(Date.now() + this.#ttlSeconds * 1000)
+    const userId = this.#tags.get(sessionId)
+    const columns = {
+      data: message,
+      expires_at: expiresAt,
+      ...(userId && { user_id: userId }),
+    }
 
     if (this.#found.has(sessionId)) {
-      await this.#client
-        .from(this.#tableName)
-        .where('id', sessionId)
-        .update({ data: message, expires_at: expiresAt })
+      await this.#client.from(this.#tableName).where('id', sessionId).update(columns)
     } else {
       await this.#client
         .insertQuery()
         .table(this.#tableName)
-        .insert({ id: sessionId, data: message, expires_at: expiresAt })
+        .insert({ id: sessionId, ...columns })
         .knexQuery.onConflict('id')
-        .merge(['data', 'expires_at'])
+        .merge(Object.keys(columns))
     }
 
     await this.#collectGarbage()
@@ -222,8 +231,10 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Tags a session with a user ID for tracking user sessions.
-   * Uses UPSERT to handle both existing and new sessions.
+   * Tags a session with a user ID for tracking user sessions. Updates the
+   * row when it exists, and the next write of the session by this store
+   * stores the user ID along with its data. No row is created for a
+   * session without data.
    *
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
@@ -234,15 +245,11 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   async tag(sessionId: string, userId: string | number): Promise<void> {
     debug('database store: associating user %s with session %s', userId, sessionId)
 
-    const data = new MessageBuilder().build({}, undefined, sessionId)
-    const expiresAt = new Date(Date.now() + this.#ttlSeconds * 1000)
-
+    this.#tags.set(sessionId, String(userId))
     await this.#client
-      .insertQuery()
-      .table(this.#tableName)
-      .insert({ id: sessionId, user_id: String(userId), data, expires_at: expiresAt })
-      .knexQuery.onConflict('id')
-      .merge(['user_id'])
+      .from(this.#tableName)
+      .where('id', sessionId)
+      .update({ user_id: String(userId) })
   }
 
   /**
@@ -258,6 +265,7 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   async untag(sessionId: string, userId: string | number): Promise<void> {
     debug('database store: dissociating user %s from session %s', userId, sessionId)
 
+    this.#tags.delete(sessionId)
     await this.#client
       .query()
       .from(this.#tableName)

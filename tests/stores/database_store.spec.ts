@@ -324,8 +324,8 @@ test.group('Database store', (group) => {
   /**
    * Simulate what happens during login lifecycle:
    * - Session is new (doesnt exist in DB yet)
-   * - User calls session.tag => create session in database
-   * - Then commit() calls write() => update data and preserves the rest
+   * - User calls session.tag => remembered by the store
+   * - Then commit() calls write() => inserts data and user id together
    */
   test('tag before write creates session and preserves tag', async ({ assert }) => {
     const store = new DatabaseStore(db.connection(), '2 hours')
@@ -338,6 +338,14 @@ test.group('Database store', (group) => {
 
     const data = await store.read('new-session')
     assert.deepEqual(data, { message: 'hello' })
+  })
+
+  test('do not create a session row when tagging a session without data', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+    await store.tag('new-session', 'user-123')
+
+    assert.isNull(await db.from('sessions').where('id', 'new-session').first())
+    assert.deepEqual(await store.tagged('user-123'), [])
   })
 
   test('tag is preserved after write updates session data', async ({ assert }) => {
