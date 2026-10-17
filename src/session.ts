@@ -243,6 +243,17 @@ export class Session extends Macroable {
     this.#valuesStore = new ValuesStore(contents)
 
     /**
+     * The cookie names a session the store does not have (expired or
+     * destroyed). Start a fresh session under a new id, so the id of
+     * an ended session is never used again.
+     */
+    if (!contents && this.#sessionIdFromCookie) {
+      debug('session %s not found, starting a new session', this.#sessionIdFromCookie)
+      this.#sessionIdFromCookie = undefined
+      this.#sessionId = randomUUID()
+    }
+
+    /**
      * Extract flash messages from the store and keep a local
      * copy of it.
      */
