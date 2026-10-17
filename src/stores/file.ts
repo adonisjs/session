@@ -11,7 +11,7 @@ import type { Stats } from 'node:fs'
 import { dirname, join } from 'node:path'
 import string from '@adonisjs/core/helpers/string'
 import { MessageBuilder } from '@adonisjs/core/helpers'
-import { access, mkdir, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
+import { access, mkdir, open, readFile, rm, writeFile, utimes, stat } from 'node:fs/promises'
 
 import debug from '../debug.ts'
 import type { FileStoreConfig, SessionData, SessionStoreContract } from '../types.ts'
@@ -35,6 +35,13 @@ export class FileStore implements SessionStoreContract {
    * Session age/expiry time
    */
   #age: string | number
+
+  /**
+   * Ids of the sessions this store found while reading. A store serves
+   * one request, so a write to one of them must not bring it back once
+   * another request destroyed it.
+   */
+  #found = new Set<string>()
 
   /**
    * Creates a new file store instance
@@ -145,6 +152,8 @@ export class FileStore implements SessionStoreContract {
       return null
     }
 
+    this.#found.add(sessionId)
+
     /**
      * Verify contents with the session id and return them as an object. The verify
      * method can fail when the contents is not JSON>
@@ -157,7 +166,9 @@ export class FileStore implements SessionStoreContract {
   }
 
   /**
-   * Writes the session data to the disk as a string
+   * Writes the session data to the disk as a string. The file of a session
+   * read by this store is only rewritten while it still exists, so a logout
+   * or a destroy that happened during the request is not undone.
    *
    * @param sessionId - Session identifier
    * @param values - Session data to store
@@ -171,7 +182,29 @@ export class FileStore implements SessionStoreContract {
     const filePath = this.#getFilePath(sessionId)
     const message = new MessageBuilder().build(values, undefined, sessionId)
 
-    await this.#outputFile(filePath, message)
+    if (!this.#found.has(sessionId)) {
+      await this.#outputFile(filePath, message)
+      return
+    }
+
+    /**
+     * "r+" fails when the file is gone. A file removed after it was
+     * opened loses the write along with its inode.
+     */
+    let file
+    try {
+      file = await open(filePath, 'r+')
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return
+      throw error
+    }
+
+    try {
+      await file.truncate(0)
+      await file.write(message, 0, 'utf-8')
+    } finally {
+      await file.close()
+    }
   }
 
   /**

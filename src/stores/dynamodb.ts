@@ -16,6 +16,7 @@ import {
   PutItemCommand,
   DeleteItemCommand,
   UpdateItemCommand,
+  ConditionalCheckFailedException,
 } from '@aws-sdk/client-dynamodb'
 
 import debug from '../debug.ts'
@@ -61,6 +62,13 @@ export class DynamoDBStore implements SessionStoreContract {
    * Attribute name for the expiry timestamp
    */
   #expiresAtAttribute: string = 'expires_at'
+
+  /**
+   * Ids of the sessions this store found while reading. A store serves
+   * one request, so a write to one of them must not bring it back once
+   * another request destroyed it.
+   */
+  #found = new Set<string>()
 
   /**
    * Creates a new DynamoDB store instance
@@ -129,6 +137,8 @@ export class DynamoDBStore implements SessionStoreContract {
       return null
     }
 
+    this.#found.add(sessionId)
+
     /**
      * Verify contents with the session id and return them as an object. The verify
      * method can fail when the contents is not JSON.
@@ -141,7 +151,9 @@ export class DynamoDBStore implements SessionStoreContract {
   }
 
   /**
-   * Writes session values to DynamoDB with expiry
+   * Writes session values to DynamoDB with expiry. A session read by this
+   * store is only updated while it still exists, so a logout or a destroy
+   * that happened during the request is not undone.
    *
    * @param sessionId - Session identifier
    * @param values - Session data to store
@@ -160,9 +172,18 @@ export class DynamoDBStore implements SessionStoreContract {
         [this.#valueAttribute]: message,
         [this.#expiresAtAttribute]: Date.now() + this.#ttlSeconds * 1000,
       }),
+      ...(this.#found.has(sessionId) && {
+        ConditionExpression: 'attribute_exists(#key)',
+        ExpressionAttributeNames: { '#key': this.#keyAttribute },
+      }),
     })
 
-    await this.#client.send(command)
+    try {
+      await this.#client.send(command)
+    } catch (error) {
+      if (!(error instanceof ConditionalCheckFailedException)) throw error
+      debug('dynamodb store: skipped write of destroyed session %s', sessionId)
+    }
   }
 
   /**

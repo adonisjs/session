@@ -168,6 +168,30 @@ test.group('Database store', (group) => {
     assert.isNull(row)
   })
 
+  test('do not write back a session destroyed after it was read', async ({ assert }) => {
+    const request = new DatabaseStore(db.connection(), '2 hours')
+    const logout = new DatabaseStore(db.connection(), '2 hours')
+
+    await logout.write(sessionId, { user: 1 })
+    assert.deepEqual(await request.read(sessionId), { user: 1 })
+
+    await logout.destroy(sessionId)
+    await request.write(sessionId, { user: 1, visits: 2 })
+
+    const row = await db.from('sessions').where('id', sessionId).first()
+    assert.isNull(row)
+  })
+
+  test('update a session read by the store while it exists', async ({ assert }) => {
+    const store = new DatabaseStore(db.connection(), '2 hours')
+
+    await store.write(sessionId, { visits: 1 })
+    await store.read(sessionId)
+    await store.write(sessionId, { visits: 2 })
+
+    assert.deepEqual(await store.read(sessionId), { visits: 2 })
+  })
+
   test('update session expiry on touch', async ({ assert }) => {
     const store = new DatabaseStore(db.connection(), 10)
     await store.write(sessionId, { message: 'hello-world' })

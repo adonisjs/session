@@ -120,6 +120,32 @@ test.group('File store', () => {
     await assert.fileNotExists('1234.txt')
   })
 
+  test('do not write back a session destroyed after it was read', async ({ assert, fs }) => {
+    const request = new FileStore({ location: fs.basePath }, '2 hours')
+    const logout = new FileStore({ location: fs.basePath }, '2 hours')
+
+    await logout.write('1234', { user: 1 })
+    assert.deepEqual(await request.read('1234'), { user: 1 })
+
+    await logout.destroy('1234')
+    await request.write('1234', { user: 1, visits: 2 })
+
+    await assert.fileNotExists('1234.txt')
+  })
+
+  test('update a session read by the store while it exists', async ({ assert, fs }) => {
+    const store = new FileStore({ location: fs.basePath }, '2 hours')
+
+    await store.write('1234', { message: 'a longer message than the next one' })
+    await store.read('1234')
+    await store.write('1234', { message: 'short' })
+
+    await assert.fileEquals(
+      '1234.txt',
+      JSON.stringify({ message: { message: 'short' }, purpose: '1234' })
+    )
+  })
+
   test('update session expiry on touch', async ({ assert, fs }) => {
     const sessionId = '1234'
 

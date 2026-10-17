@@ -32,6 +32,13 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   #gcProbability: number
 
   /**
+   * Ids of the sessions this store found while reading. A store serves
+   * one request, so a write to one of them must not bring it back once
+   * another request destroyed it.
+   */
+  #found = new Set<string>()
+
+  /**
    * Creates a new database store instance
    *
    * @param client - Lucid query client instance
@@ -143,12 +150,14 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
       return null
     }
 
+    this.#found.add(sessionId)
     return this.#parseSessionData(row.data, sessionId)
   }
 
   /**
-   * Writes session values to the database with expiry.
-   * Uses UPSERT to handle both new and existing sessions.
+   * Writes session values to the database with expiry. A session read by
+   * this store is only updated (no insert), so a logout or a destroy that
+   * happened during the request is not undone. Other sessions are upserted.
    *
    * @param sessionId - Session identifier
    * @param values - Session data to store
@@ -162,12 +171,19 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
     const message = new MessageBuilder().build(values, undefined, sessionId)
     const expiresAt = new Date(Date.now() + this.#ttlSeconds * 1000)
 
-    await this.#client
-      .insertQuery()
-      .table(this.#tableName)
-      .insert({ id: sessionId, data: message, expires_at: expiresAt })
-      .knexQuery.onConflict('id')
-      .merge(['data', 'expires_at'])
+    if (this.#found.has(sessionId)) {
+      await this.#client
+        .from(this.#tableName)
+        .where('id', sessionId)
+        .update({ data: message, expires_at: expiresAt })
+    } else {
+      await this.#client
+        .insertQuery()
+        .table(this.#tableName)
+        .insert({ id: sessionId, data: message, expires_at: expiresAt })
+        .knexQuery.onConflict('id')
+        .merge(['data', 'expires_at'])
+    }
 
     await this.#collectGarbage()
   }

@@ -33,6 +33,13 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   #ttlSeconds: number
 
   /**
+   * Ids of the sessions this store found while reading. A store serves
+   * one request, so a write to one of them must not bring it back once
+   * another request destroyed it.
+   */
+  #found = new Set<string>()
+
+  /**
    * Creates a new Redis store instance
    *
    * @param connection - Redis connection instance
@@ -132,6 +139,8 @@ export class RedisStore implements SessionStoreWithTaggingContract {
       return null
     }
 
+    this.#found.add(sessionId)
+
     /**
      * Verify contents with the session id and return them as an object. The verify
      * method can fail when the contents is not JSON>
@@ -144,7 +153,9 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Writes session values to Redis with expiry
+   * Writes session values to Redis with expiry. A session read by this
+   * store is only updated while it still exists (`XX`), so a logout or
+   * a destroy that happened during the request is not undone.
    *
    * @param sessionId - Session identifier
    * @param values - Session data to store
@@ -156,7 +167,11 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     debug('redis store: writing session data %s, %O', sessionId, values)
 
     const message = new MessageBuilder().build(values, undefined, sessionId)
-    await this.#connection.setex(sessionId, this.#ttlSeconds, message)
+    if (this.#found.has(sessionId)) {
+      await this.#connection.set(sessionId, message, 'EX', this.#ttlSeconds, 'XX')
+    } else {
+      await this.#connection.set(sessionId, message, 'EX', this.#ttlSeconds)
+    }
   }
 
   /**
