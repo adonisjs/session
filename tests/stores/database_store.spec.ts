@@ -11,6 +11,7 @@ import { test } from '@japa/runner'
 import { setTimeout } from 'node:timers/promises'
 import { Database } from '@adonisjs/lucid/database'
 import { AppFactory } from '@adonisjs/core/factories/app'
+import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 import { LoggerFactory } from '@adonisjs/core/factories/logger'
 import { EmitterFactory } from '@adonisjs/core/factories/events'
 
@@ -108,6 +109,17 @@ test.group('Database store', (group) => {
 
     const value = await store.read(sessionId)
     assert.deepEqual(value, { message: 'hello-world' })
+  })
+
+  test('encrypt session data when an encrypter is given', async ({ assert }) => {
+    const encryption = new EncryptionFactory().create()
+    const store = new DatabaseStore(db.connection(), '2 hours', { encryption })
+    await store.write(sessionId, { message: 'hello-world' })
+
+    const row = await db.from('sessions').where('id', sessionId).first()
+    assert.notInclude(row.data, 'hello-world')
+    assert.deepEqual(encryption.decrypt(row.data, sessionId), { message: 'hello-world' })
+    assert.deepEqual(await store.read(sessionId), { message: 'hello-world' })
   })
 
   test('return null when session data is expired', async ({ assert }) => {

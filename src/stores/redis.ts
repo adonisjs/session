@@ -12,7 +12,12 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { Connection } from '@adonisjs/redis/types'
 
 import debug from '../debug.ts'
-import type { SessionData, TaggedSession, SessionStoreWithTaggingContract } from '../types.ts'
+import type {
+  SessionData,
+  TaggedSession,
+  SessionEncryption,
+  SessionStoreWithTaggingContract,
+} from '../types.ts'
 
 /**
  * Redis store to read/write session data to Redis server.
@@ -33,6 +38,12 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   #ttlSeconds: number
 
   /**
+   * Encrypts the session data when defined. Otherwise the data is
+   * only signed.
+   */
+  #encryption?: SessionEncryption
+
+  /**
    * Ids of the sessions this store found while reading. A store serves
    * one request, so a write to one of them must not bring it back once
    * another request destroyed it.
@@ -50,10 +61,16 @@ export class RedisStore implements SessionStoreWithTaggingContract {
    *
    * @param connection - Redis connection instance
    * @param age - Session age in seconds or time expression (e.g. '2 hours')
+   * @param options.encryption - Encrypts the session data instead of only signing it
    */
-  constructor(connection: Connection, age: string | number) {
+  constructor(
+    connection: Connection,
+    age: string | number,
+    options?: { encryption?: SessionEncryption }
+  ) {
     this.#connection = connection
     this.#ttlSeconds = string.seconds.parse(age)
+    this.#encryption = options?.encryption
     debug('initiating redis store')
   }
 
@@ -123,10 +140,26 @@ export class RedisStore implements SessionStoreWithTaggingContract {
    */
   #parseSessionData(contents: string, sessionId: string): SessionData | null {
     try {
+      if (this.#encryption) {
+        return this.#encryption.decrypt<SessionData>(contents, sessionId)
+      }
       return new MessageBuilder().verify<SessionData>(contents, sessionId)
     } catch {
       return null
     }
+  }
+
+  /**
+   * Encrypts or signs the session data for the session id
+   *
+   * @param values - Session data to serialize
+   * @param sessionId - Session identifier used as the purpose
+   */
+  #serializeSessionData(values: Object, sessionId: string): string {
+    if (this.#encryption) {
+      return this.#encryption.encrypt(values, undefined, sessionId)
+    }
+    return new MessageBuilder().build(values, undefined, sessionId)
   }
 
   /**
@@ -146,16 +179,7 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     }
 
     this.#found.add(sessionId)
-
-    /**
-     * Verify contents with the session id and return them as an object. The verify
-     * method can fail when the contents is not JSON>
-     */
-    try {
-      return new MessageBuilder().verify<SessionData>(contents, sessionId)
-    } catch {
-      return null
-    }
+    return this.#parseSessionData(contents, sessionId)
   }
 
   /**
@@ -172,7 +196,7 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   async write(sessionId: string, values: Object): Promise<void> {
     debug('redis store: writing session data %s, %O', sessionId, values)
 
-    const message = new MessageBuilder().build(values, undefined, sessionId)
+    const message = this.#serializeSessionData(values, sessionId)
     const transaction = this.#connection.multi()
 
     if (this.#found.has(sessionId)) {
