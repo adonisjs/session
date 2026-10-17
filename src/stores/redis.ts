@@ -51,8 +51,8 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   #found = new Set<string>()
 
   /**
-   * User ids the sessions were tagged with by this store. The write of a
-   * tagged session adds it to the tag set in the same transaction.
+   * User ids the new sessions were tagged with by this store. The write of
+   * a tagged session adds it to the tag set in the same transaction.
    */
   #tags = new Map<string, string>()
 
@@ -265,15 +265,22 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Tag a session with a user ID. The next write of the session by this
-   * store tags it again, atomically with its data.
+   * Tag a session with a user ID. For a new session, the next write by
+   * this store tags it again, atomically with its data.
    *
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
    */
   async tag(sessionId: string, userId: string | number): Promise<void> {
     debug('redis store: tagging session %s with user %s', sessionId, userId)
-    this.#tags.set(sessionId, String(userId))
+    /**
+     * A session this store read already has data, so the tag applied
+     * below is enough. Replaying it on write would undo an untag done
+     * meanwhile by another request.
+     */
+    if (!this.#found.has(sessionId)) {
+      this.#tags.set(sessionId, String(userId))
+    }
     await this.#connection.sadd(this.#getTagKey(String(userId)), sessionId)
   }
 

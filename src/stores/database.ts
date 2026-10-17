@@ -50,8 +50,8 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   #found = new Set<string>()
 
   /**
-   * User ids the sessions were tagged with by this store. The write of a
-   * tagged session stores the user id in the same query as its data.
+   * User ids the new sessions were tagged with by this store. The write of
+   * a tagged session stores the user id in the same query as its data.
    */
   #tags = new Map<string, string>()
 
@@ -265,7 +265,7 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
 
   /**
    * Tags a session with a user ID for tracking user sessions. Updates the
-   * row when it exists, and the next write of the session by this store
+   * row when it exists. For a new session, the next write by this store
    * stores the user ID along with its data. No row is created for a
    * session without data.
    *
@@ -278,7 +278,14 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   async tag(sessionId: string, userId: string | number): Promise<void> {
     debug('database store: associating user %s with session %s', userId, sessionId)
 
-    this.#tags.set(sessionId, String(userId))
+    /**
+     * A session this store read already has data, so the tag applied
+     * below is enough. Replaying it on write would undo an untag done
+     * meanwhile by another request.
+     */
+    if (!this.#found.has(sessionId)) {
+      this.#tags.set(sessionId, String(userId))
+    }
     await this.#client
       .from(this.#tableName)
       .where('id', sessionId)
