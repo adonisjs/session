@@ -243,13 +243,19 @@ export const sessionApiClient = (app: ApplicationService) => {
       })
 
       request.teardown(async (response) => {
-        const sessionId = response.cookie(config.cookieName)
+        /**
+         * With "refreshCookie" disabled, the response has no session
+         * cookie when the session id did not change.
+         */
+        const sessionId =
+          response.cookie(config.cookieName)?.value ??
+          (config.refreshCookie === false ? request.sessionClient.sessionId : undefined)
 
         /**
          * Reading session data from the response cookie
          */
         response.sessionBag = sessionId
-          ? await response.request.sessionClient.load(sessionId.value)
+          ? await response.request.sessionClient.load(sessionId)
           : {
               values: {},
               flashMessages: {},
@@ -258,7 +264,7 @@ export const sessionApiClient = (app: ApplicationService) => {
         /**
          * Cleanup state
          */
-        await request.sessionClient.destroy(sessionId?.value)
+        await request.sessionClient.destroy(sessionId)
       })
     })
   }
