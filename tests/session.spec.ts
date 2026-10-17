@@ -316,6 +316,44 @@ test.group('Session', (group) => {
     })
   })
 
+  test('do not resend the cookie of an unchanged session id when refreshCookie is false', async ({
+    assert,
+  }) => {
+    const sessionId = randomUUID()
+    MemoryStore.sessions.set(sessionId, { visits: 1 })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const config = { ...sessionConfig, refreshCookie: false }
+      const session = new Session(config, () => new MemoryStore(), emitter, ctx)
+      await session.initiate(false)
+
+      session.increment('visits')
+      if (request.input('regenerate')) session.regenerate()
+
+      await session.commit()
+      response.finish()
+    })
+
+    const sessionIdCookie = `adonis_session=${cookieClient.sign('adonis_session', sessionId)}`
+
+    const unchanged = await supertest(server).get('/').set('cookie', sessionIdCookie)
+    assert.notProperty(
+      setCookieParser.parse(unchanged.headers['set-cookie'] ?? [], { map: true }),
+      'adonis_session'
+    )
+    assert.deepEqual(MemoryStore.sessions.get(sessionId), { visits: 2 })
+
+    const regenerated = await supertest(server).get('/?regenerate=1').set('cookie', sessionIdCookie)
+    const cookies = setCookieParser.parse(regenerated.headers['set-cookie'], { map: true })
+    const newSessionId = cookieClient.unsign('adonis_session', cookies.adonis_session.value)
+    assert.notEqual(newSessionId, sessionId)
+    assert.deepEqual(MemoryStore.sessions.get(newSessionId), { visits: 3 })
+  })
+
   test('start a new session when the cookie names a session the store does not have', async ({
     assert,
   }) => {

@@ -699,9 +699,12 @@ export class Session extends Macroable {
     debug('committing session data')
 
     /**
-     * Touch the session id cookie to stay alive
+     * Touch the session id cookie to stay alive. With "refreshCookie"
+     * disabled, only send it when the browser does not have this id.
      */
-    this.#ctx.response.cookie(this.config.cookieName, this.#sessionId, this.config.cookie!)
+    if (this.config.refreshCookie !== false || this.#sessionId !== this.#sessionIdFromCookie) {
+      this.#ctx.response.cookie(this.config.cookieName, this.#sessionId, this.config.cookie!)
+    }
 
     /**
      * Delete the session data when the session store
