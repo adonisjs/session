@@ -117,6 +117,30 @@ test.group('Redis store', (group) => {
     assert.isAtLeast(expiryPostTouch, 9)
   }).disableTimeout()
 
+  test('do not write back a session destroyed after it was read', async ({ assert }) => {
+    const request = new RedisStore(redis.connection('main'), '2 hours')
+    const logout = new RedisStore(redis.connection('main'), '2 hours')
+
+    await logout.write(sessionId, { user: 1 })
+    assert.deepEqual(await request.read(sessionId), { user: 1 })
+
+    await logout.destroy(sessionId)
+    await request.write(sessionId, { user: 1, visits: 2 })
+
+    assert.isNull(await redis.get(sessionId))
+  })
+
+  test('update a session read by the store while it exists', async ({ assert }) => {
+    const store = new RedisStore(redis.connection('main'), '2 hours')
+
+    await store.write(sessionId, { visits: 1 })
+    await store.read(sessionId)
+    await store.write(sessionId, { visits: 2 })
+
+    assert.deepEqual(await store.read(sessionId), { visits: 2 })
+    assert.isAbove(await redis.ttl(sessionId), 7000)
+  })
+
   test('tag a session with a user id', async ({ assert }) => {
     const session = new RedisStore(redis.connection('main'), '2 hours')
 

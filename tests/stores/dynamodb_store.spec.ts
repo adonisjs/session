@@ -123,6 +123,29 @@ test.group('DynamoDB store', (group) => {
     const expiryPostTouch = await getExpiry(client, defaultTableName, defaultKeyName, sessionId)
     assert.isAbove(expiryPostTouch, expiry)
   }).timeout(3000)
+
+  test('do not write back a session destroyed after it was read', async ({ assert }) => {
+    const request = new DynamoDBStore(client, '2 hours')
+    const logout = new DynamoDBStore(client, '2 hours')
+
+    await logout.write(sessionId, { user: 1 })
+    assert.deepEqual(await request.read(sessionId), { user: 1 })
+
+    await logout.destroy(sessionId)
+    await request.write(sessionId, { user: 1, visits: 2 })
+
+    assert.isNull(await getSession(client, defaultTableName, defaultKeyName, sessionId))
+  })
+
+  test('update a session read by the store while it exists', async ({ assert }) => {
+    const store = new DynamoDBStore(client, '2 hours')
+
+    await store.write(sessionId, { visits: 1 })
+    await store.read(sessionId)
+    await store.write(sessionId, { visits: 2 })
+
+    assert.deepEqual(await store.read(sessionId), { visits: 2 })
+  })
 })
 
 test.group('DynamoDB store | Custom table name', (group) => {

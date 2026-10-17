@@ -36,7 +36,7 @@ import type {
  * ```
  */
 export class SessionCollection {
-  #store: SessionStoreWithTaggingContract
+  #config: ResolvedSessionConfig
 
   /**
    * Creates a new SessionCollection instance
@@ -44,8 +44,16 @@ export class SessionCollection {
    * @param config - Resolved session configuration
    */
   constructor(config: ResolvedSessionConfig) {
-    const storeFactory = config.stores[config.store]
-    this.#store = storeFactory(null as any, config) as SessionStoreWithTaggingContract
+    this.#config = config
+  }
+
+  /**
+   * A store serves one request and remembers the sessions it read.
+   * The collection is a singleton, so each operation gets a new store.
+   */
+  get #store(): SessionStoreWithTaggingContract {
+    const storeFactory = this.#config.stores[this.#config.store]
+    return storeFactory(null as any, this.#config) as SessionStoreWithTaggingContract
   }
 
   /**
