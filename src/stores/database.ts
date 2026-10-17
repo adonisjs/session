@@ -12,7 +12,12 @@ import { MessageBuilder } from '@adonisjs/core/helpers'
 import type { QueryClientContract } from '@adonisjs/lucid/types/database'
 
 import debug from '../debug.ts'
-import type { SessionStoreWithTaggingContract, SessionData, TaggedSession } from '../types.ts'
+import type {
+  SessionData,
+  TaggedSession,
+  SessionEncryption,
+  SessionStoreWithTaggingContract,
+} from '../types.ts'
 
 /**
  * Database store to read/write session data to SQL databases using Lucid.
@@ -30,6 +35,12 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   #tableName: string
   #ttlSeconds: number
   #gcProbability: number
+
+  /**
+   * Encrypts the session data when defined. Otherwise the data is
+   * only signed.
+   */
+  #encryption?: SessionEncryption
 
   /**
    * Ids of the sessions this store found while reading. A store serves
@@ -71,12 +82,18 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
        * Defaults to 2 (2% chance)
        */
       gcProbability?: number
+
+      /**
+       * Encrypts the session data instead of only signing it
+       */
+      encryption?: SessionEncryption
     }
   ) {
     this.#client = client
     this.#tableName = options?.tableName ?? 'sessions'
     this.#ttlSeconds = string.seconds.parse(age)
     this.#gcProbability = options?.gcProbability ?? 2
+    this.#encryption = options?.encryption
     debug('initiating database store')
   }
 
@@ -107,10 +124,26 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
    */
   #parseSessionData(contents: string, sessionId: string): SessionData | null {
     try {
+      if (this.#encryption) {
+        return this.#encryption.decrypt<SessionData>(contents, sessionId)
+      }
       return new MessageBuilder().verify<SessionData>(contents, sessionId)
     } catch {
       return null
     }
+  }
+
+  /**
+   * Encrypts or signs the session data for the session id
+   *
+   * @param values - Session data to serialize
+   * @param sessionId - Session identifier used as the purpose
+   */
+  #serializeSessionData(values: Object, sessionId: string): string {
+    if (this.#encryption) {
+      return this.#encryption.encrypt(values, undefined, sessionId)
+    }
+    return new MessageBuilder().build(values, undefined, sessionId)
   }
 
   /**
@@ -174,7 +207,7 @@ export class DatabaseStore implements SessionStoreWithTaggingContract {
   async write(sessionId: string, values: Object): Promise<void> {
     debug('database store: writing session data %s, %O', sessionId, values)
 
-    const message = new MessageBuilder().build(values, undefined, sessionId)
+    const message = this.#serializeSessionData(values, sessionId)
     const expiresAt = new Date(Date.now() + this.#ttlSeconds * 1000)
     const userId = this.#tags.get(sessionId)
     const columns = {

@@ -11,6 +11,7 @@ import { test } from '@japa/runner'
 import { defineConfig } from '@adonisjs/redis'
 import { setTimeout } from 'node:timers/promises'
 import { RedisManagerFactory } from '@adonisjs/redis/factories'
+import { EncryptionFactory } from '@adonisjs/core/factories/encryption'
 
 import { RedisStore } from '../../src/stores/redis.ts'
 
@@ -81,6 +82,17 @@ test.group('Redis store', (group) => {
 
     const value = await session.read(sessionId)
     assert.isNull(value)
+  })
+
+  test('encrypt session data when an encrypter is given', async ({ assert }) => {
+    const encryption = new EncryptionFactory().create()
+    const session = new RedisStore(redis.connection('main'), '2 hours', { encryption })
+    await session.write(sessionId, { message: 'hello-world' })
+
+    const contents = await redis.get(sessionId)
+    assert.notInclude(contents, 'hello-world')
+    assert.deepEqual(encryption.decrypt(contents!, sessionId), { message: 'hello-world' })
+    assert.deepEqual(await session.read(sessionId), { message: 'hello-world' })
   })
 
   test('delete key on destroy', async ({ assert }) => {

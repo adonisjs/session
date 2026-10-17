@@ -196,9 +196,12 @@ export const stores: {
     return configProvider.create(async (app) => {
       const { RedisStore } = await import('./stores/redis.js')
       const redis = await app.container.make('redis')
+      const encryption = config.encrypt ? await app.container.make('encryption') : undefined
 
       return (_, sessionConfig: SessionConfig) => {
-        return new RedisStore(redis.connection(config.connection), sessionConfig.age)
+        return new RedisStore(redis.connection(config.connection), sessionConfig.age, {
+          encryption,
+        })
       }
     })
   },
@@ -251,10 +254,13 @@ export const stores: {
         )
       }
 
+      const encryption = config?.encrypt ? await app.container.make('encryption') : undefined
+
       return (_, sessionConfig: SessionConfig) => {
         return new DatabaseStore(db.connection(connectionName), sessionConfig.age, {
           tableName: config?.tableName,
           gcProbability: config?.gcProbability,
+          encryption,
         })
       }
     })

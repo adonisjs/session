@@ -9,6 +9,7 @@
 
 import { type HttpContext } from '@adonisjs/core/http'
 import { type RedisConnections } from '@adonisjs/redis/types'
+import type { Encryption } from '@adonisjs/core/encryption'
 import type { CookieOptions } from '@adonisjs/core/types/http'
 import type { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb'
 
@@ -211,6 +212,12 @@ export type FileStoreConfig = {
 }
 
 /**
+ * Encrypter used by the redis and database stores when their
+ * "encrypt" option is enabled. Satisfied by the encryption service.
+ */
+export type SessionEncryption = Pick<Encryption, 'encrypt' | 'decrypt'>
+
+/**
  * Configuration for Redis-based session storage.
  * Sessions are stored in a Redis database with automatic expiry.
  *
@@ -224,6 +231,15 @@ export type RedisStoreConfig = {
    * Name of the Redis connection to use (must match connection name in config/redis.ts)
    */
   connection: keyof RedisConnections
+
+  /**
+   * Encrypt the session data with the encryption service instead of
+   * only signing it. Sessions written without encryption cannot be
+   * read once it is enabled, so users start a new session.
+   *
+   * Defaults to false
+   */
+  encrypt?: boolean
 }
 
 /**
@@ -317,6 +333,15 @@ export interface DatabaseStoreConfig {
    * Defaults to 2 (2% chance)
    */
   gcProbability?: number
+
+  /**
+   * Encrypt the session data with the encryption service instead of
+   * only signing it. Sessions written without encryption cannot be
+   * read once it is enabled, so users start a new session.
+   *
+   * Defaults to false
+   */
+  encrypt?: boolean
 }
 
 /**

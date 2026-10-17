@@ -13,6 +13,8 @@ import { AppFactory } from '@adonisjs/core/factories/app'
 import { defineConfig as redisConfig } from '@adonisjs/redis'
 import type { ApplicationService } from '@adonisjs/core/types'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
+import { EncryptionManager } from '@adonisjs/core/encryption'
+import { AES256GCM } from '@adonisjs/core/encryption/drivers/aes_256_gcm'
 
 import { FileStore } from '../src/stores/file.ts'
 import { RedisStore } from '../src/stores/redis.ts'
@@ -157,6 +159,54 @@ test.group('Define config', () => {
 
     const ctx = new HttpContextFactory().create()
     assert.instanceOf(config.stores.redis(ctx, config), RedisStore)
+  })
+
+  test('encrypt redis store data when encrypt is enabled', async ({ assert, cleanup }) => {
+    const appForRedis = new AppFactory().create(BASE_URL, () => {}) as ApplicationService
+    appForRedis.rcContents({
+      providers: [
+        () => import('@adonisjs/core/providers/app_provider'),
+        () => import('@adonisjs/redis/redis_provider'),
+      ],
+    })
+    appForRedis.useConfig({
+      logger: { default: 'main', loggers: { main: {} } },
+      redis: redisConfig({ connection: 'main', connections: { main: {} } }),
+    })
+    await appForRedis.init()
+    await appForRedis.boot()
+
+    const encryption = new EncryptionManager({
+      default: 'gcm',
+      list: {
+        gcm: {
+          driver: (key) => new AES256GCM({ key, id: 'gcm' }),
+          keys: ['averystrongrandomsecretkey'],
+        },
+      },
+    })
+    appForRedis.container.bindValue('encryption', encryption)
+
+    const config = await defineConfig({
+      store: 'redis',
+      stores: {
+        redis: stores.redis({ connection: 'main', encrypt: true } as any),
+      },
+    }).resolver(appForRedis)
+
+    const redis = await appForRedis.container.make('redis')
+    cleanup(async () => {
+      await redis.del('encrypted-session')
+      await redis.disconnectAll()
+    })
+
+    const store = config.stores.redis(new HttpContextFactory().create(), config)
+    await store.write('encrypted-session', { message: 'hello-world' })
+
+    const contents = await redis.get('encrypted-session')
+    assert.deepEqual(encryption.decrypt(contents!, 'encrypted-session'), {
+      message: 'hello-world',
+    })
   })
 
   test('transform config with cookie store', async ({ assert }) => {
