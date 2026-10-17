@@ -180,6 +180,18 @@ export interface SessionConfig {
   cookie: Partial<CookieOptions>
 
   /**
+   * Whether to give a new session ID when the cookie names a session
+   * the store does not have (expired or destroyed). Defaults to false.
+   *
+   * When true, the ID of an ended session is never used again, so a
+   * late request that read the old session cannot write it back. The
+   * session is "fresh". A session without data then gets a new ID on
+   * each request, so do not use `session.sessionId` as a stable key
+   * for a session without data.
+   */
+  renewMissingSessionId?: boolean
+
+  /**
    * Whether to send the session ID cookie on every response, which
    * refreshes its Max-Age. Defaults to true.
    *

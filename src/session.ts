@@ -244,10 +244,10 @@ export class Session extends Macroable {
 
     /**
      * The cookie names a session the store does not have (expired or
-     * destroyed). Start a fresh session under a new id, so the id of
-     * an ended session is never used again.
+     * destroyed). With "renewMissingSessionId", start a fresh session
+     * under a new id, so the id of an ended session is never used again.
      */
-    if (!contents && this.#sessionIdFromCookie) {
+    if (this.config.renewMissingSessionId && !contents && this.#sessionIdFromCookie) {
       debug('session %s not found, starting a new session', this.#sessionIdFromCookie)
       this.#sessionIdFromCookie = undefined
       this.#sessionId = randomUUID()
