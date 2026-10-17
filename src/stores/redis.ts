@@ -40,6 +40,12 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   #found = new Set<string>()
 
   /**
+   * User ids the sessions were tagged with by this store. The write of a
+   * tagged session adds it to the tag set in the same transaction.
+   */
+  #tags = new Map<string, string>()
+
+  /**
    * Creates a new Redis store instance
    *
    * @param connection - Redis connection instance
@@ -167,10 +173,28 @@ export class RedisStore implements SessionStoreWithTaggingContract {
     debug('redis store: writing session data %s, %O', sessionId, values)
 
     const message = new MessageBuilder().build(values, undefined, sessionId)
+    const transaction = this.#connection.multi()
+
     if (this.#found.has(sessionId)) {
-      await this.#connection.set(sessionId, message, 'EX', this.#ttlSeconds, 'XX')
+      transaction.set(sessionId, message, 'EX', this.#ttlSeconds, 'XX')
     } else {
-      await this.#connection.set(sessionId, message, 'EX', this.#ttlSeconds)
+      transaction.set(sessionId, message, 'EX', this.#ttlSeconds)
+    }
+
+    /**
+     * A concurrent "tagged" call drops ids that have no data yet. Adding
+     * the id along with the data keeps it in the set. When "XX" refuses
+     * the write, the id has no data and the next "tagged" call drops it.
+     */
+    const userId = this.#tags.get(sessionId)
+    if (userId) {
+      transaction.sadd(this.#getTagKey(userId), sessionId)
+    }
+
+    const results = await transaction.exec()
+    const failure = results?.find(([error]) => error)
+    if (failure) {
+      throw failure[0]
     }
   }
 
@@ -201,14 +225,16 @@ export class RedisStore implements SessionStoreWithTaggingContract {
   }
 
   /**
-   * Tag a session with a user ID
+   * Tag a session with a user ID. The next write of the session by this
+   * store tags it again, atomically with its data.
    *
    * @param sessionId - Session identifier
    * @param userId - User identifier to tag the session with
    */
   async tag(sessionId: string, userId: string | number): Promise<void> {
     debug('redis store: tagging session %s with user %s', sessionId, userId)
-    await this.#connection.sadd(this.#getTagKey(userId.toString()), sessionId)
+    this.#tags.set(sessionId, String(userId))
+    await this.#connection.sadd(this.#getTagKey(String(userId)), sessionId)
   }
 
   /**
@@ -219,6 +245,7 @@ export class RedisStore implements SessionStoreWithTaggingContract {
    */
   async untag(sessionId: string, userId: string | number): Promise<void> {
     debug('redis store: untagging session %s from user %s', sessionId, userId)
+    this.#tags.delete(sessionId)
     await this.#connection.srem(this.#getTagKey(userId.toString()), sessionId)
   }
 

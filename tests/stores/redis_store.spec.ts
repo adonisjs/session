@@ -299,6 +299,20 @@ test.group('Redis store', (group) => {
     assert.deepEqual(sessions, [{ id: 'new-session', data: { message: 'hello' } }])
   })
 
+  test('keep a session tagged before its write when tagged runs in between', async ({ assert }) => {
+    const store = new RedisStore(redis.connection('main'), '2 hours')
+    const collection = new RedisStore(redis.connection('main'), '2 hours')
+
+    await store.tag('session-1', 'user-123')
+    assert.deepEqual(await collection.tagged('user-123'), [])
+
+    await store.write('session-1', { message: 'hello' })
+
+    assert.deepEqual(await collection.tagged('user-123'), [
+      { id: 'session-1', data: { message: 'hello' } },
+    ])
+  })
+
   test('tag is preserved after write updates session data', async ({ assert }) => {
     const session = new RedisStore(redis.connection('main'), '2 hours')
 
