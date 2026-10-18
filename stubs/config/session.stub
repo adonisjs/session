@@ -44,7 +44,11 @@ const sessionConfig = defineConfig({
    * list of available stores and their config.
    */
   stores: {
-    cookie: stores.cookie(),
+    {{#if store === 'cookie'}}cookie: stores.cookie(),{{#elif store === 'file'}}file: stores.file({
+      location: app.tmpPath('sessions'),
+    }),{{#elif store === 'redis'}}redis: stores.redis({
+      connection: 'main',
+    }),{{#elif store === 'database'}}database: stores.database(),{{/if}}
   }
 })
 
