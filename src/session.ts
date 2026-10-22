@@ -454,9 +454,14 @@ export class Session extends Macroable {
    * session.flashInputErrors({ email: 'This email is already registered' })
    */
   flashInputErrors(messages: Record<string, string | string[]>) {
-    const inputErrors: Record<string, string[]> = {
-      ...this.#getFlashStore('write').get('inputErrorsBag', {}),
-    }
+    /**
+     * Null prototype, so a field named like an Object.prototype member
+     * (e.g. "constructor") does not read an inherited value.
+     */
+    const inputErrors: Record<string, string[]> = Object.assign(
+      Object.create(null),
+      this.#getFlashStore('write').get('inputErrorsBag', {})
+    )
 
     for (const [field, fieldMessages] of Object.entries(messages)) {
       inputErrors[field] = (inputErrors[field] ?? []).concat(fieldMessages)

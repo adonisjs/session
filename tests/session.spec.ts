@@ -1400,6 +1400,7 @@ test.group('Session | Flash', (group) => {
 
       session.flashInputErrors({ email: 'Email is taken' })
       session.flashInputErrors({ email: ['Email is too long'], username: 'Username is taken' })
+      session.flashInputErrors({ constructor: 'Constructor is reserved' })
       sessionId = session.sessionId
 
       await session.commit()
@@ -1414,6 +1415,7 @@ test.group('Session | Flash', (group) => {
         inputErrorsBag: {
           email: ['Email is taken', 'Email is too long'],
           username: ['Username is taken'],
+          constructor: ['Constructor is reserved'],
         },
       },
     })
