@@ -443,6 +443,29 @@ export class Session extends Macroable {
   }
 
   /**
+   * Flashes error messages for form fields to the inputErrorsBag, the same
+   * bag "flashValidationErrors" fills. The "@inputError" tag and the Inertia
+   * adapter read them like validation errors. Messages are appended to the
+   * ones already flashed for a field.
+   *
+   * @param messages - Error messages keyed by field name
+   *
+   * @example
+   * session.flashInputErrors({ email: 'This email is already registered' })
+   */
+  flashInputErrors(messages: Record<string, string | string[]>) {
+    const inputErrors: Record<string, string[]> = {
+      ...this.#getFlashStore('write').get('inputErrorsBag', {}),
+    }
+
+    for (const [field, fieldMessages] of Object.entries(messages)) {
+      inputErrors[field] = (inputErrors[field] ?? []).concat(fieldMessages)
+    }
+
+    this.flash('inputErrorsBag', inputErrors)
+  }
+
+  /**
    * Flashes validation error messages. Make sure the error is an instance of VineJS ValidationException.
    * Overrides existing inputErrors.
    *
