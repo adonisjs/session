@@ -1387,6 +1387,40 @@ test.group('Session | Flash', (group) => {
     })
   })
 
+  test('flash input errors for fields', async ({ assert }) => {
+    let sessionId: string | undefined
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res, encryption }).create()
+      const response = new ResponseFactory().merge({ req, res, encryption }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const session = new Session(sessionConfig, cookieDriver, emitter, ctx)
+      await session.initiate(false)
+
+      session.flashInputErrors({ email: 'Email is taken' })
+      session.flashInputErrors({ email: ['Email is too long'], username: 'Username is taken' })
+      session.flashInputErrors({ constructor: 'Constructor is reserved' })
+      sessionId = session.sessionId
+
+      await session.commit()
+      response.finish()
+    })
+
+    const { headers } = await supertest(server).get('/')
+    const cookies = setCookieParser.parse(headers['set-cookie'], { map: true })
+
+    assert.deepEqual(cookieClient.decrypt(sessionId!, cookies[sessionId!].value), {
+      __flash__: {
+        inputErrorsBag: {
+          email: ['Email is taken', 'Email is too long'],
+          username: ['Username is taken'],
+          constructor: ['Constructor is reserved'],
+        },
+      },
+    })
+  })
+
   test('access flash messages inside templates', async ({ assert }) => {
     let sessionId: string | undefined
 
