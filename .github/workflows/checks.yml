@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [latest]
+        node-version: [24]
         db: [sqlite, postgres, mysql]
     services:
       redis:
@@ -106,7 +106,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        node-version: [latest]
+        node-version: [24]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Use Node.js ${{ matrix.node-version }}
